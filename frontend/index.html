@@ -1,0 +1,172 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Job Search Platform</title>
+    <meta name="description" content="按次收费的 AI 求职分析平台 MVP。" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="mvp-page">
+    <div class="bg-glow"></div>
+    <main class="container">
+      <header class="hero card reveal mvp-hero">
+        <p class="badge">AI Job Search Platform</p>
+        <h1>按次收费的 AI 求职分析平台</h1>
+        <p class="hero-text">围绕目标岗位做差距分析、次数包收费、定制简历生成和后续求职动作管理。</p>
+        <div class="overview-stats mvp-stats">
+          <div class="stat-box"><b>Analyze</b><span>岗位差距分析</span></div>
+          <div class="stat-box"><b>Credits</b><span>按次收费</span></div>
+          <div class="stat-box"><b>Resume Draft</b><span>定制简历草稿</span></div>
+          <div class="stat-box"><b>History</b><span>用户分析记录</span></div>
+        </div>
+      </header>
+
+      <section class="section reveal">
+        <div class="grid mvp-grid">
+          <article class="card mvp-form-card">
+            <div class="section-head">
+              <h2>账户与额度</h2>
+              <p>先注册一个测试账户，系统会赠送 1 次分析额度。</p>
+            </div>
+            <form id="authForm" class="mvp-form auth-form">
+              <label>
+                <span>邮箱</span>
+                <input id="userEmail" type="email" placeholder="name@example.com" required />
+              </label>
+              <label>
+                <span>昵称</span>
+                <input id="userName" type="text" placeholder="你的名字" required />
+              </label>
+              <div class="mvp-actions">
+                <button id="authBtn" class="button-link" type="submit">注册 / 登录</button>
+                <p id="authStatus" class="form-status">尚未登录</p>
+              </div>
+            </form>
+            <div class="account-box">
+              <p><strong>当前用户：</strong><span id="currentUser">未登录</span></p>
+              <p><strong>剩余额度：</strong><span id="currentCredits">0</span></p>
+              <p class="module-meta">Token 暂存到浏览器本地，方便持续测试。</p>
+            </div>
+          </article>
+
+          <article class="card mvp-side-card">
+            <div class="section-head">
+              <h2>开始分析</h2>
+              <p>支持上传简历文件或直接粘贴文本，再输入目标岗位 JD 生成结果。</p>
+            </div>
+            <div class="resume-upload-box">
+              <div>
+                <strong>简历文件上传</strong>
+                <p class="module-meta">支持 `.txt`、`.md`、`.docx`。</p>
+              </div>
+              <div class="resume-upload-actions">
+                <input id="resumeFile" type="file" accept=".txt,.md,.markdown,.docx" />
+                <button id="uploadBtn" class="button-link button-link-secondary mvp-upload" type="button">上传并解析</button>
+              </div>
+              <p id="uploadStatus" class="form-status">暂未上传文件</p>
+            </div>
+            <form id="analysisForm" class="mvp-form">
+              <label>
+                <span>目标岗位</span>
+                <input id="targetRole" name="targetRole" type="text" placeholder="例如：AI 产品经理 / AI 研究助理 / 后端工程师" required />
+              </label>
+              <label>
+                <span>简历文本</span>
+                <textarea id="resumeText" name="resumeText" rows="12" placeholder="把简历内容粘贴到这里" required></textarea>
+              </label>
+              <label>
+                <span>职位描述 JD</span>
+                <textarea id="jobDescription" name="jobDescription" rows="12" placeholder="把目标岗位 JD 粘贴到这里" required></textarea>
+              </label>
+              <div class="mvp-actions">
+                <button id="submitBtn" class="button-link mvp-submit" type="submit">生成分析报告</button>
+                <p id="formStatus" class="form-status">准备就绪</p>
+              </div>
+            </form>
+          </article>
+        </div>
+      </section>
+
+      <section class="section reveal">
+        <div class="section-head">
+          <h2>套餐配置</h2>
+          <p>点击购买会直接给当前登录账户充值额度。</p>
+        </div>
+        <div id="pricingCatalog" class="provider-list"></div>
+      </section>
+
+      <section class="section reveal">
+        <div class="grid mvp-grid">
+          <article class="card">
+            <div class="section-head">
+              <h2>模型工位</h2>
+              <p>用于定义后续真实多模型路由策略。</p>
+            </div>
+            <div id="providerCatalog" class="provider-list"></div>
+          </article>
+          <article class="card">
+            <div class="section-head">
+              <h2>产品定位</h2>
+              <p>这是独立产品仓库，不承载个人案例内容。</p>
+            </div>
+            <ul class="list mvp-side-list">
+              <li>围绕收费闭环设计</li>
+              <li>围绕用户账户和额度设计</li>
+              <li>围绕后续支付、导出、投递管理扩展</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="section reveal">
+        <div class="section-head">
+          <h2>分析结果</h2>
+          <p>提交后返回结构化报告、模型路由建议和定制简历草稿。</p>
+        </div>
+        <div id="emptyState" class="card mvp-empty-state">还没有结果。先注册账户，再提交一份简历和 JD。</div>
+        <div id="resultSection" class="mvp-result" hidden>
+          <div class="grid mvp-summary-grid">
+            <article class="card">
+              <p class="result-label">匹配度</p>
+              <h3 id="matchScore" class="result-score">0</h3>
+              <p id="summaryText" class="module-meta"></p>
+            </article>
+            <article class="card">
+              <p class="result-label">会话信息</p>
+              <h3 id="sessionMeta" class="module-title">尚未生成</h3>
+              <p id="routingMode" class="module-meta">路由模式尚未生成</p>
+              <p id="creditsRemaining" class="module-meta">剩余额度：0</p>
+            </article>
+          </div>
+          <article class="card">
+            <h3 class="module-title">推荐模型路由</h3>
+            <div id="modelPlan" class="provider-plan"></div>
+          </article>
+          <div class="grid mvp-report-grid">
+            <article class="card"><h3 class="module-title">优势</h3><ul id="strengthsList" class="list"></ul></article>
+            <article class="card"><h3 class="module-title">风险</h3><ul id="risksList" class="list"></ul></article>
+          </div>
+          <article class="card"><h3 class="module-title">差距项</h3><div id="gapsList" class="gap-list"></div></article>
+          <div class="grid mvp-report-grid">
+            <article class="card"><h3 class="module-title">学习计划</h3><ul id="learningPlanList" class="list"></ul></article>
+            <article class="card"><h3 class="module-title">面试准备重点</h3><ul id="interviewFocusList" class="list"></ul></article>
+          </div>
+          <article class="card"><h3 class="module-title">下一步动作</h3><ul id="nextActionsList" class="list"></ul></article>
+          <article class="card"><h3 class="module-title">简历优化建议</h3><div id="resumeSuggestions" class="suggestion-list"></div></article>
+          <article class="card"><h3 class="module-title">岗位定制简历草稿</h3><pre id="resumeDraft" class="resume-draft"></pre></article>
+        </div>
+      </section>
+
+      <section class="section reveal">
+        <div class="section-head">
+          <h2>最近分析记录</h2>
+          <p>按当前登录用户显示历史记录和消耗额度。</p>
+        </div>
+        <div id="historyList" class="grid highlights-grid"></div>
+      </section>
+    </main>
+    <footer class="footer"><p>AI Job Search Platform MVP</p></footer>
+    <script src="./app.js"></script>
+  </body>
+</html>
