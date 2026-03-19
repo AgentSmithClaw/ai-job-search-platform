@@ -51,10 +51,11 @@ from app.services.auth import add_credits, consume_credit, get_user_by_token, re
 from app.services.export import export_service
 from app.services.llm import get_llm_service
 from app.services.payment import (
-    complete_mock_payment,
-    create_mock_payment_order,
+    complete_payment,
+    create_payment_order,
     get_order_by_id,
     get_user_orders,
+    process_payment_webhook,
 )
 from app.services.pricing import get_package_by_code, get_pricing_catalog
 from app.services.resume_parser import extract_resume_text
@@ -325,21 +326,25 @@ def analyze(request: AnalysisRequest) -> AnalysisResponse:
 
 @app.post('/api/payment/create', response_model=dict)
 async def create_payment(request: PaymentCreateRequest) -> dict:
+    """
+    Create a payment order and complete it (MOCK implementation).
+    TODO: For real payment, create PENDING order and redirect to Stripe/Alipay.
+    """
     user = get_user_by_token(request.access_token)
     package = get_package_by_code(request.package_code)
     if not package:
         raise HTTPException(status_code=404, detail='Package not found')
-    
-    order_id = create_mock_payment_order(
+
+    order_id = create_payment_order(
         user_id=user.id,
         package_code=package.code,
         package_name=package.name,
         credits=package.credits,
         price_cny=package.price_cny,
     )
-    
-    completed = complete_mock_payment(order_id)
-    
+
+    completed = complete_payment(order_id)
+
     return {
         "order_id": order_id,
         "status": "completed",
