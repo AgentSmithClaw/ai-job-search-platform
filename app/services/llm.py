@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import List, Optional
 import openai
 from app.config import settings
@@ -11,6 +12,8 @@ from app.schemas import (
     RoutedModelPlan,
     ValidationSummary,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class LLMService:
@@ -60,19 +63,20 @@ class LLMService:
 岗位描述 JD：
 {job_description}
 
-请以 JSON 格式返回分析结果，包含以下字段：
-- match_score: 0-100 的匹配度分数
-- summary: 总体评估摘要（50字以内）
-- strengths: 优势列表（3-5条）
-- risks: 风险列表（3-5条）
-- gaps: 差距项列表，每个包含 category, severity, requirement, evidence, recommendation
-- learning_plan: 学习计划（4周）
-- interview_focus: 面试准备重点
-- resume_suggestions: 简历优化建议，包含 original, optimized, reason
-- recommended_model_plan: 模型使用建议
-- next_actions: 下一步动作
-
-请确保返回的是有效的 JSON 格式。"""
+请直接返回 JSON 格式的分析结果，不要包含任何思考过程或 markdown 代码块标记：
+{{
+  "match_score": 0-100 的匹配度分数,
+  "summary": "总体评估摘要（50字以内）",
+  "strengths": ["优势列表"],
+  "risks": ["风险列表"],
+  "gaps": [{{"category": "类别", "severity": "high/medium/low", "requirement": "要求", "evidence": "证据", "recommendation": "建议", "gap_type": "expression/evidence_missing/skill_gap"}}],
+  "learning_plan": ["学习计划"],
+  "interview_focus": ["面试准备重点"],
+  "resume_suggestions": [{{"original": "原文", "optimized": "优化", "reason": "原因"}}],
+  "recommended_model_plan": {{"orchestrator": "模型", "extractor": "模型", "writer": "模型", "reviewer": "模型", "rationale": ["说明"]}},
+  "next_actions": ["下一步动作"],
+  "validation": {{"confidence": 0-100, "overclaim_warning": true/false, "critical_gaps": ["关键缺口"], "high_priority_actions": ["高优先级动作"], "caution_notes": ["注意事项"]}}
+}}"""
 
     def _parse_analysis_response(
         self,
@@ -84,14 +88,40 @@ class LLMService:
         import json
         import re
 
-        json_match = re.search(r"\{.*\}", content, re.DOTALL)
-        if not json_match:
+        logger.info(f"LLM raw response length: {len(content) if content else 0}")
+
+        if not content:
             from app.services.analysis import build_analysis as mock_build
             return mock_build(target_role, resume_text, job_description)
 
+        content_clean = re.sub(r'<think>[\s\S]*?</think>', '', content)
+
+        json_match = re.search(r'```(?:json)?\s*(\{[\s\S]*?\})\s*```', content_clean)
+        if json_match:
+            json_str = json_match.group(1)
+        else:
+            brace_count = 0
+            start_idx = None
+            for i, c in enumerate(content_clean):
+                if c == '{':
+                    if start_idx is None:
+                        start_idx = i
+                    brace_count += 1
+                elif c == '}':
+                    brace_count -= 1
+                    if brace_count == 0 and start_idx is not None:
+                        json_str = content_clean[start_idx:i+1]
+                        break
+            else:
+                logger.error(f"No complete JSON found after cleaning. content_clean[:300]: {content_clean[:300]}")
+                from app.services.analysis import build_analysis as mock_build
+                return mock_build(target_role, resume_text, job_description)
+
         try:
-            data = json.loads(json_match.group())
-        except json.JSONDecodeError:
+            data = json.loads(json_str)
+            logger.info(f"Successfully parsed JSON with {len(data.get('gaps', []))} gaps")
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON parse failed: {e}, json_str[:200]: {json_str[:200]}")
             from app.services.analysis import build_analysis as mock_build
             return mock_build(target_role, resume_text, job_description)
 
