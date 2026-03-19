@@ -5,16 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>AI Job Search Platform</title>
     <meta name="description" content="AI驱动的高效求职分析平台" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236366f1'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='18' fill='white'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
+    <div id="globalError" style="display:none;background:#fee2e2;border-bottom:2px solid var(--accent);padding:12px 20px;text-align:center;font-size:0.9rem;position:sticky;top:0;z-index:9999">
+      <span id="globalErrorText" style="color:#991b1b"></span>
+      <span id="globalErrorId" style="color:#6b7280;font-size:0.75rem;margin-left:8px"></span>
+      <button onclick="document.getElementById('globalError').style.display='none'" style="background:none;border:none;cursor:pointer;margin-left:12px;color:#991b1b;font-size:1rem">×</button>
+    </div>
     <div class="bg-gradient"></div>
     <main class="container">
       <header class="hero">
-        <span class="badge">✨ AI Job Search Platform</span>
-        <h1>智能求职差距分析平台</h1>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <span class="badge">✨ AI Job Search Platform</span>
+            <h1>智能求职差距分析平台</h1>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button id="darkModeToggle" onclick="toggleDarkMode()" style="background:none;border:1px solid var(--line);border-radius:10px;padding:6px 12px;cursor:pointer;font-size:0.85rem;display:flex;align-items:center;gap:6px;color:var(--muted)" title="切换深色模式">🌙 深色</button>
+          </div>
+        </div>
         <p class="hero-text">上传简历，输入目标岗位，AI自动分析差距、生成定制简历、规划学习路径</p>
         <div class="stats-grid">
           <div class="stat-item">
@@ -40,6 +53,32 @@
         </div>
       </header>
 
+      <div id="onboardingPanel" style="display:none;margin:0 auto 24px;max-width:720px;background:linear-gradient(135deg,var(--brand-soft),var(--panel));border:1px solid var(--brand);border-radius:var(--radius);padding:20px 24px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+          <h3 style="margin:0;color:var(--brand)">🎯 快速开始</h3>
+          <button onclick="dismissOnboarding()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:1.1rem;padding:0">×</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <span style="background:var(--brand);color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;flex-shrink:0">1</span>
+            <div><strong>注册/登录</strong><p style="margin:2px 0 0;font-size:0.8rem;color:var(--muted)">注册即送1次免费分析额度</p></div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <span style="background:var(--brand);color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;flex-shrink:0">2</span>
+            <div><strong>上传简历</strong><p style="margin:2px 0 0;font-size:0.8rem;color:var(--muted)">支持 PDF/Word/TXT，自动解析</p></div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <span style="background:var(--brand);color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;flex-shrink:0">3</span>
+            <div><strong>粘贴 JD</strong><p style="margin:2px 0 0;font-size:0.8rem;color:var(--muted)">复制目标岗位描述，获得精准分析</p></div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <span style="background:var(--brand);color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;flex-shrink:0">4</span>
+            <div><strong>生成报告</strong><p style="margin:2px 0 0;font-size:0.8rem;color:var(--muted)">AI 分析差距、生成简历、规划学习</p></div>
+          </div>
+        </div>
+        <p style="margin:12px 0 0;font-size:0.8rem;color:var(--muted)">💡 提示：分析报告可导出为 Word/PDF，任务可直接添加到学习计划</p>
+      </div>
+
       <section class="section">
         <div class="grid grid-2">
           <article class="card">
@@ -61,7 +100,7 @@
             </form>
             <div class="account-box">
               <p><strong>👤 <span id="currentUser">未登录</span></strong></p>
-              <p>剩余额度: <span id="currentCredits" style="color:var(--brand);font-weight:700">0</span> 次</p>
+              <p>剩余额度: <span id="currentCredits" style="color:var(--brand);font-weight:700">0</span> <span id="creditsLowBadge" class="badge-warning" hidden>额度不足</span></p>
               <div class="account-actions">
                 <button id="logoutBtn" class="btn btn-sm btn-outline" hidden>退出</button>
                 <button id="editProfileBtn" class="btn btn-sm btn-secondary">✏️ 编辑</button>
@@ -70,7 +109,7 @@
               </div>
               <div id="dashboardStats" hidden>
                 <div class="dashboard-stats">
-                  <p>📈 分析次数: <span id="statAnalyses">0</span></p>
+                  <p>📈 分析次数: <span id="statAnalyses">0</span> <span style="color:var(--muted);font-size:0.8rem">（本周 <span id="statAnalysesWeek">0</span>）</span></p>
                   <p>📨 投递数: <span id="statApplications">0</span></p>
                   <p>✅ 任务数: <span id="statTasks">0</span></p>
                   <p>💰 累计消费: ¥<span id="statSpent">0</span></p>
@@ -92,20 +131,21 @@
               <p id="uploadStatus" class="form-status"></p>
             </div>
             <form id="analysisForm">
-              <div class="form-group">
-                <label>🎯 目标岗位</label>
-                <input id="targetRole" type="text" placeholder="例如：AI产品经理 / Python后端工程师" required />
-              </div>
-              <div class="form-group">
-                <label>📋 简历内容</label>
-                <textarea id="resumeText" rows="6" placeholder="粘贴简历内容..." required></textarea>
-              </div>
-              <div class="form-group">
-                <label>📌 职位描述 JD</label>
-                <textarea id="jobDescription" rows="6" placeholder="粘贴目标岗位JD..." required></textarea>
-              </div>
+            <div class="form-group">
+              <label>🎯 目标岗位 <button type="button" class="btn-clear" onclick="document.getElementById('targetRole').value=''">×</button></label>
+              <input id="targetRole" type="text" placeholder="例如：AI产品经理 / Python后端工程师" required />
+            </div>
+            <div class="form-group">
+              <label>📄 简历内容 <span id="resumeCharCount" style="font-size:0.75rem;color:var(--muted);font-weight:400;margin-left:4px"></span></label>
+              <textarea id="resumeText" rows="6" placeholder="粘贴简历内容，或上传文件自动解析..." required></textarea>
+            </div>
+            <div class="form-group">
+              <label>📌 职位描述 JD <button type="button" class="btn-clear" onclick="document.getElementById('jobDescription').value=''">×</button></label>
+              <textarea id="jobDescription" rows="6" placeholder="粘贴目标岗位JD..." required></textarea>
+            </div>
               <button id="submitBtn" type="submit" class="btn btn-primary" style="width:100%">🚀 生成分析报告</button>
               <p id="formStatus" class="form-status"></p>
+              <p id="creditsWarn" style="color:var(--warning);font-size:0.8rem;text-align:center;display:none"></p>
             </form>
           </article>
         </div>
@@ -136,13 +176,36 @@
           <div style="font-size:3rem;margin-bottom:16px">📋</div>
           <p>还没有分析结果</p>
           <p style="font-size:0.9rem">注册账户后，提交简历和JD即可开始分析</p>
+          <button class="btn btn-primary" style="margin-top:16px" onclick="scrollToAnalysis()">🚀 立即开始分析</button>
         </div>
-        <div id="resultSection" hidden>
-          <div class="grid grid-2" style="margin-bottom:24px">
+          <div id="resultSection" hidden>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+              <h2 style="margin:0">📊 分析结果</h2>
+              <button id="newAnalysisBtn" class="btn btn-secondary btn-sm" onclick="scrollToAnalysis()">+ 新建分析</button>
+            </div>
+            <div id="analysisLoading">
+              <div class="skeleton skeleton-card skeleton-title"></div>
+              <div class="grid grid-2">
+                <div class="skeleton skeleton-card"><div class="skeleton skeleton-text" style="width:50%"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text" style="width:80%"></div></div>
+                <div class="skeleton skeleton-card"><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text" style="width:70%"></div><div class="skeleton skeleton-text" style="width:60%"></div></div>
+              </div>
+              <p style="margin-top:16px">🔄 AI 正在分析中，请稍候...</p>
+            </div>
+            <div id="analysisContent" hidden>
             <article class="card" style="text-align:center">
               <p class="score-label">匹配度评分</p>
               <div id="matchScore" class="result-score">0</div>
               <p id="summaryText" style="margin-top:12px;color:var(--muted)"></p>
+            </article>
+            <article class="card" id="validationCard" hidden>
+              <p class="score-label">报告可信度</p>
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+                <span id="confidenceScore" style="font-size:2rem;font-weight:700;color:var(--brand)">-</span>
+                <span style="color:var(--muted)">/ 100</span>
+              </div>
+              <div id="overclaimWarning" class="badge-warning" hidden>⚠️ 报告可能存在夸大，请谨慎参考</div>
+              <div id="criticalGaps" class="validation-list" hidden></div>
+              <div id="cautionNotes" class="validation-list caution" hidden></div>
             </article>
             <article class="card">
               <p class="score-label">会话信息</p>
@@ -152,6 +215,7 @@
               <div class="export-buttons">
                 <button id="exportDocx" class="btn btn-secondary btn-sm">📄 DOCX</button>
                 <button id="exportPdf" class="btn btn-secondary btn-sm">📑 PDF</button>
+                <button id="shareReportBtn" class="btn btn-secondary btn-sm">🔗 分享</button>
                 <button id="createTasksBtn" class="btn btn-secondary btn-sm">✅ 创建任务</button>
                 <button id="generateQuestionsBtn" class="btn btn-secondary btn-sm">❓ 面试题</button>
               </div>
@@ -201,17 +265,36 @@
           </div>
 
           <div class="card">
-            <h3>📝 岗位定制简历草稿</h3>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <h3 style="margin:0">📝 岗位定制简历草稿</h3>
+              <button id="copyDraftBtn" class="btn btn-secondary btn-sm" onclick="copyResumeDraft()">📋 复制</button>
+            </div>
             <pre id="resumeDraft" class="resume-draft"></pre>
+          </div>
+        </div>
           </div>
         </div>
       </section>
 
       <section class="section">
-        <div class="section-head">
-          <h2>📜 分析历史</h2>
+        <div class="section-head" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <h2>📜 分析历史</h2>
+            <span id="historyCountBadge" style="background:var(--brand-soft);color:var(--brand);padding:2px 10px;border-radius:999px;font-size:0.8rem;font-weight:600;display:none">0</span>
+          </div>
+            <div style="display:flex;gap:8px;align-items:center;position:relative">
+              <input id="historySearch" type="text" list="recentSearches" placeholder="搜索岗位..." oninput="debouncedFilterHistory(this.value)" style="padding:6px 10px;border-radius:10px;border:1px solid var(--line);font-size:0.85rem;width:140px" />
+              <datalist id="recentSearches"></datalist>
+              <select id="historySort" onchange="sortHistory(this.value)" style="padding:6px 10px;border-radius:10px;border:1px solid var(--line);font-size:0.85rem">
+                <option value="newest">最新在前</option>
+                <option value="oldest">最旧在前</option>
+              </select>
+            </div>
         </div>
         <div id="historyList" class="grid grid-3"></div>
+        <div id="historyLoadMore" style="text-align:center;margin-top:16px;display:none">
+          <button class="btn btn-secondary" onclick="loadMoreHistory()">加载更多</button>
+        </div>
       </section>
 
       <section class="section">
@@ -324,6 +407,15 @@
         </div>
       </section>
     </main>
+    <div id="shortcutsBtn" onclick="toggleShortcuts()" style="position:fixed;bottom:24px;left:24px;background:var(--brand);color:#fff;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;cursor:pointer;box-shadow:var(--shadow);z-index:100;opacity:0.7;transition:opacity 0.2s" title="键盘快捷键">⌨️</div>
+    <div id="shortcutsPanel" hidden style="position:fixed;bottom:72px;left:24px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-lg);z-index:100;font-size:0.85rem;min-width:240px">
+      <h4 style="margin:0 0 12px">⌨️ 快捷键</h4>
+      <div style="display:grid;gap:8px">
+        <div style="display:flex;justify-content:space-between"><kbd style="background:#f3f4f6;padding:2px 8px;border-radius:4px;font-size:0.8rem">Ctrl+Enter</kbd><span>提交分析</span></div>
+        <div style="display:flex;justify-content:space-between"><kbd style="background:#f3f4f6;padding:2px 8px;border-radius:4px;font-size:0.8rem">Ctrl+S</kbd><span>保存草稿</span></div>
+        <div style="display:flex;justify-content:space-between"><kbd style="background:#f3f4f6;padding:2px 8px;border-radius:4px;font-size:0.8rem">Ctrl+L</kbd><span>加载草稿</span></div>
+      </div>
+    </div>
     <footer class="footer">
       <p>AI Job Search Platform © 2024 | 智能求职分析平台</p>
     </footer>

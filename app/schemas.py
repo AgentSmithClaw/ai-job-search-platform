@@ -64,6 +64,7 @@ class AnalysisReport(BaseModel):
 
 class AnalysisResponse(BaseModel):
     session_id: int
+    created_at: str
     target_role: str
     report: AnalysisReport
     resume_draft: str
@@ -158,6 +159,12 @@ class PaymentCreateRequest(BaseModel):
 
 class PaymentCompleteRequest(BaseModel):
     order_id: str = Field(min_length=8)
+
+
+class StripeCheckoutResponse(BaseModel):
+    order_id: str
+    checkout_url: str
+    status: str = "pending"
 
 
 class JobApplicationCreate(BaseModel):

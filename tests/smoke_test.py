@@ -42,11 +42,10 @@ def main():
     )))
 
     print("\n--- Resume Upload ---")
-    test_file = ("test resume content with python and sql experience",)
     results.append(test("Resume Upload", lambda: (
         requests.post(
             f"{BASE_URL}/api/resume/upload",
-            files={"file": ("test.txt", b"test resume content", "text/plain")}
+            files={"file": ("test.txt", b"test resume content with python sql experience", "text/plain")}
         ).status_code == 200
     )))
 

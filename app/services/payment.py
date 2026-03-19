@@ -191,23 +191,101 @@ async def create_stripe_checkout_session(
     package_name: str,
     credits: int,
     price_cny: int,
+    order_id: str,
 ) -> str:
     """
-    REAL PAYMENT: Create Stripe checkout session and return URL.
-    MOCK: Returns a mock URL for testing.
-    TODO: Implement real Stripe integration.
+    Create Stripe checkout session and return URL.
+    Creates a pending order first, embeds order_id in Stripe metadata.
     """
     if not settings.STRIPE_SECRET_KEY:
         logger.warning("Stripe not configured, returning mock checkout URL")
         return f"https://checkout.stripe.com/mock/{secrets.token_urlsafe(16)}"
 
-    logger.info(f"Creating Stripe checkout: user_id={user_id}, package={package_code}, amount={price_cny}")
+    import stripe
 
-    # TODO: Implement real Stripe checkout
-    # checkout_session = stripe.checkout.sessions.create(...)
-    # return checkout_session.url
+    stripe.api_key = settings.STRIPE_SECRET_KEY
 
-    return f"https://checkout.stripe.com/mock/{secrets.token_urlsafe(16)}"
+    try:
+        existing = get_order_by_id(order_id)
+        if existing and existing['status'] == PaymentStatus.PENDING.value and existing['payment_method'] == PaymentMethod.STRIPE.value:
+            conn = get_connection()
+            pending = conn.execute(
+                "SELECT checkout_url FROM payment_orders WHERE order_id = ? AND status = 'pending' AND payment_method = 'stripe'",
+                (order_id,)
+            ).fetchone()
+            conn.close()
+            if pending and pending['checkout_url']:
+                logger.info(f"Reusing existing Stripe checkout: order_id={order_id}")
+                return pending['checkout_url']
+    except Exception:
+        pass
+
+    price_id = _get_or_create_stripe_price(stripe, package_code, package_name, price_cny)
+
+    session = stripe.checkout.Session.create(
+        payment_method_types=['card'],
+        line_items=[{
+            'price': price_id,
+            'quantity': 1,
+        }],
+        mode='payment',
+        success_url=f"{settings.APP_URL or 'http://127.0.0.1:8080'}/payment/success?session_id={{CHECKOUT_SESSION_ID}}&order_id={order_id}",
+        cancel_url=f"{settings.APP_URL or 'http://127.0.0.1:8080'}/payment/cancel?order_id={order_id}",
+        metadata={
+            'order_id': order_id,
+            'user_id': str(user_id),
+            'package_code': package_code,
+        },
+        customer_email=_get_user_email(user_id),
+    )
+
+    checkout_url = session.url
+    if not checkout_url:
+        raise RuntimeError("Stripe did not return a checkout URL")
+
+    conn = get_connection()
+    conn.execute(
+        "UPDATE payment_orders SET checkout_url = ? WHERE order_id = ?",
+        (checkout_url, order_id)
+    )
+    conn.commit()
+    conn.close()
+
+    logger.info(f"Stripe checkout created: order_id={order_id}, session_id={session.id}, url={checkout_url}")
+    return checkout_url
+
+
+def _get_or_create_stripe_price(stripe, package_code: str, package_name: str, price_cny: int) -> str:
+    price_attr_map = {
+        'gap-report': 'STRIPE_PRICE_GAP_REPORT',
+        'resume-10': 'STRIPE_PRICE_RESUME_10',
+        'interview-coach': 'STRIPE_PRICE_INTERVIEW_COACH',
+    }
+    attr_name = price_attr_map.get(package_code)
+    if attr_name and hasattr(settings, attr_name):
+        price_id = getattr(settings, attr_name)
+        if price_id:
+            return price_id
+
+    product = stripe.Product.create(
+        name=f"AI Job Search - {package_name}",
+        metadata={'package_code': package_code}
+    )
+    price = stripe.Price.create(
+        product=product.id,
+        unit_amount=price_cny * 100,
+        currency='cny',
+        metadata={'package_code': package_code}
+    )
+    logger.info(f"Created Stripe price: package={package_code}, price_id={price.id}")
+    return price.id
+
+
+def _get_user_email(user_id: int) -> Optional[str]:
+    conn = get_connection()
+    row = conn.execute('SELECT email FROM users WHERE id = ?', (user_id,)).fetchone()
+    conn.close()
+    return row['email'] if row else None
 
 
 def process_payment_webhook(order_id: str, payment_status: str) -> bool:

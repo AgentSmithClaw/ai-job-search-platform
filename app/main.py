@@ -4,7 +4,7 @@ import json
 import logging
 import sys
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -16,6 +16,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+from app.config import settings
 from app.db import get_connection, init_db
 from app.schemas import (
     AnalysisRequest,
@@ -43,6 +44,7 @@ from app.schemas import (
     ResumeUploadResponse,
     SessionDetail,
     SessionSummary,
+    StripeCheckoutResponse,
     UpdateUserRequest,
     UserProfile,
 )
@@ -51,8 +53,10 @@ from app.services.auth import add_credits, consume_credit, get_user_by_token, re
 from app.services.export import export_service
 from app.services.llm import get_llm_service
 from app.services.payment import (
+    PaymentMethod,
     complete_payment,
     create_payment_order,
+    create_stripe_checkout_session,
     get_order_by_id,
     get_user_orders,
     process_payment_webhook,
@@ -76,6 +80,63 @@ from app.services.tracking import (
 )
 
 
+from collections import defaultdict
+from time import time as _time
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import Response, JSONResponse
+import uuid
+
+
+class RequestIDMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next) -> Response:
+        request_id = str(uuid.uuid4())[:8]
+        request.state.request_id = request_id
+        logger.info(f"[{request_id}] {request.method} {request.url.path}")
+        response = await call_next(request)
+        response.headers['X-Request-ID'] = request_id
+        return response
+
+
+RATE_LIMIT_WINDOW = 60
+RATE_LIMIT_MAX = {
+    '/api/analyze': 3,
+    '/api/payment/create': 5,
+    '/api/payment/create-stripe': 5,
+    '/api/generate-questions': 3,
+    '/api/export': 10,
+}
+GLOBAL_RATE_LIMIT = 60
+
+
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    def __init__(self, app):
+        super().__init__(app)
+        self._requests = defaultdict(list)
+
+    async def dispatch(self, request: Request, call_next) -> Response:
+        client_ip = request.client.host if request.client else 'unknown'
+        path = request.url.path
+        now = _time()
+
+        self._requests[client_ip] = [
+            t for t in self._requests[client_ip] if now - t < RATE_LIMIT_WINDOW
+        ]
+
+        limit = RATE_LIMIT_MAX.get(path, GLOBAL_RATE_LIMIT)
+        if len(self._requests[client_ip]) >= limit:
+            logger.warning(f"Rate limit exceeded: ip={client_ip} path={path}")
+            return Response(
+                content='{"detail":"请求过于频繁，请稍后再试"}',
+                status_code=429,
+                media_type='application/json',
+                headers={'Retry-After': '60'},
+            )
+
+        self._requests[client_ip].append(now)
+        return await call_next(request)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
@@ -83,19 +144,43 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title='AI Job Search Platform API', lifespan=lifespan)
+app.add_middleware(RequestIDMiddleware)
+app.add_middleware(RateLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['*'],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=['*'],
     allow_headers=['*'],
 )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    request_id = getattr(request.state, 'request_id', 'unknown')
+    logger.error(f"[{request_id}] Unhandled error: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={'detail': '服务器内部错误，请稍后重试'},
+        headers={'X-Request-ID': request_id},
+    )
+
 
 app.mount('/static', StaticFiles(directory='frontend'), name='static')
 
 
 @app.get('/')
 def root() -> FileResponse:
+    return FileResponse('frontend/index.html')
+
+
+@app.get('/payment/success')
+def payment_success() -> FileResponse:
+    return FileResponse('frontend/index.html')
+
+
+@app.get('/payment/cancel')
+def payment_cancel() -> FileResponse:
     return FileResponse('frontend/index.html')
 
 
@@ -135,13 +220,21 @@ def get_dashboard(access_token: str) -> dict:
            FROM analysis_sessions WHERE user_id = ?''',
         (user.id,)
     ).fetchone()['avg_score'] or 0
-    
+
+    from datetime import datetime, timedelta
+    week_ago = (datetime.utcnow() - timedelta(days=7)).isoformat(timespec='seconds') + 'Z'
+    sessions_this_week = conn.execute(
+        'SELECT COUNT(*) as count FROM analysis_sessions WHERE user_id = ? AND created_at >= ?',
+        (user.id, week_ago)
+    ).fetchone()['count']
+
     conn.close()
     
     return {
         'user': UserProfile.model_validate(user),
         'stats': {
             'total_analyses': sessions_count,
+            'analyses_this_week': sessions_this_week,
             'total_applications': sum(application_stats.values()),
             'application_by_status': application_stats,
             'total_tasks': sum(task_stats.values()),
@@ -222,13 +315,17 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeUploadResponse:
     )
 
 
-@app.get('/api/sessions', response_model=list[SessionSummary])
-def list_sessions(access_token: str) -> list[SessionSummary]:
+@app.get('/api/sessions', response_model=dict)
+def list_sessions(access_token: str, offset: int = 0, limit: int = 20) -> dict:
     user = get_user_by_token(access_token)
     conn = get_connection()
+    total = conn.execute(
+        'SELECT COUNT(*) as count FROM analysis_sessions WHERE user_id = ?',
+        (user.id,)
+    ).fetchone()['count']
     rows = conn.execute(
-        'SELECT id, created_at, target_role, report_json, credits_used FROM analysis_sessions WHERE user_id = ? ORDER BY id DESC LIMIT 20',
-        (user.id,),
+        'SELECT id, created_at, target_role, report_json, credits_used FROM analysis_sessions WHERE user_id = ? ORDER BY id DESC LIMIT ? OFFSET ?',
+        (user.id, limit, offset),
     ).fetchall()
     conn.close()
 
@@ -245,7 +342,7 @@ def list_sessions(access_token: str) -> list[SessionSummary]:
                 credits_used=row['credits_used'],
             )
         )
-    return items
+    return {'items': items, 'total': total, 'offset': offset, 'limit': limit}
 
 
 @app.get('/api/sessions/{session_id}', response_model=SessionDetail)
@@ -315,7 +412,8 @@ def analyze(request: AnalysisRequest) -> AnalysisResponse:
     conn.close()
 
     return AnalysisResponse(
-        session_id=session_id,
+        session_id=session_id or 0,
+        created_at=created_at,
         target_role=request.target_role,
         report=report,
         resume_draft=resume_draft,
@@ -354,6 +452,38 @@ async def create_payment(request: PaymentCreateRequest) -> dict:
     }
 
 
+@app.post('/api/payment/create-stripe', response_model=StripeCheckoutResponse)
+async def create_stripe_payment(request: PaymentCreateRequest) -> StripeCheckoutResponse:
+    """
+    Create a Stripe checkout session for payment.
+    Creates a PENDING order and returns Stripe checkout URL.
+    """
+    user = get_user_by_token(request.access_token)
+    package = get_package_by_code(request.package_code)
+    if not package:
+        raise HTTPException(status_code=404, detail='Package not found')
+
+    order_id = create_payment_order(
+        user_id=user.id,
+        package_code=package.code,
+        package_name=package.name,
+        credits=package.credits,
+        price_cny=package.price_cny,
+        payment_method=PaymentMethod.STRIPE,
+    )
+
+    checkout_url = await create_stripe_checkout_session(
+        user_id=user.id,
+        package_code=package.code,
+        package_name=package.name,
+        credits=package.credits,
+        price_cny=package.price_cny,
+        order_id=order_id,
+    )
+
+    return StripeCheckoutResponse(order_id=order_id, checkout_url=checkout_url, status="pending")
+
+
 @app.get('/api/payment/orders', response_model=list[PaymentOrderResponse])
 def list_orders(access_token: str) -> list[PaymentOrderResponse]:
     user = get_user_by_token(access_token)
@@ -370,6 +500,73 @@ def list_orders(access_token: str) -> list[PaymentOrderResponse]:
         )
         for o in orders
     ]
+
+
+@app.post('/api/payment/webhook')
+async def stripe_webhook(request: Request):
+    """
+    Stripe webhook endpoint.
+    Verifies signature and processes payment events.
+    """
+    body = await request.body()
+    sig_header = request.headers.get('stripe-signature', '')
+
+    if not settings.STRIPE_WEBHOOK_SECRET:
+        logger.warning("Stripe webhook secret not configured, skipping signature verification")
+    else:
+        try:
+            import stripe
+            stripe.api_key = settings.STRIPE_SECRET_KEY
+            event = stripe.Webhook.construct_event(body, sig_header, settings.STRIPE_WEBHOOK_SECRET)
+            logger.info(f"Stripe webhook verified: event_type={event['type']}, event_id={event['id']}")
+        except Exception as exc:
+            logger.error(f"Stripe webhook verification/processing error: {exc}")
+            raise HTTPException(status_code=400, detail=str(exc))
+
+    import json
+    try:
+        event = json.loads(body)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail='Invalid JSON')
+
+    event_type = event.get('type', '')
+    data = event.get('data', {}).get('object', {})
+
+    if event_type == 'checkout.session.completed':
+        session_id = data.get('id')
+        order_id = data.get('metadata', {}).get('order_id')
+
+        if not order_id:
+            logger.error(f"Webhook: no order_id in metadata for session {session_id}")
+            return {"received": True}
+
+        conn = get_connection()
+        conn.execute(
+            "UPDATE payment_orders SET session_id = ? WHERE order_id = ?",
+            (session_id, order_id)
+        )
+        conn.commit()
+        conn.close()
+
+        try:
+            complete_payment(order_id, PaymentMethod.STRIPE)
+            logger.info(f"Stripe payment completed via webhook: order_id={order_id}")
+        except ValueError as e:
+            logger.error(f"Webhook payment completion failed: order_id={order_id}, error={e}")
+
+    elif event_type == 'checkout.session.expired':
+        order_id = data.get('metadata', {}).get('order_id')
+        if order_id:
+            conn = get_connection()
+            conn.execute(
+                "UPDATE payment_orders SET status = ? WHERE order_id = ? AND status = ?",
+                ("failed", order_id, "pending")
+            )
+            conn.commit()
+            conn.close()
+            logger.info(f"Stripe checkout expired: order_id={order_id}")
+
+    return {"received": True}
 
 
 @app.post('/api/applications', response_model=JobApplicationResponse)

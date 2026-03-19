@@ -110,6 +110,8 @@ def get_connection() -> sqlite3.Connection:
     conn.executescript(BASE_SCHEMA)
     _ensure_column(conn, 'analysis_sessions', 'user_id', 'user_id INTEGER')
     _ensure_column(conn, 'analysis_sessions', 'credits_used', 'credits_used INTEGER NOT NULL DEFAULT 1')
+    _ensure_column(conn, 'payment_orders', 'checkout_url', 'checkout_url TEXT')
+    _ensure_column(conn, 'payment_orders', 'session_id', 'session_id TEXT')
     conn.commit()
     return conn
 
