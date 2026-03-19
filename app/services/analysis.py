@@ -1,18 +1,24 @@
 from __future__ import annotations
 
 import re
+import logging
 from collections import Counter
 from typing import List
 
-from app.schemas import AnalysisReport, GapItem, ResumeSuggestion
+from app.schemas import AnalysisReport, GapItem, ResumeSuggestion, ValidationSummary
 from app.services.routing import choose_model_plan
 
+logger = logging.getLogger(__name__)
 
 COMMON_STOPWORDS = {
-    'and', 'the', 'with', 'for', 'you', 'your', 'will', 'are', 'our', 'that', 'from',
-    'have', 'has', 'able', 'work', 'team', 'years', 'plus', 'using', 'build', 'develop',
-    '经验', '负责', '熟悉', '能力', '以及', '相关', '岗位', '优先', '进行', '工作', '简历', '项目'
+    "and", "the", "with", "for", "you", "your", "will", "are", "our", "that", "from",
+    "have", "has", "able", "work", "team", "years", "plus", "using", "build", "develop",
+    "经验", "负责", "熟悉", "能力", "以及", "相关", "岗位", "优先", "进行", "工作", "简历", "项目"
 }
+
+EXPRESSION_KEYWORDS = {"熟练", "精通", "掌握", "了解", "熟悉"}
+SKILL_KEYWORDS = {"python", "java", "javascript", "sql", "git", "linux", "docker", "kubernetes", "aws", "cloud"}
+QUANTITY_WORDS = ["年", "月", "人", "次", "个", "%", "percent", "achieved", "improved", "increased", "reduced"]
 
 
 def extract_keywords(text: str, top_n: int = 16) -> List[str]:
@@ -22,7 +28,62 @@ def extract_keywords(text: str, top_n: int = 16) -> List[str]:
     return [word for word, _ in ranked]
 
 
+def classify_gap(keyword: str, resume_text: str) -> str:
+    resume_lower = resume_text.lower()
+    keyword_lower = keyword.lower()
+
+    if keyword_lower in resume_lower:
+        return "expression"
+
+    if any(skill in keyword_lower for skill in SKILL_KEYWORDS):
+        return "skill_gap"
+
+    return "evidence_missing"
+
+
+def has_quantification(text: str) -> bool:
+    return any(word in text for word in QUANTITY_WORDS)
+
+
+def build_validation(resume_text: str, jd_keywords: List[str], matched: List[str], missing: List[str], gaps: List[GapItem]) -> ValidationSummary:
+    overclaim_warning = False
+    critical_gaps = []
+    high_priority_actions = []
+    caution_notes = []
+
+    if not has_quantification(resume_text):
+        overclaim_warning = True
+        caution_notes.append("简历中缺少量化数据，竞争力可能被低估")
+
+    critical_gaps = [g.requirement for g in gaps if g.severity == "high"][:3]
+
+    high_priority_actions = [
+        "优先补充关键缺口的项目证据和量化结果",
+        "使用 STAR 格式重写核心经历",
+        "确保简历中的关键词与 JD 匹配"
+    ][:3]
+
+    confidence = 50
+    if len(matched) >= len(jd_keywords) * 0.6:
+        confidence += 20
+    if has_quantification(resume_text):
+        confidence += 15
+    if len(gaps) <= 2:
+        confidence += 15
+    confidence = min(95, confidence)
+
+    return ValidationSummary(
+        confidence=confidence,
+        overclaim_warning=overclaim_warning,
+        critical_gaps=critical_gaps,
+        high_priority_actions=high_priority_actions,
+        caution_notes=caution_notes
+    )
+
+
 def build_analysis(target_role: str, resume_text: str, job_description: str) -> tuple[AnalysisReport, str, str]:
+    logger.info(f"Building analysis for target_role={target_role}")
+
     routing_mode, model_plan = choose_model_plan(target_role, resume_text, job_description)
 
     resume_keywords = set(extract_keywords(resume_text, top_n=20))
@@ -36,78 +97,81 @@ def build_analysis(target_role: str, resume_text: str, job_description: str) -> 
         score = 40
 
     strengths = [
-        f'与 {target_role} 相关的现有关键词：{", ".join(matched[:6]) or "基础经验"}',
-        '现有经历已经具备重写为岗位定制版简历的基础',
-        '可以基于当前材料继续生成学习计划与面试准备清单'
+        f"与 {target_role} 相关的现有关键词：{', '.join(matched[:6]) or '基础经验'}",
+        "现有经历已经具备重写为岗位定制版简历的基础",
+        "可以基于当前材料继续生成学习计划与面试准备清单"
     ]
 
     risks = [
-        f'当前 JD 中未明显覆盖的关键词：{", ".join(missing[:6]) or "暂无"}',
-        '量化结果较少时，竞争力会受影响',
-        '如果没有补充证据，部分要求只能停留在表达优化层面'
+        f"当前 JD 中未明显覆盖的关键词：{', '.join(missing[:6]) or '暂无'}",
+        "量化结果较少时，竞争力会受影响",
+        "如果没有补充证据，部分要求只能停留在表达优化层面"
     ]
 
     gaps = []
     for index, keyword in enumerate(missing[:4]):
+        gap_type = classify_gap(keyword, resume_text)
         gaps.append(
             GapItem(
-                category='岗位缺口',
-                severity='high' if index < 2 else 'medium',
-                requirement=f'岗位要求提到 {keyword}',
-                evidence='当前简历中没有检索到明确支撑，或支撑较弱',
-                recommendation=f'补充与 {keyword} 相关的项目证据、结果指标或职责描述'
+                category="岗位缺口",
+                severity="high" if index < 2 else "medium",
+                requirement=f"岗位要求提到 {keyword}",
+                evidence="当前简历中没有检索到明确支撑，或支撑较弱",
+                recommendation=f"补充与 {keyword} 相关的项目证据、结果指标或职责描述",
+                gap_type=gap_type
             )
         )
 
     if not gaps:
         gaps.append(
             GapItem(
-                category='表达优化',
-                severity='medium',
-                requirement='用招聘语言提升可读性和关键词覆盖',
-                evidence='已有基础匹配，但经历表述仍偏泛化',
-                recommendation='使用 STAR 结构和量化指标重写核心经历'
+                category="表达优化",
+                severity="medium",
+                requirement="用招聘语言提升可读性和关键词覆盖",
+                evidence="已有基础匹配，但经历表述仍偏泛化",
+                recommendation="使用 STAR 结构和量化指标重写核心经历",
+                gap_type="expression"
             )
         )
 
     suggestions = [
         ResumeSuggestion(
-            original='负责项目开发和维护。',
-            optimized='负责核心功能迭代与线上稳定性优化，围绕业务目标推进需求落地并持续提升交付质量。',
-            reason='把笼统职责改成更贴近招聘语言的表达'
+            original="负责项目开发和维护。",
+            optimized="负责核心功能迭代与线上稳定性优化，围绕业务目标推进需求落地并持续提升交付质量。",
+            reason="把笼统职责改成更贴近招聘语言的表达"
         ),
         ResumeSuggestion(
-            original='参与团队合作完成任务。',
-            optimized='跨团队协作推进多个关键任务交付，协调产品、设计与开发节奏保证版本按期上线。',
-            reason='增加协作场景与结果信息，让经历更可信'
+            original="参与团队合作完成任务。",
+            optimized="跨团队协作推进多个关键任务交付，协调产品、设计与开发节奏保证版本按期上线。",
+            reason="增加协作场景与结果信息，让经历更可信"
         )
     ]
 
     learning_plan = [
-        f'第 1 周：拆解 {target_role} 的 must-have 能力与关键词',
-        f'第 2 周：围绕 {", ".join(missing[:3]) or "关键能力"} 补充项目证据和素材',
-        '第 3 周：完善简历中的指标、动作和结果描述',
-        '第 4 周：模拟面试并打磨自我介绍与 STAR 案例'
+        f"第 1 周：拆解 {target_role} 的 must-have 能力与关键词",
+        f"第 2 周：围绕 {', '.join(missing[:3]) or '关键能力'} 补充项目证据和素材",
+        "第 3 周：完善简历中的指标、动作和结果描述",
+        "第 4 周：模拟面试并打磨自我介绍与 STAR 案例"
     ]
 
     interview_focus = [
-        f'准备一段 90 秒版本的 {target_role} 定制自我介绍',
-        '为两段最强经历各准备一套 STAR 故事',
-        '围绕 JD 中最核心的 3 个要求准备深挖回答'
+        f"准备一段 90 秒版本的 {target_role} 定制自我介绍",
+        "为两段最强经历各准备一套 STAR 故事",
+        "围绕 JD 中最核心的 3 个要求准备深挖回答"
     ]
 
     next_actions = [
-        '先确认缺口里哪些属于表达优化，哪些属于真实能力缺失。',
-        '把 JD 的前 5 个 must-have 逐条映射到简历证据。',
-        '生成岗位定制版简历后，继续进入面试题与学习计划模块。'
+        "先确认缺口里哪些属于表达优化，哪些属于真实能力缺失。",
+        "把 JD 的前 5 个 must-have 逐条映射到简历证据。",
+        "生成岗位定制版简历后，继续进入面试题与学习计划模块。"
     ]
 
     summary = (
-        f'当前简历与目标岗位 {target_role} 的基础匹配度约为 {score} 分。'
-        '优先动作应聚焦在关键词补齐、经历量化以及项目证据映射。'
+        f"当前简历与目标岗位 {target_role} 的基础匹配度约为 {score} 分。"
+        "优先动作应聚焦在关键词补齐、经历量化以及项目证据映射。"
     )
 
-    resume_draft = f'''目标岗位：{target_role}
+    resume_draft = f"""目标岗位：{target_role}
 
 【职业概述】
 候选人具备与 {target_role} 相关的基础经历，能够围绕业务目标推进项目交付，并持续优化执行质量与结果表现。
@@ -120,7 +184,9 @@ def build_analysis(target_role: str, resume_text: str, job_description: str) -> 
 - 在每段经历中增加具体动作、负责范围与结果指标。
 - 把与目标岗位最相关的项目提前展示，并突出业务影响。
 - 对应 JD 的关键词，逐条补齐证据或替换为更准确的招聘语言。
-'''
+"""
+
+    validation = build_validation(resume_text, jd_keywords, matched, missing, gaps)
 
     report = AnalysisReport(
         match_score=score,
@@ -133,5 +199,7 @@ def build_analysis(target_role: str, resume_text: str, job_description: str) -> 
         resume_suggestions=suggestions,
         recommended_model_plan=model_plan,
         next_actions=next_actions,
+        validation=validation,
     )
+    logger.info(f"Analysis complete: score={score}, confidence={validation.confidence}")
     return report, resume_draft, routing_mode

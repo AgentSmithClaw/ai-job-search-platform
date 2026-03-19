@@ -9,6 +9,7 @@ from app.schemas import (
     GapItem,
     ResumeSuggestion,
     RoutedModelPlan,
+    ValidationSummary,
 )
 
 
@@ -101,6 +102,7 @@ class LLMService:
                 requirement=g.get("requirement", ""),
                 evidence=g.get("evidence", ""),
                 recommendation=g.get("recommendation", ""),
+                gap_type=g.get("gap_type", "unknown")
             )
             for g in data.get("gaps", [])
         ]
@@ -123,6 +125,15 @@ class LLMService:
             rationale=plan_data.get("rationale", ["使用 GPT-4o-mini 进行分析"]),
         )
 
+        validation_data = data.get("validation", {})
+        validation = ValidationSummary(
+            confidence=validation_data.get("confidence", 50),
+            overclaim_warning=validation_data.get("overclaim_warning", False),
+            critical_gaps=validation_data.get("critical_gaps", []),
+            high_priority_actions=validation_data.get("high_priority_actions", []),
+            caution_notes=validation_data.get("caution_notes", [])
+        )
+
         report = AnalysisReport(
             match_score=data.get("match_score", 50),
             summary=data.get("summary", ""),
@@ -134,6 +145,7 @@ class LLMService:
             resume_suggestions=suggestions,
             recommended_model_plan=model_plan,
             next_actions=data.get("next_actions", []),
+            validation=validation,
         )
 
         resume_draft = self._generate_resume_draft(

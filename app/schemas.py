@@ -1,4 +1,5 @@
 from typing import List
+from enum import Enum
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -15,6 +16,22 @@ class GapItem(BaseModel):
     requirement: str
     evidence: str
     recommendation: str
+    gap_type: str = "unknown"
+
+
+class GapClassification(str, Enum):
+    EXPRESSION = "expression"
+    EVIDENCE_MISSING = "evidence_missing"
+    SKILL_GAP = "skill_gap"
+    PROJECT_GAP = "project_gap"
+
+
+class ValidationSummary(BaseModel):
+    confidence: int
+    overclaim_warning: bool
+    critical_gaps: List[str]
+    high_priority_actions: List[str]
+    caution_notes: List[str]
 
 
 class ResumeSuggestion(BaseModel):
@@ -42,6 +59,7 @@ class AnalysisReport(BaseModel):
     resume_suggestions: List[ResumeSuggestion]
     recommended_model_plan: RoutedModelPlan
     next_actions: List[str]
+    validation: ValidationSummary
 
 
 class AnalysisResponse(BaseModel):
