@@ -1,4 +1,4 @@
-﻿from app.schemas import PricingCatalogResponse, PricingPackage
+from app.schemas import PricingCatalogResponse, PricingPackage
 
 
 def get_pricing_catalog() -> PricingCatalogResponse:

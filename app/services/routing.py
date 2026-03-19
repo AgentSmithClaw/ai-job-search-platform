@@ -1,4 +1,4 @@
-﻿from app.schemas import RoutedModelPlan
+from app.schemas import RoutedModelPlan
 
 
 def choose_model_plan(target_role: str, resume_text: str, job_description: str) -> tuple[str, RoutedModelPlan]:

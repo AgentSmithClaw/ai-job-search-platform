@@ -1,4 +1,4 @@
-﻿from typing import List
+from typing import List
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -97,6 +97,11 @@ class RegisterRequest(BaseModel):
     name: str = Field(min_length=2, max_length=80)
 
 
+class UpdateUserRequest(BaseModel):
+    access_token: str = Field(min_length=8)
+    name: str = Field(min_length=2, max_length=80)
+
+
 class UserProfile(BaseModel):
     id: int
     email: EmailStr
@@ -116,3 +121,132 @@ class PurchaseResponse(BaseModel):
     credits_added: int
     credits_total: int
     price_cny: int
+
+
+class PaymentOrderResponse(BaseModel):
+    order_id: str
+    created_at: str
+    package_name: str
+    credits: int
+    price_cny: int
+    status: str
+    payment_method: str
+
+
+class PaymentCreateRequest(BaseModel):
+    access_token: str = Field(min_length=8)
+    package_code: str = Field(min_length=2)
+
+
+class PaymentCompleteRequest(BaseModel):
+    order_id: str = Field(min_length=8)
+
+
+class JobApplicationCreate(BaseModel):
+    access_token: str = Field(min_length=8)
+    company_name: str = Field(min_length=1, max_length=120)
+    target_role: str = Field(min_length=1, max_length=120)
+    job_description: str = ""
+    status: str = "interested"
+    application_url: str = ""
+    salary_range: str = ""
+    notes: str = ""
+
+
+class JobApplicationUpdate(BaseModel):
+    access_token: str = Field(min_length=8)
+    status: str
+
+
+class JobApplicationResponse(BaseModel):
+    id: int
+    created_at: str
+    updated_at: str | None
+    company_name: str
+    target_role: str
+    job_description: str
+    status: str
+    application_url: str
+    salary_range: str
+    notes: str
+
+
+class LearningTaskCreate(BaseModel):
+    access_token: str = Field(min_length=8)
+    title: str = Field(min_length=1, max_length=200)
+    description: str = ""
+    session_id: int | None = None
+    target_date: str | None = None
+    priority: str = "medium"
+
+
+class LearningTaskUpdate(BaseModel):
+    access_token: str = Field(min_length=8)
+    status: str
+
+
+class LearningTaskResponse(BaseModel):
+    id: int
+    created_at: str
+    updated_at: str | None
+    title: str
+    description: str
+    target_date: str | None
+    priority: str
+    status: str
+
+
+class InterviewPrepCreate(BaseModel):
+    access_token: str = Field(min_length=8)
+    question: str = Field(min_length=1)
+    ideal_answer: str = ""
+    notes: str = ""
+    session_id: int | None = None
+    application_id: int | None = None
+
+
+class InterviewPrepUpdate(BaseModel):
+    access_token: str = Field(min_length=8)
+    ideal_answer: str = ""
+    notes: str = ""
+    status: str = "prepared"
+
+
+class InterviewPrepResponse(BaseModel):
+    id: int
+    created_at: str
+    updated_at: str | None
+    question: str
+    ideal_answer: str
+    notes: str
+    status: str
+
+
+class ExportRequest(BaseModel):
+    access_token: str = Field(min_length=8)
+    session_id: int
+    format: str = Field(pattern="^(docx|pdf)$")
+
+
+class SessionDetail(BaseModel):
+    id: int
+    created_at: str
+    target_role: str
+    resume_text: str
+    job_description: str
+    report_json: str
+    resume_draft: str
+    credits_used: int
+
+
+class GenerateQuestionsRequest(BaseModel):
+    access_token: str = Field(min_length=8)
+    session_id: int | None = None
+    target_role: str = Field(min_length=2, max_length=120)
+    resume_text: str = Field(min_length=20)
+    job_description: str = Field(min_length=20)
+    gaps: list[dict] = Field(default_factory=list)
+
+
+class GenerateQuestionsResponse(BaseModel):
+    questions: List[str]

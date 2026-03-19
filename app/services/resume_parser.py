@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from io import BytesIO
 from pathlib import Path
@@ -19,6 +19,30 @@ def _clean_text(text: str) -> str:
     return text.strip()
 
 
+def _extract_from_docx(file_bytes: bytes) -> str:
+    with zipfile.ZipFile(BytesIO(file_bytes)) as archive:
+        xml_bytes = archive.read('word/document.xml')
+    root = ET.fromstring(xml_bytes)
+    text_nodes = [node.text for node in root.iter() if node.text]
+    return _clean_text(' '.join(text_nodes))
+
+
+def _extract_from_pdf(file_bytes: bytes) -> str:
+    import pdfplumber
+    
+    text_parts = []
+    with pdfplumber.open(BytesIO(file_bytes)) as pdf:
+        for page in pdf.pages:
+            page_text = page.extract_text()
+            if page_text:
+                text_parts.append(page_text)
+    
+    if not text_parts:
+        raise ValueError('PDF 文件中未提取到文本内容，请确保是文本型 PDF。')
+    
+    return _clean_text('\n'.join(text_parts))
+
+
 def extract_resume_text(file_name: str, file_bytes: bytes) -> tuple[str, str]:
     suffix = Path(file_name).suffix.lower()
 
@@ -26,10 +50,9 @@ def extract_resume_text(file_name: str, file_bytes: bytes) -> tuple[str, str]:
         return _clean_text(file_bytes.decode('utf-8', errors='ignore')), TEXT_TYPES[suffix]
 
     if suffix == '.docx':
-        with zipfile.ZipFile(BytesIO(file_bytes)) as archive:
-            xml_bytes = archive.read('word/document.xml')
-        root = ET.fromstring(xml_bytes)
-        text_nodes = [node.text for node in root.iter() if node.text]
-        return _clean_text(' '.join(text_nodes)), 'docx-xml'
+        return _extract_from_docx(file_bytes), 'docx-xml'
 
-    raise ValueError('当前仅支持 txt、md、markdown、docx 文件。')
+    if suffix == '.pdf':
+        return _extract_from_pdf(file_bytes), 'pdf-plumber'
+
+    raise ValueError('当前仅支持 txt、md、markdown、docx、pdf 文件。')

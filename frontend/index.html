@@ -1,172 +1,332 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>AI Job Search Platform</title>
-    <meta name="description" content="按次收费的 AI 求职分析平台 MVP。" />
+    <meta name="description" content="AI驱动的高效求职分析平台" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./styles.css" />
   </head>
-  <body class="mvp-page">
-    <div class="bg-glow"></div>
+  <body>
+    <div class="bg-gradient"></div>
     <main class="container">
-      <header class="hero card reveal mvp-hero">
-        <p class="badge">AI Job Search Platform</p>
-        <h1>按次收费的 AI 求职分析平台</h1>
-        <p class="hero-text">围绕目标岗位做差距分析、次数包收费、定制简历生成和后续求职动作管理。</p>
-        <div class="overview-stats mvp-stats">
-          <div class="stat-box"><b>Analyze</b><span>岗位差距分析</span></div>
-          <div class="stat-box"><b>Credits</b><span>按次收费</span></div>
-          <div class="stat-box"><b>Resume Draft</b><span>定制简历草稿</span></div>
-          <div class="stat-box"><b>History</b><span>用户分析记录</span></div>
+      <header class="hero">
+        <span class="badge">✨ AI Job Search Platform</span>
+        <h1>智能求职差距分析平台</h1>
+        <p class="hero-text">上传简历，输入目标岗位，AI自动分析差距、生成定制简历、规划学习路径</p>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="icon">📊</div>
+            <b>Analyze</b>
+            <span>智能差距分析</span>
+          </div>
+          <div class="stat-item">
+            <div class="icon">📝</div>
+            <b>Resume</b>
+            <span>定制简历生成</span>
+          </div>
+          <div class="stat-item">
+            <div class="icon">🎯</div>
+            <b>Track</b>
+            <span>求职进度追踪</span>
+          </div>
+          <div class="stat-item">
+            <div class="icon">🚀</div>
+            <b>Ready</b>
+            <span>面试准备充分</span>
+          </div>
         </div>
       </header>
 
-      <section class="section reveal">
-        <div class="grid mvp-grid">
-          <article class="card mvp-form-card">
+      <section class="section">
+        <div class="grid grid-2">
+          <article class="card">
             <div class="section-head">
-              <h2>账户与额度</h2>
-              <p>先注册一个测试账户，系统会赠送 1 次分析额度。</p>
+              <h2>👤 账户与额度</h2>
+              <p>注册即送1次分析额度</p>
             </div>
-            <form id="authForm" class="mvp-form auth-form">
-              <label>
-                <span>邮箱</span>
+            <form id="authForm">
+              <div class="form-group">
+                <label>邮箱</label>
                 <input id="userEmail" type="email" placeholder="name@example.com" required />
-              </label>
-              <label>
-                <span>昵称</span>
-                <input id="userName" type="text" placeholder="你的名字" required />
-              </label>
-              <div class="mvp-actions">
-                <button id="authBtn" class="button-link" type="submit">注册 / 登录</button>
-                <p id="authStatus" class="form-status">尚未登录</p>
               </div>
+              <div class="form-group">
+                <label>昵称</label>
+                <input id="userName" type="text" placeholder="你的名字" required />
+              </div>
+              <button id="authBtn" type="submit" class="btn btn-primary" style="width:100%">注册 / 登录</button>
+              <p id="authStatus" class="form-status"></p>
             </form>
             <div class="account-box">
-              <p><strong>当前用户：</strong><span id="currentUser">未登录</span></p>
-              <p><strong>剩余额度：</strong><span id="currentCredits">0</span></p>
-              <p class="module-meta">Token 暂存到浏览器本地，方便持续测试。</p>
+              <p><strong>👤 <span id="currentUser">未登录</span></strong></p>
+              <p>剩余额度: <span id="currentCredits" style="color:var(--brand);font-weight:700">0</span> 次</p>
+              <div class="account-actions">
+                <button id="logoutBtn" class="btn btn-sm btn-outline" hidden>退出</button>
+                <button id="editProfileBtn" class="btn btn-sm btn-secondary">✏️ 编辑</button>
+                <button id="saveDraftBtn" class="btn btn-sm btn-secondary">💾 保存</button>
+                <button id="loadDraftBtn" class="btn btn-sm btn-secondary">📂 加载</button>
+              </div>
+              <div id="dashboardStats" hidden>
+                <div class="dashboard-stats">
+                  <p>📈 分析次数: <span id="statAnalyses">0</span></p>
+                  <p>📨 投递数: <span id="statApplications">0</span></p>
+                  <p>✅ 任务数: <span id="statTasks">0</span></p>
+                  <p>💰 累计消费: ¥<span id="statSpent">0</span></p>
+                  <p>🎯 平均匹配度: <span id="statAvgMatch">0</span>%</p>
+                </div>
+              </div>
             </div>
           </article>
 
-          <article class="card mvp-side-card">
+          <article class="card">
             <div class="section-head">
-              <h2>开始分析</h2>
-              <p>支持上传简历文件或直接粘贴文本，再输入目标岗位 JD 生成结果。</p>
+              <h2>🔍 开始分析</h2>
+              <p>支持上传简历文件或粘贴文本</p>
             </div>
-            <div class="resume-upload-box">
-              <div>
-                <strong>简历文件上传</strong>
-                <p class="module-meta">支持 `.txt`、`.md`、`.docx`。</p>
-              </div>
-              <div class="resume-upload-actions">
-                <input id="resumeFile" type="file" accept=".txt,.md,.markdown,.docx" />
-                <button id="uploadBtn" class="button-link button-link-secondary mvp-upload" type="button">上传并解析</button>
-              </div>
-              <p id="uploadStatus" class="form-status">暂未上传文件</p>
+            <div class="form-group">
+              <label>📄 简历文件</label>
+              <input id="resumeFile" type="file" accept=".txt,.md,.docx,.pdf" style="padding:8px" />
+              <button id="uploadBtn" class="btn btn-secondary btn-sm" style="margin-top:8px">上传并解析</button>
+              <p id="uploadStatus" class="form-status"></p>
             </div>
-            <form id="analysisForm" class="mvp-form">
-              <label>
-                <span>目标岗位</span>
-                <input id="targetRole" name="targetRole" type="text" placeholder="例如：AI 产品经理 / AI 研究助理 / 后端工程师" required />
-              </label>
-              <label>
-                <span>简历文本</span>
-                <textarea id="resumeText" name="resumeText" rows="12" placeholder="把简历内容粘贴到这里" required></textarea>
-              </label>
-              <label>
-                <span>职位描述 JD</span>
-                <textarea id="jobDescription" name="jobDescription" rows="12" placeholder="把目标岗位 JD 粘贴到这里" required></textarea>
-              </label>
-              <div class="mvp-actions">
-                <button id="submitBtn" class="button-link mvp-submit" type="submit">生成分析报告</button>
-                <p id="formStatus" class="form-status">准备就绪</p>
+            <form id="analysisForm">
+              <div class="form-group">
+                <label>🎯 目标岗位</label>
+                <input id="targetRole" type="text" placeholder="例如：AI产品经理 / Python后端工程师" required />
               </div>
+              <div class="form-group">
+                <label>📋 简历内容</label>
+                <textarea id="resumeText" rows="6" placeholder="粘贴简历内容..." required></textarea>
+              </div>
+              <div class="form-group">
+                <label>📌 职位描述 JD</label>
+                <textarea id="jobDescription" rows="6" placeholder="粘贴目标岗位JD..." required></textarea>
+              </div>
+              <button id="submitBtn" type="submit" class="btn btn-primary" style="width:100%">🚀 生成分析报告</button>
+              <p id="formStatus" class="form-status"></p>
             </form>
           </article>
         </div>
       </section>
 
-      <section class="section reveal">
+      <section class="section">
         <div class="section-head">
-          <h2>套餐配置</h2>
-          <p>点击购买会直接给当前登录账户充值额度。</p>
+          <h2>💰 套餐价格</h2>
+          <p>选择适合您的分析套餐</p>
         </div>
-        <div id="pricingCatalog" class="provider-list"></div>
+        <div id="pricingCatalog" class="grid grid-3"></div>
       </section>
 
-      <section class="section reveal">
-        <div class="grid mvp-grid">
-          <article class="card">
-            <div class="section-head">
-              <h2>模型工位</h2>
-              <p>用于定义后续真实多模型路由策略。</p>
-            </div>
-            <div id="providerCatalog" class="provider-list"></div>
-          </article>
-          <article class="card">
-            <div class="section-head">
-              <h2>产品定位</h2>
-              <p>这是独立产品仓库，不承载个人案例内容。</p>
-            </div>
-            <ul class="list mvp-side-list">
-              <li>围绕收费闭环设计</li>
-              <li>围绕用户账户和额度设计</li>
-              <li>围绕后续支付、导出、投递管理扩展</li>
-            </ul>
-          </article>
+      <section class="section">
+        <div class="section-head">
+          <h2>🤖 模型路由策略</h2>
+          <p>多模型协同，提供最优分析结果</p>
         </div>
+        <div id="providerCatalog" class="provider-grid"></div>
       </section>
 
-      <section class="section reveal">
+      <section class="section">
         <div class="section-head">
-          <h2>分析结果</h2>
-          <p>提交后返回结构化报告、模型路由建议和定制简历草稿。</p>
+          <h2>📊 分析结果</h2>
+          <p>点击历史记录可查看详情</p>
         </div>
-        <div id="emptyState" class="card mvp-empty-state">还没有结果。先注册账户，再提交一份简历和 JD。</div>
-        <div id="resultSection" class="mvp-result" hidden>
-          <div class="grid mvp-summary-grid">
-            <article class="card">
-              <p class="result-label">匹配度</p>
-              <h3 id="matchScore" class="result-score">0</h3>
-              <p id="summaryText" class="module-meta"></p>
+        <div id="emptyState" class="card" style="text-align:center;padding:48px;color:var(--muted)">
+          <div style="font-size:3rem;margin-bottom:16px">📋</div>
+          <p>还没有分析结果</p>
+          <p style="font-size:0.9rem">注册账户后，提交简历和JD即可开始分析</p>
+        </div>
+        <div id="resultSection" hidden>
+          <div class="grid grid-2" style="margin-bottom:24px">
+            <article class="card" style="text-align:center">
+              <p class="score-label">匹配度评分</p>
+              <div id="matchScore" class="result-score">0</div>
+              <p id="summaryText" style="margin-top:12px;color:var(--muted)"></p>
             </article>
             <article class="card">
-              <p class="result-label">会话信息</p>
-              <h3 id="sessionMeta" class="module-title">尚未生成</h3>
-              <p id="routingMode" class="module-meta">路由模式尚未生成</p>
-              <p id="creditsRemaining" class="module-meta">剩余额度：0</p>
+              <p class="score-label">会话信息</p>
+              <h3 id="sessionMeta" style="margin:8px 0">-</h3>
+              <p id="routingMode" style="color:var(--muted)">-</p>
+              <p id="creditsRemaining" style="color:var(--brand);margin-top:8px">-</p>
+              <div class="export-buttons">
+                <button id="exportDocx" class="btn btn-secondary btn-sm">📄 DOCX</button>
+                <button id="exportPdf" class="btn btn-secondary btn-sm">📑 PDF</button>
+                <button id="createTasksBtn" class="btn btn-secondary btn-sm">✅ 创建任务</button>
+                <button id="generateQuestionsBtn" class="btn btn-secondary btn-sm">❓ 面试题</button>
+              </div>
             </article>
           </div>
-          <article class="card">
-            <h3 class="module-title">推荐模型路由</h3>
-            <div id="modelPlan" class="provider-plan"></div>
-          </article>
-          <div class="grid mvp-report-grid">
-            <article class="card"><h3 class="module-title">优势</h3><ul id="strengthsList" class="list"></ul></article>
-            <article class="card"><h3 class="module-title">风险</h3><ul id="risksList" class="list"></ul></article>
+
+          <div class="card" style="margin-bottom:20px">
+            <h3 style="margin-bottom:16px">🤖 推荐模型路由</h3>
+            <div id="modelPlan"></div>
           </div>
-          <article class="card"><h3 class="module-title">差距项</h3><div id="gapsList" class="gap-list"></div></article>
-          <div class="grid mvp-report-grid">
-            <article class="card"><h3 class="module-title">学习计划</h3><ul id="learningPlanList" class="list"></ul></article>
-            <article class="card"><h3 class="module-title">面试准备重点</h3><ul id="interviewFocusList" class="list"></ul></article>
+
+          <div class="grid grid-2" style="margin-bottom:20px">
+            <article class="card">
+              <h3>💪 优势</h3>
+              <ul id="strengthsList" class="list"></ul>
+            </article>
+            <article class="card">
+              <h3>⚠️ 风险</h3>
+              <ul id="risksList" class="list"></ul>
+            </article>
           </div>
-          <article class="card"><h3 class="module-title">下一步动作</h3><ul id="nextActionsList" class="list"></ul></article>
-          <article class="card"><h3 class="module-title">简历优化建议</h3><div id="resumeSuggestions" class="suggestion-list"></div></article>
-          <article class="card"><h3 class="module-title">岗位定制简历草稿</h3><pre id="resumeDraft" class="resume-draft"></pre></article>
+
+          <div class="card" style="margin-bottom:20px">
+            <h3>📌 差距项分析</h3>
+            <div id="gapsList"></div>
+          </div>
+
+          <div class="grid grid-2" style="margin-bottom:20px">
+            <article class="card">
+              <h3>📚 学习计划</h3>
+              <ul id="learningPlanList" class="list"></ul>
+            </article>
+            <article class="card">
+              <h3>🎤 面试重点</h3>
+              <ul id="interviewFocusList" class="list"></ul>
+            </article>
+          </div>
+
+          <div class="card" style="margin-bottom:20px">
+            <h3>📋 下一步动作</h3>
+            <ul id="nextActionsList" class="list"></ul>
+          </div>
+
+          <div class="card" style="margin-bottom:20px">
+            <h3>✍️ 简历优化建议</h3>
+            <div id="resumeSuggestions"></div>
+          </div>
+
+          <div class="card">
+            <h3>📝 岗位定制简历草稿</h3>
+            <pre id="resumeDraft" class="resume-draft"></pre>
+          </div>
         </div>
       </section>
 
-      <section class="section reveal">
+      <section class="section">
         <div class="section-head">
-          <h2>最近分析记录</h2>
-          <p>按当前登录用户显示历史记录和消耗额度。</p>
+          <h2>📜 分析历史</h2>
         </div>
-        <div id="historyList" class="grid highlights-grid"></div>
+        <div id="historyList" class="grid grid-3"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>📨 投递管理</h2>
+        </div>
+        <div class="grid grid-2">
+          <article class="card">
+            <h3 style="margin-bottom:16px">➕ 添加投递</h3>
+            <form id="applicationForm">
+              <div class="form-group">
+                <label>公司名称</label>
+                <input id="appCompany" type="text" required />
+              </div>
+              <div class="form-group">
+                <label>目标岗位</label>
+                <input id="appRole" type="text" required />
+              </div>
+              <div class="form-group">
+                <label>职位描述</label>
+                <textarea id="appDesc" rows="3"></textarea>
+              </div>
+              <div class="form-group">
+                <label>投递链接</label>
+                <input id="appUrl" type="url" />
+              </div>
+              <div class="form-group">
+                <label>薪资范围</label>
+                <input id="appSalary" type="text" />
+              </div>
+              <div class="form-group">
+                <label>备注</label>
+                <textarea id="appNotes" rows="2"></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary">添加投递</button>
+            </form>
+          </article>
+          <article class="card">
+            <h3 style="margin-bottom:16px">📋 投递列表</h3>
+            <div id="applicationList"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>✅ 学习任务</h2>
+        </div>
+        <div class="grid grid-2">
+          <article class="card">
+            <h3 style="margin-bottom:16px">➕ 添加任务</h3>
+            <form id="taskForm">
+              <div class="form-group">
+                <label>任务标题</label>
+                <input id="taskTitle" type="text" required />
+              </div>
+              <div class="form-group">
+                <label>任务描述</label>
+                <textarea id="taskDesc" rows="3"></textarea>
+              </div>
+              <div class="form-group">
+                <label>目标日期</label>
+                <input id="taskDate" type="date" />
+              </div>
+              <div class="form-group">
+                <label>优先级</label>
+                <select id="taskPriority">
+                  <option value="high">🔴 高</option>
+                  <option value="medium" selected>🟡 中</option>
+                  <option value="low">🟢 低</option>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-primary">添加任务</button>
+            </form>
+          </article>
+          <article class="card">
+            <h3 style="margin-bottom:16px">📋 任务列表</h3>
+            <div id="taskList"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>🎤 面试准备</h2>
+        </div>
+        <div class="grid grid-2">
+          <article class="card">
+            <h3 style="margin-bottom:16px">➕ 添加面试题</h3>
+            <form id="prepForm">
+              <div class="form-group">
+                <label>面试问题</label>
+                <textarea id="prepQuestion" rows="2" required></textarea>
+              </div>
+              <div class="form-group">
+                <label>参考答案</label>
+                <textarea id="prepAnswer" rows="3"></textarea>
+              </div>
+              <div class="form-group">
+                <label>备注</label>
+                <textarea id="prepNotes" rows="2"></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary">添加</button>
+            </form>
+          </article>
+          <article class="card">
+            <h3 style="margin-bottom:16px">📋 面试题列表</h3>
+            <div id="prepList"></div>
+          </article>
+        </div>
       </section>
     </main>
-    <footer class="footer"><p>AI Job Search Platform MVP</p></footer>
+    <footer class="footer">
+      <p>AI Job Search Platform © 2024 | 智能求职分析平台</p>
+    </footer>
     <script src="./app.js"></script>
   </body>
 </html>

@@ -1,4 +1,4 @@
-﻿from pathlib import Path
+from pathlib import Path
 import sqlite3
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -35,6 +35,65 @@ CREATE TABLE IF NOT EXISTS analysis_sessions (
     job_description TEXT NOT NULL,
     report_json TEXT NOT NULL,
     resume_draft TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS payment_orders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id TEXT NOT NULL UNIQUE,
+    created_at TEXT NOT NULL,
+    completed_at TEXT,
+    refunded_at TEXT,
+    user_id INTEGER NOT NULL,
+    package_code TEXT NOT NULL,
+    package_name TEXT NOT NULL,
+    credits INTEGER NOT NULL,
+    price_cny INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    payment_method TEXT NOT NULL DEFAULT 'mock',
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS job_applications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT,
+    user_id INTEGER NOT NULL,
+    company_name TEXT NOT NULL,
+    target_role TEXT NOT NULL,
+    job_description TEXT,
+    status TEXT NOT NULL DEFAULT 'interested',
+    application_url TEXT,
+    salary_range TEXT,
+    notes TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS learning_tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT,
+    user_id INTEGER NOT NULL,
+    session_id INTEGER,
+    title TEXT NOT NULL,
+    description TEXT,
+    target_date TEXT,
+    priority TEXT NOT NULL DEFAULT 'medium',
+    status TEXT NOT NULL DEFAULT 'pending',
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS interview_prep (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT,
+    user_id INTEGER NOT NULL,
+    session_id INTEGER,
+    application_id INTEGER,
+    question TEXT NOT NULL,
+    ideal_answer TEXT,
+    notes TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
 '''
 
