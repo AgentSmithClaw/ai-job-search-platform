@@ -9,7 +9,6 @@ from pathlib import Path
 import zipfile
 from xml.etree import ElementTree as ET
 
-
 TEXT_TYPES = {
     '.txt': 'plain-text',
     '.md': 'markdown',
@@ -82,16 +81,17 @@ def _extract_pdf_miner(file_bytes: bytes) -> str:
 
 
 def _extract_pdf_ocr(file_bytes: bytes) -> str:
+    import PIL.Image
+    import pytesseract
+
     try:
         import pypdfium2 as pdfium
-        import PIL.Image
-        import pytesseract
 
         images = []
         with pdfium.PdfDocument(file_bytes) as pdf:
             for page_number in range(len(pdf)):
                 page = pdf[page_number]
-                bitmap = page.render(scale=2.0, rotation=0)
+                bitmap = page.render(scale=2, rotation=0)
                 pil_image = bitmap.to_pil()
                 text = pytesseract.image_to_string(pil_image, lang='eng+chi')
                 if text:
@@ -127,11 +127,12 @@ def _extract_pdf_ocr(file_bytes: bytes) -> str:
 def _pdf_to_images_fallback(file_bytes: bytes) -> list[bytes]:
     try:
         import pypdfium2 as pdfium
+        import PIL.Image
         images = []
         with pdfium.PdfDocument(file_bytes) as pdf:
             for page_number in range(len(pdf)):
                 page = pdf[page_number]
-                bitmap = page.render(scale=2.0, rotation=0)
+                bitmap = page.render(scale=2, rotation=0)
                 img_byte_arr = BytesIO()
                 pil_image = bitmap.to_pil()
                 pil_image.save(img_byte_arr, format='PNG')

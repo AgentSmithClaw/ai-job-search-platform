@@ -1,7 +1,33 @@
-﻿data/
-*.db
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+
+# Virtual environments
 .venv/
-server.log
+venv/
+env/
 .env
+
+# Database
+data/
+*.db
+
+# Logs
+server.log
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/

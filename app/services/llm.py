@@ -45,7 +45,7 @@ class LLMService:
                 temperature=0.7,
                 max_tokens=2000,
             )
-            content = response.choices[0].message.content
+            content = response.choices[0].message.content or ''
             return self._parse_analysis_response(content, target_role, resume_text, job_description)
         except Exception as e:
             raise RuntimeError(f"LLM API调用失败: {str(e)}")
@@ -216,7 +216,7 @@ class LLMService:
                 temperature=0.7,
                 max_tokens=1500,
             )
-            return response.choices[0].message.content
+            return response.choices[0].message.content or ''
         except Exception:
             return f"目标岗位：{target_role}\n\n【简历草稿生成失败，请稍后重试】"
 
@@ -251,7 +251,7 @@ class LLMService:
                 max_tokens=1000,
             )
             content = response.choices[0].message.content
-            questions = [q.strip() for q in content.split('\n') if q.strip()]
+            questions = [q.strip() for q in (content or '').split('\n') if q.strip()]
             return questions
         except Exception:
             return [

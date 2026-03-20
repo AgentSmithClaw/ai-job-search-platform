@@ -32,7 +32,7 @@ def register_user(payload: RegisterRequest) -> UserProfile:
     conn.commit()
     user_id = cursor.lastrowid
     conn.close()
-    return UserProfile(id=user_id, email=payload.email, name=payload.name, access_token=token, credits=1)
+    return UserProfile(id=user_id or 0, email=payload.email, name=payload.name, access_token=token, credits=1)
 
 
 def get_user_by_token(access_token: str) -> UserProfile:
