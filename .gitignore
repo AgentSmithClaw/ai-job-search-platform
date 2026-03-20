@@ -9,6 +9,9 @@ venv/
 env/
 .env
 
+# Pytest
+.pytest_cache/
+
 # Database
 data/
 *.db

@@ -49,7 +49,7 @@
 - **LLM**: OpenAI Compatible API (MiniMax / GPT / Claude 等)
 - **Documents**: python-docx · reportlab · pdfplumber · pytesseract · pypdfium2
 - **Payment**: Stripe Checkout · Mock 双模式
-- **Dev Tools**: pytest · black · uvicorn
+- **Dev Tools**: pytest · ruff · uvicorn
 
 ---
 
@@ -58,46 +58,53 @@
 ```
 ai-job-search-platform/
 ├── app/                          # FastAPI 后端
-│   ├── main.py                   # 应用入口、中间件
+│   ├── main.py                   # 应用入口、中间件、CORS
 │   ├── dependencies.py           # FastAPI Depends 认证依赖
-│   ├── db.py                    # SQLite 数据库初始化与迁移
 │   ├── schemas.py                # Pydantic 请求/响应模型
 │   ├── config.py                 # 环境变量配置
-│   ├── routes/                  # 路由模块
-│   │   ├── auth.py              # 认证相关端点
-│   │   ├── analysis.py          # 分析、简历上传、导出端点
-│   │   ├── payment.py           # 支付、订单、退款端点
-│   │   ├── tracking.py         # 投递/任务/面试端点
-│   │   └── misc.py             # 健康检查、数据面板、套餐端点
+│   ├── db.py                     # SQLite 数据库初始化与迁移
+│   ├── routes/                   # 路由模块（FastAPI APIRouter）
+│   │   ├── auth.py              # 注册、登录、用户信息
+│   │   ├── analysis.py          # 分析、简历上传、导出
+│   │   ├── payment.py           # 支付、订单、退款
+│   │   ├── tracking.py          # 投递/任务/面试
+│   │   └── misc.py              # 健康检查、仪表盘、套餐
 │   └── services/                 # 业务逻辑层
-│       ├── analysis.py           # 分析报告生成（含本地可信度校验）
+│       ├── analysis.py           # 分析引擎 + 本地可信度校验
 │       ├── auth.py               # 用户注册 / Token 管理
-│       ├── llm.py                # LLM API 集成（含本地 validation 层）
-│       ├── payment.py           # 支付服务（Mock + Stripe）
+│       ├── llm.py                # LLM API 集成
+│       ├── payment.py            # 支付服务（Mock + Stripe）
 │       ├── pricing.py            # 套餐配置
-│       ├── resume_parser.py       # 简历解析（多层降级）
+│       ├── resume_parser.py      # 简历解析（多层降级 + OCR）
 │       ├── export.py             # DOCX / PDF 导出
 │       ├── routing.py            # 模型路由策略
 │       ├── tracking.py           # 投递/任务/面试跟踪
 │       └── email.py              # SMTP 邮件通知
 │
 ├── frontend/                     # 前端静态资源
-│   ├── index.html               # 单页应用入口
-│   ├── app.js                  # 全部前端逻辑（无框架）
-│   └── styles.css               # 样式（含暗色模式）
+│   ├── index.html                # 单页应用入口（423 行）
+│   ├── app.js                    # 全部前端逻辑（1429 行）
+│   └── styles.css                # 样式 + 暗色模式（722 行）
 │
-├── docs/                         # 项目文档
-│   └── api.md                   # API 端点详细文档
+├── tests/                        # 测试（pytest + smoke）
+│   ├── conftest.py              # 测试夹具（临时数据库）
+│   ├── smoke_test.py            # 集成烟雾测试（14 项）
+│   ├── test_auth.py             # 认证单元测试（10 项）
+│   ├── test_analysis.py         # 分析单元测试（15 项）
+│   ├── test_tracking.py         # 追踪单元测试（16 项）
+│   └── test_payment.py          # 支付单元测试（9 项）
 │
-├── tests/
-│   └── smoke_test.py            # 烟雾测试（5/5 通过）
+├── docs/
+│   └── api.md                    # API 端点参考文档
 │
-├── data/                         # SQLite 数据库（不提交）
-├── .env                          # 运行时配置（不提交）
+├── .github/
+│   └── workflows/
+│       └── ci.yml                # GitHub Actions CI（lint + test）
+│
+├── .gitignore
 ├── .env.example                  # 环境变量模板
-├── requirements.txt             # Python 依赖
-├── README.md                     # 本文档
-└── server.log                   # 服务日志（不提交）
+├── requirements.txt              # Python 依赖
+└── README.md
 ```
 
 ---
@@ -199,7 +206,7 @@ APP_URL=https://your-domain.com
 
 - **按用户维度积分管理** — 每次分析消耗，不可超扣
 - **Token 鉴权** — 简约 Bearer Token，URL 参数传递
-- **API 限流** — 按端点独立限流（/analyze 3次/分，/payment 5次/分，全局 60次/分）
+- **API 限流** — 按端点独立限流（/analyze 10次/分，/payment 15次/分，全局 120次/分）
 - **Request ID 追踪** — 每个请求分配 UUID，便于日志定位
 - **Stripe 签名验证** — Webhook 端点验证消息真实性
 - **CORS 收紧** — 生产环境配置具体域名
@@ -228,7 +235,7 @@ APP_URL=https://your-domain.com
 ## 🧪 测试
 
 ```bash
-# 运行烟雾测试（10 个端点检查）
+# 运行烟雾测试（14 个端点检查）
 python3 tests/smoke_test.py
 
 # 运行 pytest 单元测试（49 个测试）
