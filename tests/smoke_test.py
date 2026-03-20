@@ -64,14 +64,15 @@ def main():
         results.append(test("Payment Credits Added", lambda: False))
 
     print("\n--- Analyze ---")
+    session_id = None
     if token:
         r = requests.post(
             f"{BASE_URL}/api/analyze",
             json={
                 "access_token": token,
                 "target_role": "Python Backend Engineer",
-                "resume_text": "Python developer with 3 years experience in FastAPI, SQL, and Docker.",
-                "job_description": "We need a Python backend engineer familiar with FastAPI, PostgreSQL, Docker, and Kubernetes."
+                "resume_text": "Python developer with 3 years experience in FastAPI, SQL, and Docker. Skilled in Django and PostgreSQL databases.",
+                "job_description": "We need a Python backend engineer familiar with FastAPI, PostgreSQL, Docker, and Kubernetes. Experience with cloud platforms is a plus."
             }
         )
         results.append(test("Analyze", lambda: r.status_code == 200))
@@ -81,8 +82,27 @@ def main():
         results.append(test("Analyze Credits Deducted", lambda: (
             r.status_code == 200 and r.json().get("credits_remaining", 999) >= 0
         )))
+        if r.status_code == 200:
+            session_id = r.json().get("session_id")
     else:
         results.extend([test(n, lambda: False) for n in ["Analyze", "Analyze Score Valid", "Analyze Credits Deducted"]])
+
+    print("\n--- History & Export ---")
+    if token:
+        r = requests.get(f"{BASE_URL}/api/sessions?access_token={token}&limit=10")
+        results.append(test("History Fetch", lambda: r.status_code == 200))
+        results.append(test("History Has Items", lambda: (
+            r.status_code == 200 and r.json().get("total", 0) >= 1
+        )))
+        if session_id:
+            r_docx = requests.get(f"{BASE_URL}/api/export/{session_id}?access_token={token}&format=docx")
+            results.append(test("Export DOCX", lambda: r_docx.status_code == 200))
+            r_pdf = requests.get(f"{BASE_URL}/api/export/{session_id}?access_token={token}&format=pdf")
+            results.append(test("Export PDF", lambda: r_pdf.status_code == 200))
+        else:
+            results.extend([test(n, lambda: False) for n in ["Export DOCX", "Export PDF"]])
+    else:
+        results.extend([test(n, lambda: False) for n in ["History Fetch", "History Has Items", "Export DOCX", "Export PDF"]])
 
     print("\n" + "=" * 50)
     passed = sum(results)

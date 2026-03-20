@@ -199,7 +199,8 @@ async def export_session(
     user: UserProfile = Depends(get_current_user),
     format: str = 'docx',
 ):
-    from fastapi.responses import FileResponse
+    from fastapi.responses import FileResponse, StreamingResponse
+    from io import BytesIO
     from app.db import get_connection
     from app.services.export import export_service
 
@@ -216,33 +217,45 @@ async def export_session(
     report = json.loads(row['report_json'])
 
     if format == 'docx':
-        content = export_service.generate_resume_docx(
-            resume_draft=row['resume_draft'],
-            target_role=row['target_role'],
-            match_score=report['match_score'],
-        )
-        return FileResponse(
-            content=content,
+        try:
+            content = export_service.generate_resume_docx(
+                resume_draft=row['resume_draft'],
+                target_role=row['target_role'],
+                match_score=report['match_score'],
+            )
+        except Exception as exc:
+            logger.error(f"Export DOCX failed: session_id={session_id}, user_id={user.id}, error={exc}")
+            raise HTTPException(status_code=500, detail='导出 DOCX 失败，请稍后重试')
+        return StreamingResponse(
+            BytesIO(content),
             media_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            filename=f'resume_draft_{session_id}.docx',
+            headers={
+                'Content-Disposition': f'attachment; filename=resume_draft_{session_id}.docx'
+            },
         )
     elif format == 'pdf':
-        content = export_service.generate_analysis_report_pdf(
-            target_role=row['target_role'],
-            match_score=report['match_score'],
-            summary=report['summary'],
-            strengths=report['strengths'],
-            risks=report['risks'],
-            gaps=report['gaps'],
-            learning_plan=report['learning_plan'],
-            interview_focus=report['interview_focus'],
-            resume_suggestions=report['resume_suggestions'],
-            resume_draft=row['resume_draft'],
-        )
-        return FileResponse(
-            content=content,
+        try:
+            content = export_service.generate_analysis_report_pdf(
+                target_role=row['target_role'],
+                match_score=report['match_score'],
+                summary=report['summary'],
+                strengths=report['strengths'],
+                risks=report['risks'],
+                gaps=report['gaps'],
+                learning_plan=report['learning_plan'],
+                interview_focus=report['interview_focus'],
+                resume_suggestions=report['resume_suggestions'],
+                resume_draft=row['resume_draft'],
+            )
+        except Exception as exc:
+            logger.error(f"Export PDF failed: session_id={session_id}, user_id={user.id}, error={exc}")
+            raise HTTPException(status_code=500, detail='导出 PDF 失败，请稍后重试')
+        return StreamingResponse(
+            BytesIO(content),
             media_type='application/pdf',
-            filename=f'analysis_report_{session_id}.pdf',
+            headers={
+                'Content-Disposition': f'attachment; filename=analysis_report_{session_id}.pdf'
+            },
         )
     else:
         raise HTTPException(status_code=400, detail='Unsupported format')
