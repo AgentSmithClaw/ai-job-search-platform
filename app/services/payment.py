@@ -236,7 +236,7 @@ async def create_stripe_checkout_session(
             'user_id': str(user_id),
             'package_code': package_code,
         },
-        customer_email=_get_user_email(user_id),
+        customer_email=_get_user_email(user_id) or '',
     )
 
     checkout_url = session.url

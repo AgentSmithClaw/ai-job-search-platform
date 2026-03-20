@@ -40,7 +40,7 @@ def create_job_application(
         (created_at, user_id, company_name, target_role, job_description, status.value, application_url, salary_range, notes)
     )
     conn.commit()
-    application_id = cursor.lastrowid
+    application_id = cursor.lastrowid or 0
     conn.close()
     return application_id
 
@@ -116,7 +116,7 @@ def create_learning_task(
         (created_at, user_id, session_id, title, description, target_date, priority, LearningTaskStatus.PENDING.value)
     )
     conn.commit()
-    task_id = cursor.lastrowid
+    task_id = cursor.lastrowid or 0
     conn.close()
     return task_id
 
@@ -199,7 +199,7 @@ def create_interview_prep(
         (created_at, user_id, session_id, application_id, question, ideal_answer, notes, status)
     )
     conn.commit()
-    prep_id = cursor.lastrowid
+    prep_id = cursor.lastrowid or 0
     conn.close()
     return prep_id
 

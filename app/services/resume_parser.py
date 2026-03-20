@@ -4,7 +4,6 @@ from io import BytesIO
 import logging
 import re
 import subprocess
-import tempfile
 from pathlib import Path
 import zipfile
 from xml.etree import ElementTree as ET

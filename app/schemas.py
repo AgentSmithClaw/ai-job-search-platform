@@ -168,7 +168,6 @@ class StripeCheckoutResponse(BaseModel):
 
 
 class JobApplicationCreate(BaseModel):
-    access_token: str = Field(min_length=8)
     company_name: str = Field(min_length=1, max_length=120)
     target_role: str = Field(min_length=1, max_length=120)
     job_description: str = ""
@@ -197,7 +196,6 @@ class JobApplicationResponse(BaseModel):
 
 
 class LearningTaskCreate(BaseModel):
-    access_token: str = Field(min_length=8)
     title: str = Field(min_length=1, max_length=200)
     description: str = ""
     session_id: int | None = None
@@ -222,7 +220,6 @@ class LearningTaskResponse(BaseModel):
 
 
 class InterviewPrepCreate(BaseModel):
-    access_token: str = Field(min_length=8)
     question: str = Field(min_length=1)
     ideal_answer: str = ""
     notes: str = ""
