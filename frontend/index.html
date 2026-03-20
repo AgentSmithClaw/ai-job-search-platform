@@ -53,6 +53,15 @@
         </div>
       </header>
 
+      <div class="step-indicator">
+        <div class="step" id="step1"><span class="step-num">1</span> 注册</div>
+        <div class="step" id="step2"><span class="step-num">2</span> 上传简历</div>
+        <div class="step" id="step3"><span class="step-num">3</span> 粘贴 JD</div>
+        <div class="step" id="step4"><span class="step-num">4</span> 生成分析</div>
+      </div>
+
+      <div id="paymentResult" hidden></div>
+
       <div id="onboardingPanel" style="display:none;margin:0 auto 24px;max-width:720px;background:linear-gradient(135deg,var(--brand-soft),var(--panel));border:1px solid var(--brand);border-radius:var(--radius);padding:20px 24px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
           <h3 style="margin:0;color:var(--brand)">🎯 快速开始</h3>
@@ -160,11 +169,13 @@
       </section>
 
       <section class="section">
-        <div class="section-head">
-          <h2>🤖 模型路由策略</h2>
-          <p>多模型协同，提供最优分析结果</p>
+        <div class="collapsible-trigger" onclick="toggleCollapsible('modelRoutingBody')">
+          <h2>🤖 模型路由策略 <span style="font-size:0.8rem;color:var(--muted);font-weight:400">（多模型协同）</span></h2>
+          <span class="arrow" id="modelRoutingArrow">▼</span>
         </div>
-        <div id="providerCatalog" class="provider-grid"></div>
+        <div class="collapsible-body" id="modelRoutingBody">
+          <div id="providerCatalog" class="provider-grid"></div>
+        </div>
       </section>
 
       <section class="section">
@@ -275,6 +286,13 @@
           </div>
         </div>
       </section>
+
+      <section class="section">
+        <div class="collapsible-trigger" onclick="toggleCollapsible('toolboxBody')">
+          <h2>📊 求职工具箱 <span style="font-size:0.8rem;color:var(--muted);font-weight:400">（历史 / 投递 / 任务 / 面试）</span></h2>
+          <span class="arrow" id="toolboxArrow">▼</span>
+        </div>
+        <div class="collapsible-body open" id="toolboxBody">
 
       <section class="section">
         <div class="section-head" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
@@ -404,6 +422,9 @@
             <h3 style="margin-bottom:16px">📋 面试题列表</h3>
             <div id="prepList"></div>
           </article>
+        </div>
+      </section>
+
         </div>
       </section>
     </main>

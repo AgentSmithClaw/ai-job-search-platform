@@ -288,29 +288,4 @@ def _get_user_email(user_id: int) -> Optional[str]:
     return row['email'] if row else None
 
 
-def process_payment_webhook(order_id: str, payment_status: str) -> bool:
-    """
-    REAL PAYMENT: Process payment webhook from Stripe/Alipay.
-    MOCK: Not implemented.
-    TODO: Verify webhook signature and update order status.
-    """
-    logger.info(f"Webhook received: order_id={order_id}, status={payment_status}")
 
-    if payment_status == "succeeded":
-        try:
-            complete_payment(order_id)
-            return True
-        except ValueError as e:
-            logger.error(f"Webhook processing failed: {e}")
-            return False
-    elif payment_status == "failed":
-        conn = get_connection()
-        conn.execute(
-            'UPDATE payment_orders SET status = ? WHERE order_id = ?',
-            (PaymentStatus.FAILED.value, order_id)
-        )
-        conn.commit()
-        conn.close()
-        return True
-
-    return False

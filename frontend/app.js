@@ -67,6 +67,54 @@ function initOnboarding() {
   const panel = document.getElementById('onboardingPanel');
   if (panel) panel.style.display = 'block';
 }
+
+function toggleCollapsible(bodyId) {
+  const body = document.getElementById(bodyId);
+  const arrow = document.getElementById(bodyId.replace('Body', 'Arrow'));
+  if (body) body.classList.toggle('open');
+  if (arrow) arrow.classList.toggle('open');
+}
+
+function updateStepIndicator(activeStep) {
+  const steps = ['step1', 'step2', 'step3', 'step4'];
+  const stepNums = { step1: 1, step2: 2, step3: 3, step4: 4 };
+  const token = getAccessToken();
+  const resumeText = document.getElementById('resumeText')?.value || '';
+  const jdText = document.getElementById('jobDescription')?.value || '';
+
+  const completedMap = {
+    step1: !!token,
+    step2: !!token && resumeText.length >= 20,
+    step3: !!token && resumeText.length >= 20 && jdText.length >= 20,
+    step4: !!token && resumeText.length >= 20 && jdText.length >= 20,
+  };
+
+  steps.forEach(s => {
+    const el = document.getElementById(s);
+    if (!el) return;
+    el.classList.remove('active', 'completed');
+    if (s === activeStep) {
+      el.classList.add('active');
+    } else if (completedMap[s]) {
+      el.classList.add('completed');
+      el.querySelector('.step-num').textContent = '✓';
+    } else {
+      el.querySelector('.step-num').textContent = stepNums[s];
+    }
+  });
+}
+
+function showPaymentResult(type, message) {
+  const el = document.getElementById('paymentResult');
+  if (!el) return;
+  el.className = type;
+  el.textContent = message;
+  el.hidden = false;
+  if (type === 'success') {
+    el.innerHTML = message + ' <a href="javascript:scrollToAnalysis()" style="color:inherit;text-decoration:underline">立即开始分析 →</a>';
+  }
+  setTimeout(() => { el.hidden = true; }, 15000);
+}
 const resumeFileInput = document.getElementById('resumeFile');
 const uploadStatus = document.getElementById('uploadStatus');
 const formStatus = document.getElementById('formStatus');
@@ -347,6 +395,7 @@ function renderReport(data) {
   const loadingEl = document.getElementById('analysisLoading');
   if (loadingEl) loadingEl.style.display = 'none';
   currentSessionId = data.session_id;
+  updateStepIndicator('step4');
   const score = data.report.match_score;
   const scoreEl = document.getElementById('matchScore');
   scoreEl.textContent = `${score}`;
@@ -692,6 +741,7 @@ async function refreshProfile() {
     if (!response.ok) throw new Error(data.detail || 'Failed to load profile');
     setUserState(data);
     authStatus.textContent = '已登录';
+    updateStepIndicator('step2');
     await loadHistory();
     await loadApplications();
     await loadTasks();
@@ -864,7 +914,7 @@ function handlePaymentReturn() {
     params.delete('order_id');
     const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
     history.replaceState(null, '', newUrl);
-    showToast('支付已取消，订单未完成', 'info');
+    showPaymentResult('cancel', '⚠️ 支付已取消，订单未完成。如需购买，可稍后重试。');
     return;
   }
 
@@ -873,8 +923,8 @@ function handlePaymentReturn() {
     params.delete('order_id');
     const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
     history.replaceState(null, '', newUrl);
-    showToast('支付成功！正在刷新额度...', 'success');
-    setTimeout(() => refreshProfile(), 1500);
+    showPaymentResult('success', '✅ 支付成功！额度已更新。');
+    setTimeout(() => refreshProfile(), 1000);
   }
 }
 
@@ -950,6 +1000,7 @@ authForm.addEventListener('submit', async (event) => {
     if (!response.ok) throw new Error(data.detail || 'Auth failed');
     setAccessToken(data.access_token);
     setUserState(data);
+    updateStepIndicator('step2');
     authStatus.textContent = `登录成功，已赠送 ${data.credits} 次测试额度`;
     document.getElementById('targetRole').scrollIntoView({ behavior: 'smooth', block: 'center' });
     document.getElementById('targetRole').focus();
@@ -1005,6 +1056,7 @@ form.addEventListener('submit', async (event) => {
   const accessToken = getAccessToken();
   if (!accessToken) {
     formStatus.textContent = '请先注册 / 登录。';
+    updateStepIndicator('step1');
     document.getElementById('authForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
@@ -1326,6 +1378,7 @@ document.getElementById('resumeText').addEventListener('input', function () {
   const el = document.getElementById('resumeCharCount');
   el.textContent = count > 0 ? `（${count} 字）` : '';
   saveDraftImmediate('resumeText', this.value);
+  if (count >= 20) updateStepIndicator('step2');
 });
 
 document.getElementById('targetRole').addEventListener('input', function () {
@@ -1333,6 +1386,7 @@ document.getElementById('targetRole').addEventListener('input', function () {
 });
 
 document.getElementById('jobDescription').addEventListener('input', function () {
+  if (this.value.length >= 20) updateStepIndicator('step3');
   saveDraftImmediate('jobDescription', this.value);
 });
 
