@@ -18,8 +18,8 @@ class Settings:
     STRIPE_SECRET_KEY: str = os.getenv('STRIPE_SECRET_KEY', '')
     STRIPE_WEBHOOK_SECRET: str = os.getenv('STRIPE_WEBHOOK_SECRET', '')
     STRIPE_PRICE_GAP_REPORT: str = os.getenv('STRIPE_PRICE_GAP_REPORT', '')
-    STRIPE_PRICE_RESUME_10: str = os.getenv('STRIPE_PRICE_RESUME_10', '')
-    STRIPE_PRICE_INTERVIEW_COACH: str = os.getenv('STRIPE_PRICE_INTERVIEW_COACH', '')
+    STRIPE_PRICE_RESUME_POLISH: str = os.getenv('STRIPE_PRICE_RESUME_POLISH', '')
+    STRIPE_PRICE_FULL_PACK: str = os.getenv('STRIPE_PRICE_FULL_PACK', '')
 
 
 settings = Settings()

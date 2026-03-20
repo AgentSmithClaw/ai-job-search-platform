@@ -258,8 +258,8 @@ async def create_stripe_checkout_session(
 def _get_or_create_stripe_price(stripe, package_code: str, package_name: str, price_cny: int) -> str:
     price_attr_map = {
         'gap-report': 'STRIPE_PRICE_GAP_REPORT',
-        'resume-10': 'STRIPE_PRICE_RESUME_10',
-        'interview-coach': 'STRIPE_PRICE_INTERVIEW_COACH',
+        'resume-polish': 'STRIPE_PRICE_RESUME_POLISH',
+        'full-pack': 'STRIPE_PRICE_FULL_PACK',
     }
     attr_name = price_attr_map.get(package_code)
     if attr_name and hasattr(settings, attr_name):

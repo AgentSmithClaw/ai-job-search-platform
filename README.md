@@ -152,7 +152,9 @@ OPENAI_BASE_URL=https://api.minimaxi.com/v1  # MiniMax 示例
 # Stripe 支付（可选，未配置时自动降级为 Mock）
 STRIPE_SECRET_KEY=sk_test_xxx
 STRIPE_WEBHOOK_SECRET=whsec_xxx
-STRIPE_PRICE_GAP_REPORT=price_xxx
+STRIPE_PRICE_GAP_REPORT=price_gap_report_xxx
+STRIPE_PRICE_RESUME_POLISH=price_resume_polish_xxx
+STRIPE_PRICE_FULL_PACK=price_full_pack_xxx
 
 # 邮件通知（可选）
 SMTP_HOST=smtp.gmail.com
