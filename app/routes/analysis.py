@@ -1,7 +1,10 @@
+import logging
 from datetime import datetime
 import json
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+
+logger = logging.getLogger(__name__)
 
 from app.dependencies import get_current_user
 from app.schemas import (
@@ -149,6 +152,8 @@ def analyze(request: AnalysisRequest) -> AnalysisResponse:
     conn.commit()
     session_id = cursor.lastrowid or 0
     conn.close()
+
+    logger.info(f"Analysis complete: session_id={session_id}, user_id={user.id}, role={request.target_role}, score={report.match_score}, mode={routing_mode}")
 
     return AnalysisResponse(
         session_id=session_id,

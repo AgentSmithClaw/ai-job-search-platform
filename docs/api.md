@@ -238,19 +238,27 @@ GET /api/pricing
   "packages": [
     {
       "code": "gap-report",
-      "name": "差距分析报告",
+      "name": "差距分析",
       "credits": 1,
       "price_cny": 29,
-      "description": "单次分析",
-      "includes": ["完整分析报告", "定制简历草稿", "学习计划"]
+      "description": "输入简历和 JD，返回岗位差距分析、风险和下一步动作。",
+      "includes": ["匹配度评分", "缺口拆解", "学习建议", "面试重点"]
     },
     {
-      "code": "resume-10",
-      "name": "简历分析套餐",
-      "credits": 10,
-      "price_cny": 199,
-      "description": "10次分析，平均每次 19.9 元",
-      "includes": ["完整分析报告", "定制简历草稿", "学习计划"]
+      "code": "resume-polish",
+      "name": "简历定制",
+      "credits": 2,
+      "price_cny": 49,
+      "description": "在差距分析基础上生成岗位定制版简历草稿与优化建议。",
+      "includes": ["定制简历草稿", "表达优化建议", "关键词覆盖建议"]
+    },
+    {
+      "code": "full-pack",
+      "name": "求职冲刺包",
+      "credits": 4,
+      "price_cny": 79,
+      "description": "适合准备投递前的集中优化，包含分析、简历和面试准备建议。",
+      "includes": ["差距分析", "定制简历", "学习计划", "面试准备重点"]
     }
   ]
 }

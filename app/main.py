@@ -36,13 +36,13 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
 
 RATE_LIMIT_WINDOW = 60
 RATE_LIMIT_MAX = {
-    '/api/analyze': 3,
-    '/api/payment/create': 5,
-    '/api/payment/create-stripe': 5,
-    '/api/generate-questions': 3,
-    '/api/export': 10,
+    '/api/analyze': 10,
+    '/api/payment/create': 15,
+    '/api/payment/create-stripe': 15,
+    '/api/generate-questions': 10,
+    '/api/export': 30,
 }
-GLOBAL_RATE_LIMIT = 60
+GLOBAL_RATE_LIMIT = 120
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):

@@ -81,6 +81,74 @@ def build_validation(resume_text: str, jd_keywords: List[str], matched: List[str
     )
 
 
+def apply_local_validation(
+    resume_text: str,
+    job_description: str,
+    report: "AnalysisReport",
+) -> "ValidationSummary":
+    """
+    Post-process LLM analysis output with independent local validation checks.
+    Applied after _parse_analysis_response to ensure credibility.
+    """
+    resume_lower = resume_text.lower()
+    jd_keywords = extract_keywords(job_description, top_n=20)
+    resume_keywords = set(extract_keywords(resume_text, top_n=20))
+    matched = [k for k in jd_keywords if k in resume_keywords]
+    missing = [k for k in jd_keywords if k not in resume_keywords]
+
+    jd_keyword_coverage = len(matched) / len(jd_keywords) if jd_keywords else 0.5
+    has_quant = has_quantification(resume_text)
+
+    raw_confidence = report.validation.confidence if report.validation else 50
+    confidence = max(0, min(100, raw_confidence))
+
+    caution_notes = list(report.validation.caution_notes) if report.validation and report.validation.caution_notes else []
+    high_priority_actions = list(report.validation.high_priority_actions) if report.validation and report.validation.high_priority_actions else []
+
+    if not has_quant:
+        caution_notes.append("简历中缺少量化数据，竞争力可能被低估")
+        confidence = min(confidence, 80)
+
+    local_expected_score = int(jd_keyword_coverage * 100)
+    reported_score = report.match_score
+    score_delta = abs(reported_score - local_expected_score)
+
+    if score_delta > 30:
+        caution_notes.append(
+            f"报告匹配度（{reported_score}分）与本地关键词重叠估算（{local_expected_score}分）差异较大，建议以本地分析结果为准"
+        )
+        confidence = min(confidence, 60)
+
+    if len(report.gaps) == 0 and jd_keywords:
+        caution_notes.append("未识别出明确差距项，分析可能不够深入")
+        confidence = min(confidence, 55)
+
+    for gap in report.gaps:
+        if gap.gap_type == "unknown" or not gap.gap_type:
+            gap.gap_type = classify_gap(gap.requirement, resume_text)
+
+    local_critical = [g.requirement for g in report.gaps if g.severity == "high"][:3]
+    if not report.validation or not report.validation.critical_gaps:
+        high_priority_actions = [
+            "优先补充关键缺口的项目证据和量化结果",
+            "使用 STAR 格式重写核心经历",
+            "确保简历中的关键词与 JD 匹配"
+        ]
+    else:
+        if len(report.validation.critical_gaps) < len(local_critical):
+            confidence = min(confidence, 70)
+
+    confidence = max(0, min(95, confidence))
+
+    return ValidationSummary(
+        confidence=confidence,
+        overclaim_warning=report.validation.overclaim_warning if report.validation else (not has_quant),
+        critical_gaps=report.validation.critical_gaps if report.validation and report.validation.critical_gaps else local_critical,
+        high_priority_actions=high_priority_actions,
+        caution_notes=caution_notes,
+    )
+
+
 def build_analysis(target_role: str, resume_text: str, job_description: str) -> tuple[AnalysisReport, str, str]:
     logger.info(f"Building analysis for target_role={target_role}")
 

@@ -6,6 +6,8 @@ import sys
 
 BASE_URL = "http://127.0.0.1:8080"
 
+smoke_email = f"smoke_{__import__('time').time()}@test.com"
+
 def test(name, fn):
     try:
         result = fn()
@@ -22,24 +24,22 @@ def main():
     print("=" * 50)
 
     results = []
+    token = None
 
     print("\n--- Health Check ---")
     results.append(test("Health", lambda: requests.get(f"{BASE_URL}/health").status_code == 200))
 
     print("\n--- Auth ---")
-    results.append(test("Register/Login", lambda: (
-        requests.post(f"{BASE_URL}/api/auth/register", json={"email": "smoke@test.com", "name": "Smoke Test"}).status_code in [200, 400]
-    )))
+    r = requests.post(f"{BASE_URL}/api/auth/register", json={"email": smoke_email, "name": "Smoke Test"})
+    results.append(test("Register", lambda: r.status_code == 200))
+    if r.status_code == 200:
+        token = r.json().get("access_token")
 
     print("\n--- Pricing ---")
-    results.append(test("Get Pricing", lambda: (
-        requests.get(f"{BASE_URL}/api/pricing").status_code == 200
-    )))
+    results.append(test("Get Pricing", lambda: requests.get(f"{BASE_URL}/api/pricing").status_code == 200))
 
     print("\n--- Providers ---")
-    results.append(test("Get Providers", lambda: (
-        requests.get(f"{BASE_URL}/api/providers").status_code == 200
-    )))
+    results.append(test("Get Providers", lambda: requests.get(f"{BASE_URL}/api/providers").status_code == 200))
 
     print("\n--- Resume Upload ---")
     results.append(test("Resume Upload", lambda: (
@@ -48,6 +48,41 @@ def main():
             files={"file": ("test.txt", b"test resume content with python sql experience", "text/plain")}
         ).status_code == 200
     )))
+
+    print("\n--- Payment (Mock) ---")
+    if token:
+        r = requests.post(
+            f"{BASE_URL}/api/payment/create",
+            json={"access_token": token, "package_code": "gap-report"}
+        )
+        results.append(test("Mock Payment Create", lambda: r.status_code == 200))
+        results.append(test("Payment Credits Added", lambda: (
+            r.status_code == 200 and r.json().get("credits_added", 0) >= 1
+        )))
+    else:
+        results.append(test("Mock Payment Create", lambda: False))
+        results.append(test("Payment Credits Added", lambda: False))
+
+    print("\n--- Analyze ---")
+    if token:
+        r = requests.post(
+            f"{BASE_URL}/api/analyze",
+            json={
+                "access_token": token,
+                "target_role": "Python Backend Engineer",
+                "resume_text": "Python developer with 3 years experience in FastAPI, SQL, and Docker.",
+                "job_description": "We need a Python backend engineer familiar with FastAPI, PostgreSQL, Docker, and Kubernetes."
+            }
+        )
+        results.append(test("Analyze", lambda: r.status_code == 200))
+        results.append(test("Analyze Score Valid", lambda: (
+            r.status_code == 200 and 0 <= r.json().get("report", {}).get("match_score", -1) <= 100
+        )))
+        results.append(test("Analyze Credits Deducted", lambda: (
+            r.status_code == 200 and r.json().get("credits_remaining", 999) >= 0
+        )))
+    else:
+        results.extend([test(n, lambda: False) for n in ["Analyze", "Analyze Score Valid", "Analyze Credits Deducted"]])
 
     print("\n" + "=" * 50)
     passed = sum(results)

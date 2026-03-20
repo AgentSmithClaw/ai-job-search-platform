@@ -1,12 +1,13 @@
 import pytest
 from app.services.analysis import (
+    apply_local_validation,
     build_analysis,
     extract_keywords,
     classify_gap,
     has_quantification,
     build_validation,
 )
-from app.schemas import GapItem
+from app.schemas import AnalysisReport, GapItem, ValidationSummary
 
 
 class TestExtractKeywords:
@@ -102,3 +103,107 @@ class TestBuildAnalysis:
         resume = "Python SQL Git Docker Python Python"
         report, _, _ = build_analysis("Engineer", resume, jd)
         assert 0 <= report.match_score <= 100
+
+
+class TestApplyLocalValidation:
+    def test_confidence_clamped_to_valid_range(self):
+        from app.services.analysis import apply_local_validation, ValidationSummary
+        from app.schemas import GapItem, RoutedModelPlan
+
+        report = AnalysisReport(
+            match_score=50,
+            summary="test",
+            strengths=[],
+            risks=[],
+            gaps=[],
+            learning_plan=[],
+            interview_focus=[],
+            resume_suggestions=[],
+            recommended_model_plan=RoutedModelPlan(
+                orchestrator="gpt-4o-mini", extractor="gpt-4o-mini",
+                writer="gpt-4o-mini", reviewer="gpt-4o-mini", rationale=["test"]
+            ),
+            next_actions=[],
+            validation=ValidationSummary(
+                confidence=150,
+                overclaim_warning=False,
+                critical_gaps=[],
+                high_priority_actions=[],
+                caution_notes=[]
+            )
+        )
+        validation = apply_local_validation(
+            resume_text="Python developer with 3 years experience",
+            job_description="Python JavaScript SQL Git Docker",
+            report=report
+        )
+        assert 0 <= validation.confidence <= 100
+
+    def test_caution_added_for_missing_quantification(self):
+        from app.services.analysis import apply_local_validation
+        from app.schemas import GapItem, RoutedModelPlan
+
+        report = AnalysisReport(
+            match_score=70,
+            summary="",
+            strengths=[],
+            risks=[],
+            gaps=[],
+            learning_plan=[],
+            interview_focus=[],
+            resume_suggestions=[],
+            recommended_model_plan=RoutedModelPlan(
+                orchestrator="gpt-4o-mini", extractor="gpt-4o-mini",
+                writer="gpt-4o-mini", reviewer="gpt-4o-mini", rationale=["test"]
+            ),
+            next_actions=[],
+            validation=ValidationSummary(
+                confidence=80,
+                overclaim_warning=False,
+                critical_gaps=[],
+                high_priority_actions=[],
+                caution_notes=[]
+            )
+        )
+        validation = apply_local_validation(
+            resume_text="I am a good Python developer",
+            job_description="Python SQL Docker",
+            report=report
+        )
+        assert any("量化" in c for c in validation.caution_notes)
+
+    def test_gap_type_inferred_for_unknown_gaps(self):
+        from app.services.analysis import apply_local_validation
+        from app.schemas import GapItem, RoutedModelPlan
+
+        report = AnalysisReport(
+            match_score=50,
+            summary="",
+            strengths=[],
+            risks=[],
+            gaps=[
+                GapItem(
+                    category="skill", severity="high",
+                    requirement="Kubernetes", evidence="none",
+                    recommendation="learn", gap_type="unknown"
+                )
+            ],
+            learning_plan=[],
+            interview_focus=[],
+            resume_suggestions=[],
+            recommended_model_plan=RoutedModelPlan(
+                orchestrator="gpt-4o-mini", extractor="gpt-4o-mini",
+                writer="gpt-4o-mini", reviewer="gpt-4o-mini", rationale=["test"]
+            ),
+            next_actions=[],
+            validation=ValidationSummary(
+                confidence=50, overclaim_warning=False,
+                critical_gaps=[], high_priority_actions=[], caution_notes=[]
+            )
+        )
+        validation = apply_local_validation(
+            resume_text="I know Python and Docker",
+            job_description="Python Kubernetes Docker",
+            report=report
+        )
+        assert report.gaps[0].gap_type == "skill_gap"

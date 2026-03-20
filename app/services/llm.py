@@ -46,7 +46,11 @@ class LLMService:
                 max_tokens=2000,
             )
             content = response.choices[0].message.content or ''
-            return self._parse_analysis_response(content, target_role, resume_text, job_description)
+            report, resume_draft, mode = self._parse_analysis_response(content, target_role, resume_text, job_description)
+            from app.services.analysis import apply_local_validation
+            local_validation = apply_local_validation(resume_text, job_description, report)
+            report = report.model_copy(update={"validation": local_validation})
+            return report, resume_draft, mode
         except Exception as e:
             raise RuntimeError(f"LLM API调用失败: {str(e)}")
 

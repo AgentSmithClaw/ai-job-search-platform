@@ -1,4 +1,7 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException, Request
+
+logger = logging.getLogger(__name__)
 
 from app.dependencies import get_current_user
 from app.schemas import (
@@ -11,12 +14,14 @@ from app.schemas import (
 )
 from app.services.payment import (
     PaymentMethod,
+    PaymentStatus,
     complete_payment,
     create_payment_order,
     create_stripe_checkout_session,
     get_order_by_id,
     get_user_orders,
     process_payment_webhook,
+    refund_order,
 )
 from app.services.pricing import get_package_by_code
 
@@ -32,7 +37,6 @@ def purchase(request: PurchaseRequest) -> PurchaseResponse:
 @router.post("/create", response_model=dict)
 async def create_payment(request: PaymentCreateRequest) -> dict:
     from app.services.auth import get_user_by_token
-
     user = get_user_by_token(request.access_token)
     package = get_package_by_code(request.package_code)
     if not package:
@@ -60,7 +64,6 @@ async def create_payment(request: PaymentCreateRequest) -> dict:
 @router.post("/create-stripe", response_model=StripeCheckoutResponse)
 async def create_stripe_payment(request: PaymentCreateRequest) -> StripeCheckoutResponse:
     from app.services.auth import get_user_by_token
-
     user = get_user_by_token(request.access_token)
     package = get_package_by_code(request.package_code)
     if not package:
@@ -144,6 +147,15 @@ async def stripe_webhook(request: Request):
 
         from app.db import get_connection
         conn = get_connection()
+        order = conn.execute(
+            'SELECT user_id, status FROM payment_orders WHERE order_id = ?',
+            (order_id,)
+        ).fetchone()
+        if not order:
+            conn.close()
+            logger.error(f"Webhook: order not found: order_id={order_id}")
+            return {"received": True}
+
         conn.execute(
             "UPDATE payment_orders SET session_id = ? WHERE order_id = ?",
             (session_id, order_id)
@@ -151,9 +163,13 @@ async def stripe_webhook(request: Request):
         conn.commit()
         conn.close()
 
+        if order['status'] == PaymentStatus.COMPLETED.value:
+            logger.info(f"Webhook: order already completed, skipping: order_id={order_id}")
+            return {"received": True}
+
         try:
             complete_payment(order_id, PaymentMethod.STRIPE)
-            logger.info(f"Stripe payment completed via webhook: order_id={order_id}")
+            logger.info(f"Payment completed via webhook: order_id={order_id}, user_id={order['user_id']}")
         except ValueError as e:
             logger.error(f"Webhook payment completion failed: order_id={order_id}, error={e}")
 
@@ -171,3 +187,15 @@ async def stripe_webhook(request: Request):
             logger.info(f"Stripe checkout expired: order_id={order_id}")
 
     return {"received": True}
+
+
+@router.post("/refund/{order_id}")
+def refund(
+    order_id: str,
+    user: UserProfile = Depends(get_current_user),
+) -> dict:
+    success = refund_order(order_id, user.id)
+    if not success:
+        raise HTTPException(status_code=404, detail='退款失败，订单不存在或状态不允许退款')
+    logger.info(f"Refund processed: order_id={order_id}, user_id={user.id}")
+    return {"status": "refunded", "order_id": order_id}

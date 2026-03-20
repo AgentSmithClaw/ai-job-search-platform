@@ -58,14 +58,21 @@
 ```
 ai-job-search-platform/
 ├── app/                          # FastAPI 后端
-│   ├── main.py                   # 应用入口、全部 API 端点
+│   ├── main.py                   # 应用入口、中间件
+│   ├── dependencies.py           # FastAPI Depends 认证依赖
 │   ├── db.py                    # SQLite 数据库初始化与迁移
 │   ├── schemas.py                # Pydantic 请求/响应模型
 │   ├── config.py                 # 环境变量配置
+│   ├── routes/                  # 路由模块
+│   │   ├── auth.py              # 认证相关端点
+│   │   ├── analysis.py          # 分析、简历上传、导出端点
+│   │   ├── payment.py           # 支付、订单、退款端点
+│   │   ├── tracking.py         # 投递/任务/面试端点
+│   │   └── misc.py             # 健康检查、数据面板、套餐端点
 │   └── services/                 # 业务逻辑层
-│       ├── analysis.py           # 分析报告生成（含 Mock）
+│       ├── analysis.py           # 分析报告生成（含本地可信度校验）
 │       ├── auth.py               # 用户注册 / Token 管理
-│       ├── llm.py                # LLM API 集成
+│       ├── llm.py                # LLM API 集成（含本地 validation 层）
 │       ├── payment.py           # 支付服务（Mock + Stripe）
 │       ├── pricing.py            # 套餐配置
 │       ├── resume_parser.py       # 简历解析（多层降级）
@@ -221,16 +228,18 @@ APP_URL=https://your-domain.com
 ## 🧪 测试
 
 ```bash
-# 运行烟雾测试（5 个端点检查）
+# 运行烟雾测试（10 个端点检查）
 python3 tests/smoke_test.py
 
-# 结果示例
-# Health          PASS
-# Register/Login  PASS
-# Get Pricing     PASS
-# Get Providers   PASS
-# Resume Upload   PASS
-# Results: 5/5 passed
+# 运行 pytest 单元测试（49 个测试）
+.venv/bin/python -m pytest tests/ -v
+
+# pytest 结果示例
+# test_auth.py          10 passed
+# test_analysis.py       15 passed
+# test_tracking.py       16 passed
+# test_payment.py         9 passed
+# Results: 49 passed
 ```
 
 ---
@@ -296,9 +305,11 @@ stripe listen --forward-to localhost:8080/api/payment/webhook
 - [x] 深色模式
 - [x] API 限流
 - [x] 前端骨架屏加载
+- [x] Pytest 单元测试套件
+- [x] 本地可信度校验层
+- [x] 退款 API
 - [ ] 支付宝 / 微信支付
 - [ ] 用户邮箱验证
-- [ ] 报告公开分享链接
 - [ ] 批量 JD 导入
 - [ ] 求职进度统计图表
 - [ ] 英文界面国际化
