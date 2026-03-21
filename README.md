@@ -1,6 +1,15 @@
-# AI Job Search Platform
+# GapPilot Platform
 
-智能求职差距分析平台 —— 上传简历、粘贴 JD，AI 自动分析差距、生成定制简历、规划学习路径。
+> 智能求职差距分析平台 —— 上传简历、粘贴 JD，AI 自动分析差距、生成定制简历、规划学习路径。
+
+## 项目背景
+
+GapPilot 源自一套个人求职方法论（[GapPilot Playbook](https://github.com/AgentSmithClaw/ai-job-search-playbook)）。在求职过程中，我发现手动拆解 JD、对照简历找差距、生成改写建议这套流程可以被系统化和自动化，于是把方法论产品化成了这个平台。
+
+**GapPilot 是一个完整的故事：先用方法论搞定自己的求职，再把方法论变成产品。**
+
+- 📘 [GapPilot Playbook](https://github.com/AgentSmithClaw/ai-job-search-playbook) — 求职方法论、面试准备、项目复盘
+- ⚡ GapPilot Platform — 你正在看的这个：AI 驱动的求职分析产品
 
 **不是 Demo，是一个可上线的产品级项目。**
 
