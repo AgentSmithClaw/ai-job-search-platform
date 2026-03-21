@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gap Action &amp; Learning Dashboard | Precision Curator</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary": "#7e3000",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed": "#351000",
+                        "surface-container-lowest": "#ffffff",
+                        "outline": "#777587",
+                        "surface": "#fcf8ff",
+                        "surface-container-high": "#eae6f4",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "on-tertiary-fixed-variant": "#7b2f00",
+                        "primary-fixed": "#e2dfff",
+                        "on-primary-fixed-variant": "#3323cc",
+                        "inverse-primary": "#c3c0ff",
+                        "tertiary-container": "#a44100",
+                        "secondary-container": "#b6b4ff",
+                        "surface-container-low": "#f5f2ff",
+                        "surface-container-highest": "#e4e1ee",
+                        "tertiary-fixed-dim": "#ffb695",
+                        "on-surface": "#1b1b24",
+                        "on-background": "#1b1b24",
+                        "inverse-surface": "#302f39",
+                        "outline-variant": "#c7c4d8",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "surface-dim": "#dcd8e5",
+                        "on-secondary-fixed": "#140f54",
+                        "surface-bright": "#fcf8ff",
+                        "secondary-fixed-dim": "#c3c0ff",
+                        "error": "#ba1a1a",
+                        "on-surface-variant": "#464555",
+                        "background": "#fcf8ff",
+                        "surface-tint": "#4d44e3",
+                        "primary": "#3525cd",
+                        "inverse-on-surface": "#f3effc",
+                        "on-primary-container": "#dad7ff",
+                        "surface-variant": "#e4e1ee",
+                        "on-primary-fixed": "#0f0069",
+                        "on-tertiary-container": "#ffd2be",
+                        "primary-container": "#4f46e5",
+                        "secondary-fixed": "#e2dfff",
+                        "secondary": "#58579b",
+                        "surface-container": "#f0ecf9",
+                        "on-secondary-fixed-variant": "#413f82",
+                        "tertiary-fixed": "#ffdbcc",
+                        "on-error": "#ffffff",
+                        "on-secondary-container": "#454386",
+                        "on-primary": "#ffffff",
+                        "on-error-container": "#93000a"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased">
+<!-- SideNavBar Component -->
+<aside class="h-screen w-64 fixed left-0 top-0 overflow-y-auto bg-[#e4e1ee] dark:bg-slate-900 flex flex-col py-6 z-50">
+<div class="px-6 mb-8">
+<h1 class="text-xl font-black text-[#1b1b24] dark:text-slate-100 tracking-tighter">Precision Curator</h1>
+<p class="text-xs font-medium text-on-surface-variant opacity-70">Elite Analysis</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-[#464555] dark:text-slate-400 hover:text-[#1b1b24] dark:hover:text-white hover:bg-[#f0ecf9] dark:hover:bg-slate-800/50 transition-colors mx-2 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-medium text-sm tracking-tight">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#464555] dark:text-slate-400 hover:text-[#1b1b24] dark:hover:text-white hover:bg-[#f0ecf9] dark:hover:bg-slate-800/50 transition-colors mx-2 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-medium text-sm tracking-tight">Analysis</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#464555] dark:text-slate-400 hover:text-[#1b1b24] dark:hover:text-white hover:bg-[#f0ecf9] dark:hover:bg-slate-800/50 transition-colors mx-2 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="assignment">assignment</span>
+<span class="font-medium text-sm tracking-tight">Applications</span>
+</a>
+<!-- Active State: Learning -->
+<a class="flex items-center gap-3 px-4 py-3 text-[#4f46e5] dark:text-indigo-400 bg-[#ffffff] dark:bg-slate-800 rounded-lg mx-2 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="school" style="font-variation-settings: 'FILL' 1;">school</span>
+<span class="font-medium text-sm tracking-tight">Learning</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#464555] dark:text-slate-400 hover:text-[#1b1b24] dark:hover:text-white hover:bg-[#f0ecf9] dark:hover:bg-slate-800/50 transition-colors mx-2 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="interpreter_mode">interpreter_mode</span>
+<span class="font-medium text-sm tracking-tight">Interviews</span>
+</a>
+</nav>
+<div class="mt-auto px-6 pt-6 border-t border-outline-variant/10">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary font-bold text-xs">JD</div>
+<div>
+<p class="text-sm font-bold text-on-surface">User profile</p>
+<p class="text-xs text-on-surface-variant">Standard Tier</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopAppBar Component -->
+<header class="fixed top-0 right-0 left-64 h-16 z-40 bg-[#fcf8ff]/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-[#c7c4d8]/20 dark:border-slate-800 flex justify-between items-center px-8 w-full shadow-sm dark:shadow-none">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-96">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm" data-icon="search">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/20" placeholder="Search learning paths..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="h-8 w-[1px] bg-outline-variant/20"></div>
+<div class="flex items-center gap-3">
+<img alt="User avatar" class="w-8 h-8 rounded-full border border-outline-variant/30" data-alt="Professional headshot of a young male professional" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOTrS1IN7-Nzm-RIP0Qvj_PfNC9-7-xrsqSei6Pw2_Yt03tKjnI7PjYsElsVmJQur5Tk86p28jQCdDTmDdNjuky--uU5XktmCYujRproz0rx2gF5hADIriDSy5sWHFVM9LzmjIvGsnuRZNmBY3vnCpOmBarT01MIfbeu7iKySt1m9080Z1MxFEf2o3dz2NRLbZSP6Zqu5Q894MOK5eCBGVCtW-AIg2h47I-VuNoh8bv_aPhtdNsI2kNdej6FqdYbuhWiO_ExR7TfE"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pl-64 pt-16 min-h-screen">
+<div class="p-8 max-w-[1600px] mx-auto">
+<!-- Hero Header Section -->
+<section class="mb-12">
+<div class="flex justify-between items-end">
+<div>
+<span class="text-[0.6875rem] font-bold tracking-widest text-on-surface-variant uppercase">Learning Progress</span>
+<h2 class="text-4xl font-extrabold text-on-surface tracking-tight mt-2">Gap Action Dashboard</h2>
+<p class="text-on-surface-variant mt-2 max-w-xl">Strategically bridge your expertise deficits with curated action items and elite resources.</p>
+</div>
+<div class="flex gap-4">
+<button class="px-6 py-2.5 bg-surface-container text-primary font-semibold rounded-lg text-sm border border-outline-variant/20 hover:bg-surface-container-high transition-colors">
+                            View History
+                        </button>
+<button class="px-6 py-2.5 bg-primary-container text-on-primary font-semibold rounded-lg text-sm shadow-lg shadow-primary/20 hover:opacity-90 transition-opacity flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                            New Action
+                        </button>
+</div>
+</div>
+</section>
+<!-- Progress Bento Grid -->
+<div class="grid grid-cols-12 gap-6 mb-12">
+<!-- Main Status Card -->
+<div class="col-span-8 bg-surface-container-lowest rounded-xl p-8 shadow-sm border border-outline-variant/10 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+<div class="relative z-10 flex items-center justify-between">
+<div class="space-y-6">
+<div>
+<h3 class="text-lg font-bold text-on-surface mb-1">Overall Skill Bridge Completion</h3>
+<p class="text-sm text-on-surface-variant">You've mastered 4 out of 12 critical gaps this quarter.</p>
+</div>
+<div class="flex items-center gap-8">
+<div class="text-center">
+<div class="text-3xl font-black text-primary tracking-tighter">68%</div>
+<div class="text-[0.65rem] font-bold text-on-surface-variant uppercase tracking-wider">Total Progress</div>
+</div>
+<div class="w-[400px]">
+<div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 68%"></div>
+</div>
+<div class="flex justify-between mt-2">
+<span class="text-xs font-medium text-on-surface-variant">Current: Intermediate</span>
+<span class="text-xs font-medium text-primary">Target: Senior Lead</span>
+</div>
+</div>
+</div>
+</div>
+<div class="hidden lg:block">
+<div class="w-32 h-32 rounded-full border-8 border-surface-container-highest border-t-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-primary" data-icon="trending_up">trending_up</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Stats Card -->
+<div class="col-span-4 bg-surface-container rounded-xl p-8 border border-outline-variant/10 flex flex-col justify-between">
+<div>
+<h3 class="text-sm font-bold text-on-surface-variant uppercase tracking-widest mb-4">Focus Hours</h3>
+<div class="text-4xl font-black text-on-surface tracking-tighter">24.5<span class="text-lg font-medium ml-1">hrs</span></div>
+</div>
+<div class="mt-4 pt-4 border-t border-outline-variant/20 flex items-center gap-2 text-primary font-bold text-sm">
+<span class="material-symbols-outlined text-sm" data-icon="schedule" style="font-variation-settings: 'FILL' 1;">schedule</span>
+                        3.2h left for weekly goal
+                    </div>
+</div>
+</div>
+<!-- Kanban/Action View -->
+<div class="grid grid-cols-3 gap-8">
+<!-- Column 1: Immediate Gaps -->
+<div class="space-y-6">
+<div class="flex items-center justify-between px-2">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-error"></div>
+<h4 class="font-bold text-on-surface tracking-tight">Critical Needs</h4>
+</div>
+<span class="text-xs font-bold text-on-surface-variant bg-surface-container-high px-2 py-0.5 rounded">2</span>
+</div>
+<!-- Action Card 1 -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/10 hover:shadow-md transition-shadow group">
+<div class="flex justify-between items-start mb-4">
+<span class="text-[0.6rem] font-black uppercase tracking-widest text-error px-2 py-1 bg-error-container/30 rounded">Priority</span>
+<button class="text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-lg" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<h5 class="font-bold text-on-surface mb-2 leading-snug">Master Advanced PyTorch Architectures</h5>
+<p class="text-sm text-on-surface-variant mb-6">Essential for the upcoming Senior AI Engineer role gap.</p>
+<a class="flex items-center gap-3 p-3 rounded-lg bg-surface-container-low border border-outline-variant/10 hover:bg-surface-container transition-colors mb-6 group/link" href="#">
+<div class="w-8 h-8 rounded bg-primary-fixed-dim flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="menu_book">menu_book</span>
+</div>
+<div class="overflow-hidden">
+<p class="text-[0.7rem] font-bold text-on-surface-variant uppercase tracking-tighter">Resource</p>
+<p class="text-xs font-semibold text-on-surface truncate">Deep Learning with PyTorch (V2)</p>
+</div>
+<span class="material-symbols-outlined text-sm ml-auto text-on-surface-variant group-hover/link:translate-x-1 transition-transform" data-icon="arrow_forward">arrow_forward</span>
+</a>
+<div class="pt-4 border-t border-outline-variant/10 flex items-center justify-between">
+<div class="flex -space-x-2">
+<div class="w-6 h-6 rounded-full bg-surface-container-highest border-2 border-surface-container-lowest flex items-center justify-center text-[10px] font-bold">ML</div>
+<div class="w-6 h-6 rounded-full bg-surface-container-highest border-2 border-surface-container-lowest flex items-center justify-center text-[10px] font-bold">AI</div>
+</div>
+<div class="text-[10px] font-bold text-on-surface-variant">ETA: 4 DAYS</div>
+</div>
+</div>
+<!-- Action Card 2 -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/10 hover:shadow-md transition-shadow group">
+<div class="flex justify-between items-start mb-4">
+<span class="text-[0.6rem] font-black uppercase tracking-widest text-tertiary px-2 py-1 bg-tertiary-fixed/30 rounded">Strategic</span>
+<button class="text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-lg" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<h5 class="font-bold text-on-surface mb-2 leading-snug">System Design for Scale</h5>
+<p class="text-sm text-on-surface-variant mb-6">Understanding distributed cache invalidation patterns.</p>
+<a class="flex items-center gap-3 p-3 rounded-lg bg-surface-container-low border border-outline-variant/10 hover:bg-surface-container transition-colors mb-6 group/link" href="#">
+<div class="w-8 h-8 rounded bg-primary-fixed-dim flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="play_circle">play_circle</span>
+</div>
+<div class="overflow-hidden">
+<p class="text-[0.7rem] font-bold text-on-surface-variant uppercase tracking-tighter">Video Course</p>
+<p class="text-xs font-semibold text-on-surface truncate">High Scalability Design Masterclass</p>
+</div>
+</a>
+<div class="pt-4 border-t border-outline-variant/10 flex items-center justify-between">
+<span class="flex items-center gap-1 text-[10px] font-bold text-on-surface-variant bg-surface-container px-2 py-0.5 rounded">
+<span class="material-symbols-outlined text-[10px]" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span> Core Skill
+                            </span>
+<div class="text-[10px] font-bold text-on-surface-variant">ETA: 12 DAYS</div>
+</div>
+</div>
+</div>
+<!-- Column 2: In Progress -->
+<div class="space-y-6">
+<div class="flex items-center justify-between px-2">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<h4 class="font-bold text-on-surface tracking-tight">Active Learning</h4>
+</div>
+<span class="text-xs font-bold text-on-surface-variant bg-surface-container-high px-2 py-0.5 rounded">1</span>
+</div>
+<!-- Action Card 3 (Active) -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-md border-2 border-primary/20 relative">
+<div class="absolute -top-3 left-6 px-3 py-1 bg-primary text-on-primary text-[0.6rem] font-black uppercase tracking-widest rounded-full shadow-lg">In Progress</div>
+<h5 class="font-bold text-on-surface mb-2 leading-snug mt-2">Kubernetes Cluster Optimization</h5>
+<p class="text-sm text-on-surface-variant mb-4">Focusing on resource limits and horizontal pod autoscaling.</p>
+<div class="mb-6 space-y-2">
+<div class="flex justify-between items-end">
+<span class="text-[0.65rem] font-bold text-on-surface-variant uppercase tracking-widest">Progress</span>
+<span class="text-xs font-bold text-primary">60%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 60%"></div>
+</div>
+</div>
+<a class="flex items-center gap-3 p-3 rounded-lg bg-surface-container border border-outline-variant/20 hover:border-primary/30 transition-colors mb-6" href="#">
+<div class="w-8 h-8 rounded bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="link">link</span>
+</div>
+<div class="overflow-hidden">
+<p class="text-[0.7rem] font-bold text-on-surface-variant uppercase tracking-tighter">Documentation</p>
+<p class="text-xs font-semibold text-on-surface truncate">Official K8s Best Practices</p>
+</div>
+</a>
+<button class="w-full py-2 bg-primary text-on-primary text-xs font-bold rounded-lg hover:opacity-90 transition-opacity">
+                            Continue Study
+                        </button>
+</div>
+</div>
+<!-- Column 3: Roadmap -->
+<div class="space-y-6">
+<div class="flex items-center justify-between px-2">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-outline"></div>
+<h4 class="font-bold text-on-surface tracking-tight">Future Roadmap</h4>
+</div>
+<span class="text-xs font-bold text-on-surface-variant bg-surface-container-high px-2 py-0.5 rounded">3</span>
+</div>
+<!-- Roadmap Item 1 -->
+<div class="bg-surface-container-low rounded-xl p-6 border border-outline-variant/10 opacity-70 hover:opacity-100 transition-opacity cursor-pointer">
+<h5 class="font-bold text-on-surface mb-2 leading-snug">Public Cloud FinOps Mastery</h5>
+<p class="text-[0.65rem] font-bold text-on-surface-variant uppercase tracking-widest mb-4">Unlocks: Budget Ownership Role</p>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-on-surface-variant" data-icon="lock">lock</span>
+<span class="text-xs font-medium text-on-surface-variant italic">Waiting for Cloud Architecture completion</span>
+</div>
+</div>
+<!-- Roadmap Item 2 -->
+<div class="bg-surface-container-low rounded-xl p-6 border border-outline-variant/10 opacity-70 hover:opacity-100 transition-opacity cursor-pointer">
+<h5 class="font-bold text-on-surface mb-2 leading-snug">Advanced SQL for Analytics</h5>
+<p class="text-[0.65rem] font-bold text-on-surface-variant uppercase tracking-widest mb-4">Skill: Data Governance</p>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-on-surface-variant" data-icon="calendar_today">calendar_today</span>
+<span class="text-xs font-medium text-on-surface-variant">Scheduled: Q3 2024</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Learning Stats Footer Section -->
+<section class="mt-16 grid grid-cols-4 gap-6">
+<div class="bg-surface-container-high rounded-lg p-6 flex flex-col items-center justify-center text-center">
+<span class="material-symbols-outlined text-primary mb-2" data-icon="verified_user" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+<p class="text-2xl font-black text-on-surface tracking-tighter">12</p>
+<p class="text-[0.6rem] font-bold text-on-surface-variant uppercase tracking-widest">Skills Validated</p>
+</div>
+<div class="bg-surface-container-high rounded-lg p-6 flex flex-col items-center justify-center text-center">
+<span class="material-symbols-outlined text-primary mb-2" data-icon="timer">timer</span>
+<p class="text-2xl font-black text-on-surface tracking-tighter">184h</p>
+<p class="text-[0.6rem] font-bold text-on-surface-variant uppercase tracking-widest">Total Learning Time</p>
+</div>
+<div class="bg-surface-container-high rounded-lg p-6 flex flex-col items-center justify-center text-center">
+<span class="material-symbols-outlined text-primary mb-2" data-icon="auto_awesome">auto_awesome</span>
+<p class="text-2xl font-black text-on-surface tracking-tighter">A+</p>
+<p class="text-[0.6rem] font-bold text-on-surface-variant uppercase tracking-widest">Consistency Rating</p>
+</div>
+<div class="bg-surface-container-high rounded-lg p-6 flex flex-col items-center justify-center text-center">
+<span class="material-symbols-outlined text-primary mb-2" data-icon="emoji_events">emoji_events</span>
+<p class="text-2xl font-black text-on-surface tracking-tighter">04</p>
+<p class="text-[0.6rem] font-bold text-on-surface-variant uppercase tracking-widest">Badges Earned</p>
+</div>
+</section>
+</div>
+</main>
+<!-- Contextual FAB Suppression: FAB not rendered for focused Learning Detail screen -->
+</body></html>

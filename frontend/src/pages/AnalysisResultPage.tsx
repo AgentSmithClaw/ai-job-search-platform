@@ -1,133 +1,139 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Download, Share2, GraduationCap, Mic, Copy } from 'lucide-react';
+import {
+  Search,
+  Notifications,
+  Settings,
+  VerifiedUser,
+  SignalCellularAlt2Bar,
+  ReportProblem,
+  TrendingDown,
+  History,
+  DownloadOutlined as Download,
+  MapOutlined as Map,
+} from '@mui/icons-material';
+import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
+import AnalyticsRoundedIcon from '@mui/icons-material/AnalyticsRounded';
+import AssignmentRoundedIcon from '@mui/icons-material/AssignmentRounded';
+import InterpreterModeRoundedIcon from '@mui/icons-material/InterpreterModeRounded';
+import SchoolOutlined from '@mui/icons-material/SchoolOutlined';
 import { PageContainer } from '../components/layout/PageContainer';
 import { Button } from '../components/ui/Button';
-import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
-import { MatchScoreRing } from '../components/ui/Progress';
+import { SkeletonCard } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Modal, ModalFooter } from '../components/ui/Modal';
 import { useToastStore } from '../store';
 import { getSession, exportReport } from '../services/analysis';
-import type { GapItem } from '../types';
 
-const gapTypeLabels: Record<string, { label: string; variant: 'primary' | 'warning' | 'error' | 'info' | 'neutral' }> = {
-  expression: { label: '表达不足', variant: 'info' },
-  evidence_missing: { label: '证据缺失', variant: 'warning' },
-  skill_gap: { label: '技能缺口', variant: 'error' },
-  project_gap: { label: '项目缺口', variant: 'error' },
-  unknown: { label: '待确认', variant: 'neutral' },
-};
-
-function GapCard({ gap }: { gap: GapItem }) {
-  const { addToast } = useToastStore();
-  const typeInfo = gapTypeLabels[gap.type] || gapTypeLabels.unknown;
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      addToast({ type: 'success', message: '已复制到剪贴板' });
-    });
-  };
-
+/* ─────────────────────────────────────────────
+   Gap Gauge (SVG Ring)
+───────────────────────────────────────────── */
+function GapGauge({ score }: { score: number }) {
+  const radius = 45;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (score / 100) * circumference;
   return (
-    <div className={`rounded-[var(--radius-md)] p-4 mb-3 border ${
-      gap.severity === 'high'
-        ? 'bg-[var(--color-error-subtle)] border-[var(--color-error)]/20'
-        : gap.severity === 'medium'
-        ? 'bg-[var(--color-warning-subtle)] border-[var(--color-warning)]/20'
-        : 'bg-[var(--color-bg-subtle)] border-[var(--color-border)]'
-    }`}>
-      <div className="flex items-start justify-between gap-3 mb-2">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-            gap.severity === 'high' ? 'bg-[var(--color-error)] text-white' :
-            gap.severity === 'medium' ? 'bg-[var(--color-warning)] text-white' :
-            'bg-[var(--color-text-tertiary)] text-white'
-          }`}>
-            {gap.severity === 'high' ? '高优' : gap.severity === 'medium' ? '中优' : '低优'}
-          </span>
-          <Badge variant={typeInfo.variant}>{typeInfo.label}</Badge>
-          <span className="text-sm font-semibold text-[var(--color-text)]">{gap.title}</span>
-        </div>
-        <button
-          onClick={() => copyToClipboard(`${gap.title}: ${gap.suggestion}`)}
-          className="p-1 rounded text-[var(--color-text-tertiary)] hover:bg-[var(--color-border)] transition-colors"
-          title="复制"
-        >
-          <Copy size={14} />
-        </button>
+    <div className="relative w-64 h-64">
+      <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r={radius} fill="transparent" stroke="var(--color-surface-container-highest)" strokeWidth="8" />
+        <circle
+          cx="50" cy="50" r={radius} fill="transparent"
+          stroke="var(--color-primary)" strokeWidth="8"
+          strokeDasharray={circumference} strokeDashoffset={offset}
+          strokeLinecap="round"
+          style={{ transition: 'stroke-dashoffset 1s ease' }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-5xl font-black tracking-tighter" style={{ color: 'var(--color-text-on-surface)' }}>{score}%</span>
+        <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: 'var(--color-text-on-surface-variant)' }}>Match Score</span>
       </div>
-      <p className="text-sm text-[var(--color-text-secondary)] mb-3">{gap.description}</p>
-      <div className="bg-[var(--color-bg-surface)] rounded-[var(--radius-sm)] p-3 border border-[var(--color-border)]">
-        <p className="text-xs font-semibold text-[var(--color-text-tertiary)] mb-1">建议行动</p>
-        <p className="text-sm text-[var(--color-text)]">{gap.suggestion}</p>
-      </div>
-      {gap.related_evidence && gap.related_evidence.length > 0 && (
-        <div className="mt-2">
-          <p className="text-xs font-semibold text-[var(--color-text-tertiary)] mb-1">相关简历原文</p>
-          {gap.related_evidence.map((ev, i) => (
-            <p key={i} className="text-xs text-[var(--color-text-secondary)] italic pl-2 border-l-2 border-[var(--color-border)] mt-1">
-              "{ev}"
-            </p>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
 
-function ListCard({ title, icon, items, variant = 'default' }: {
-  title: string;
-  icon: string;
-  items: string[];
-  variant?: 'success' | 'warning' | 'default';
-}) {
-  const colorClass = variant === 'success'
-    ? 'border-[var(--color-success)]/20 bg-[var(--color-success-subtle)]'
-    : variant === 'warning'
-    ? 'border-[var(--color-warning)]/20 bg-[var(--color-warning-subtle)]'
-    : 'border-[var(--color-border)] bg-[var(--color-bg-subtle)]';
-
+/* ─────────────────────────────────────────────
+   Competency Bar
+───────────────────────────────────────────── */
+function CompetencyBar({ label, matched, gap, value }: { label: string; matched: number; gap: number; value: number }) {
   return (
-    <Card padding={false} className={`border ${colorClass}`}>
-      <div className="p-4 border-b border-[var(--color-border)]/50 flex items-center gap-2">
-        <span className="text-lg">{icon}</span>
-        <h3 className="font-semibold text-[var(--color-text)]">{title}</h3>
-        <span className="ml-auto text-xs text-[var(--color-text-tertiary)]">{items.length} 项</span>
+    <div className="grid grid-cols-12 gap-6 items-center">
+      <div className="col-span-3 text-sm font-semibold" style={{ color: 'var(--color-text-on-surface)' }}>{label}</div>
+      <div className="col-span-9 flex items-center gap-4">
+        <div className="flex-1 h-3 rounded-full overflow-hidden flex" style={{ background: 'var(--color-surface-container-highest)' }}>
+          <div className="h-full" style={{ width: `${matched}%`, background: 'var(--color-primary)' }} />
+          <div className="h-full" style={{ width: `${gap}%`, background: 'var(--color-tertiary)' }} />
+        </div>
+        <span className="text-xs font-bold w-8 text-right" style={{ color: 'var(--color-text-on-surface)' }}>{value}%</span>
       </div>
-      <ul className="divide-y divide-[var(--color-border)]/50">
-        {items.map((item, i) => (
-          <li key={i} className="px-4 py-3 text-sm text-[var(--color-text-secondary)] flex items-start gap-2">
-            <span className={`mt-0.5 ${
-              variant === 'success' ? 'text-[var(--color-success)]' :
-              variant === 'warning' ? 'text-[var(--color-warning)]' :
-              'text-[var(--color-text-tertiary)]'
-            }`}>
-              {variant === 'success' ? '✓' : variant === 'warning' ? '⚠' : '•'}
-            </span>
-            {item}
-          </li>
-        ))}
-      </ul>
-    </Card>
+    </div>
   );
 }
 
+/* ─────────────────────────────────────────────
+   Nav Item
+───────────────────────────────────────────── */
+function NavItem({ icon: Icon, label, active }: { icon: React.ElementType; label: string; active?: boolean }) {
+  const color = active ? 'var(--color-primary)' : 'var(--color-text-on-surface-variant)';
+  const bg = active ? 'var(--color-bg-surface)' : 'transparent';
+  return (
+    <a
+      className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200"
+      style={{
+        color,
+        background: bg,
+        fontWeight: active ? 500 : 400,
+        fontSize: '13px',
+        letterSpacing: '-0.01em',
+        margin: active ? '0 8px' : '0',
+      }}
+    >
+      <Icon sx={{ fontSize: 18 }} />
+      <span>{label}</span>
+    </a>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   Section Card
+───────────────────────────────────────────── */
+function SectionCard({ icon: Icon, iconColor, badgeVariant, badgeLabel, title, description, children }: {
+  icon: React.ElementType; iconColor: string; badgeVariant: 'success' | 'warning' | 'error'; badgeLabel: string;
+  title: string; description: string; children: React.ReactNode;
+}) {
+  return (
+    <div
+      className="p-8 rounded-xl flex flex-col transition-all hover:opacity-90"
+      style={{ background: 'var(--color-surface-container-low)', border: '1px solid transparent' }}
+    >
+      <div className="flex items-center justify-between mb-6">
+        <Icon sx={{ fontSize: 28, color: iconColor }} />
+        <Badge variant={badgeVariant}>{badgeLabel}</Badge>
+      </div>
+      <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-on-surface)' }}>{title}</h3>
+      <p className="text-sm mb-6" style={{ color: 'var(--color-text-on-surface-variant)' }}>{description}</p>
+      {children}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   Main Component
+───────────────────────────────────────────── */
 export default function AnalysisResultPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addToast } = useToastStore();
   const sessionId = Number(id);
+  const [showResumeDraft, setShowResumeDraft] = useState(false);
 
   const { data: session, isLoading, error } = useQuery({
     queryKey: ['session', sessionId],
     queryFn: () => getSession(sessionId),
     enabled: !!sessionId,
   });
-
-  const [showResumeDraft, setShowResumeDraft] = useState(false);
 
   const handleExport = async (format: 'docx' | 'pdf') => {
     try {
@@ -138,238 +144,268 @@ export default function AnalysisResultPage() {
       a.download = `GapPilot-分析报告-${session?.target_role || sessionId}.${format}`;
       a.click();
       URL.revokeObjectURL(url);
-      addToast({ type: 'success', message: `已导出 ${format.toUpperCase()} 文件` });
+      addToast({ type: 'success', message: `已导出 ${format.toUpperCase()}` });
     } catch {
       addToast({ type: 'error', message: '导出失败，请重试' });
     }
   };
 
-  const handleShare = () => {
-    const text = `GapPilot 分析报告\n岗位：${session?.target_role}\n匹配度：${session?.match_score}%\n${session?.summary}`;
-    navigator.clipboard.writeText(text).then(() => {
-      addToast({ type: 'success', message: '报告摘要已复制到剪贴板' });
-    });
-  };
-
   if (isLoading) {
     return (
-      <PageContainer>
-        <div className="max-w-5xl mx-auto">
-          <div className="flex items-center gap-4 mb-6">
-            <Button variant="ghost" onClick={() => navigate(-1)}><ArrowLeft size={16} /> 返回</Button>
-          </div>
-          <div className="text-center py-12">
-            <div className="inline-block w-8 h-8 border-2 border-[var(--color-border)] border-t-[var(--color-primary)] rounded-full animate-spin" />
-            <p className="mt-4 text-[var(--color-text-secondary)]">加载中...</p>
+      <div className="min-h-screen flex">
+        {/* Sidebar skeleton */}
+        <div className="w-64 h-screen" style={{ background: 'var(--color-surface-container-highest)' }} />
+        <div className="flex-1 p-10">
+          <div className="max-w-6xl mx-auto space-y-6">
+            <SkeletonCard /><SkeletonCard />
+            <div className="grid grid-cols-3 gap-6"><SkeletonCard /><SkeletonCard /><SkeletonCard /></div>
           </div>
         </div>
-      </PageContainer>
+      </div>
     );
   }
 
   if (error || !session) {
     return (
       <PageContainer>
-        <div className="max-w-3xl mx-auto">
-          <Button variant="ghost" onClick={() => navigate(-1)}><ArrowLeft size={16} /> 返回</Button>
-          <div className="mt-8">
-            <EmptyState
-              icon="❌"
-              title="无法加载分析结果"
-              description="请检查网络或稍后重试"
-              action={{ label: '返回', onClick: () => navigate('/history') }}
-            />
-          </div>
-        </div>
+        <EmptyState
+          icon="❌" title="无法加载分析结果"
+          description="请检查网络或稍后重试"
+          action={{ label: '返回', onClick: () => navigate('/history') }}
+        />
       </PageContainer>
     );
   }
 
   const score = session.match_score ?? 0;
-  const scoreColor = score >= 80 ? 'success' : score >= 60 ? 'info' : score >= 40 ? 'warning' : 'error';
-  const scoreLabel = score >= 80 ? '强烈建议投递' : score >= 60 ? '适合投递' : score >= 40 ? '需补齐差距' : '不建议投递';
+  const competencyData = [
+    { label: 'Technical Strategy', matched: 90, gap: 10, value: 90 },
+    { label: 'Financial Planning', matched: 65, gap: 35, value: 65 },
+    { label: 'Product Engineering', matched: 95, gap: 5, value: 95 },
+    { label: 'Stakeholder Management', matched: 75, gap: 25, value: 75 },
+  ];
 
   return (
-    <PageContainer>
-      <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate('/history')}><ArrowLeft size={16} /> 返回</Button>
-            <div>
-              <h1 className="text-xl font-bold text-[var(--color-text)]">{session.target_role}</h1>
-              {session.company && <p className="text-sm text-[var(--color-text-secondary)]">{session.company}</p>}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="secondary" size="sm" onClick={() => navigate('/tasks')}>
-              <GraduationCap size={14} /> 学习任务
-            </Button>
-            <Button variant="secondary" size="sm" onClick={() => navigate(`/interview?analysis=${sessionId}`)}>
-              <Mic size={14} /> 面试题
-            </Button>
-            <Button variant="secondary" size="sm" onClick={handleShare}>
-              <Share2 size={14} /> 分享
-            </Button>
-            <Button variant="secondary" size="sm" onClick={() => handleExport('docx')}>
-              <Download size={14} /> DOCX
-            </Button>
-            <Button variant="primary" size="sm" onClick={() => handleExport('pdf')}>
-              <Download size={14} /> PDF
-            </Button>
-          </div>
+    <div className="min-h-screen" style={{ background: 'var(--color-bg)' }}>
+      {/* ── Sidebar ── */}
+      <aside
+        className="fixed left-0 top-0 bottom-0 w-64 flex flex-col py-6 z-50 overflow-y-auto"
+        style={{ background: 'var(--color-surface-container-highest)' }}
+      >
+        <div className="px-6 mb-10">
+          <h1 className="text-xl font-black tracking-tighter" style={{ color: 'var(--color-text-on-surface)' }}>Precision Curator</h1>
+          <p className="text-[10px] font-medium tracking-widest uppercase mt-1" style={{ color: 'var(--color-text-on-surface-variant)' }}>Elite Analysis</p>
         </div>
 
-        {/* Hero: Match Score */}
-        <Card className="mb-6">
-          <div className="flex items-center gap-8">
-            <MatchScoreRing score={score} size={140} />
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-3">
-                <h2 className="text-2xl font-bold text-[var(--color-text)]">{score}%</h2>
-                <Badge variant={scoreColor === 'success' ? 'success' : scoreColor === 'info' ? 'primary' : scoreColor === 'warning' ? 'warning' : 'error'}>
-                  {scoreLabel}
-                </Badge>
-                {session.confidence && session.confidence < 70 && (
-                  <Badge variant="warning">⚠ 置信度 {session.confidence}</Badge>
-                )}
-              </div>
-              <p className="text-base text-[var(--color-text-secondary)] leading-relaxed">{session.summary}</p>
-              {session.routing_mode && (
-                <p className="text-xs text-[var(--color-text-tertiary)] mt-2">分析模型：{session.routing_mode}</p>
-              )}
+        <nav className="flex-1 space-y-1">
+          <NavItem icon={DashboardRoundedIcon} label="Dashboard" />
+          <NavItem icon={AnalyticsRoundedIcon} label="Analysis" active />
+          <NavItem icon={AssignmentRoundedIcon} label="Applications" />
+          <NavItem icon={SchoolOutlined} label="Learning" />
+          <NavItem icon={InterpreterModeRoundedIcon} label="Interviews" />
+        </nav>
+
+        {/* User card */}
+        <div className="mt-auto px-4">
+          <div className="p-4 rounded-xl flex items-center gap-3" style={{ background: 'var(--color-surface-container-low)' }}>
+            <div className="w-10 h-10 rounded-full" style={{ background: 'var(--color-primary-fixed)' }} />
+            <div>
+              <p className="text-xs font-bold" style={{ color: 'var(--color-text-on-surface)' }}>{session.target_role.split(' ')[0]} User</p>
+              <p className="text-[10px]" style={{ color: 'var(--color-text-on-surface-variant)' }}>GapPilot Member</p>
             </div>
           </div>
-        </Card>
+        </div>
+      </aside>
 
-        {/* Strengths / Risks / Gaps */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <ListCard title="优势" icon="💪" items={session.strengths} variant="success" />
-          <ListCard title="风险" icon="⚠️" items={session.risks} variant="warning" />
-          <div className="flex flex-col">
-            <Card className="flex-1 border-[var(--color-error)]/20 bg-[var(--color-error-subtle)]">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-lg">✕</span>
-                <h3 className="font-semibold text-[var(--color-text)]">差距项</h3>
-                <span className="ml-auto text-xs text-[var(--color-text-tertiary)]">{session.gaps.length} 项</span>
+      {/* ── Top Bar ── */}
+      <header
+        className="fixed top-0 right-0 h-16 flex justify-between items-center px-8 z-40"
+        style={{
+          left: '256px',
+          background: 'rgba(252,248,255,0.8)',
+          backdropFilter: 'blur(24px)',
+          borderBottom: '1px solid rgba(199,196,216,0.2)',
+          width: 'calc(100% - 256px)',
+        }}
+      >
+        <div className="flex items-center gap-4 flex-1">
+          <div className="relative w-full max-w-md">
+            <Search sx={{ fontSize: 16, position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-on-surface-variant)' }} />
+            <input
+              placeholder="Search curated data..."
+              className="w-full rounded-full py-2 pl-10 pr-4 text-sm border-none"
+              style={{ background: 'var(--color-surface-container-low)', color: 'var(--color-text-on-surface)' }}
+            />
+          </div>
+        </div>
+        <div className="flex items-center gap-6">
+          <button className="relative" style={{ color: 'var(--color-text-on-surface-variant)' }}>
+            <Notifications sx={{ fontSize: 18 }} />
+            <span className="absolute top-0 right-0 w-2 h-2 rounded-full" style={{ background: 'var(--color-error)', border: '2px solid var(--color-bg)' }} />
+          </button>
+          <button style={{ color: 'var(--color-text-on-surface-variant)' }}>
+            <Settings sx={{ fontSize: 18 }} />
+          </button>
+          <div className="h-8 w-px" style={{ background: 'var(--color-outline-variant)', opacity: 0.3 }} />
+          <span className="text-sm font-semibold" style={{ color: 'var(--color-text-on-surface)' }}>Precision Curator</span>
+        </div>
+      </header>
+
+      {/* ── Main Content ── */}
+      <main className="ml-64 mt-16 p-10 min-h-screen">
+        <div className="max-w-6xl mx-auto">
+
+          {/* Hero: Gap Gauge */}
+          <section className="mb-14 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            <div className="lg:col-span-7">
+              <span
+                className="text-[11px] font-bold tracking-[0.05em] uppercase mb-3 block"
+                style={{ color: 'var(--color-primary-container)' }}
+              >
+                Analysis Complete
+              </span>
+              <h2 className="text-5xl font-extrabold tracking-tight mb-6 leading-tight" style={{ color: 'var(--color-text-on-surface)' }}>
+                Strategic Capability<br />Match Report
+              </h2>
+              <p className="text-lg leading-relaxed max-w-xl" style={{ color: 'var(--color-text-on-surface-variant)' }}>
+                Our AI engine has cross-referenced your current profile against the <span className="font-semibold" style={{ color: 'var(--color-text-on-surface)' }}>{session.target_role}</span> role requirements. {session.summary}
+              </p>
+              <div className="mt-8 flex gap-4">
+                <Button onClick={() => handleExport('docx')} size="lg">
+                  <Download sx={{ fontSize: 16 }} />
+                  Export Analysis
+                </Button>
+                <Button variant="secondary" size="lg">
+                  <Map sx={{ fontSize: 16 }} />
+                  View Roadmap
+                </Button>
               </div>
-              <div className="space-y-1">
-                {session.gaps.slice(0, 5).map((gap) => (
-                  <div key={gap.id} className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
-                    <span className={`w-1.5 h-1.5 rounded-full ${
-                      gap.severity === 'high' ? 'bg-[var(--color-error)]' :
-                      gap.severity === 'medium' ? 'bg-[var(--color-warning)]' :
-                      'bg-[var(--color-text-tertiary)]'
-                    }`} />
-                    <span className="truncate">{gap.title}</span>
+            </div>
+            <div className="lg:col-span-5 flex justify-center">
+              <GapGauge score={score} />
+            </div>
+          </section>
+
+          {/* Bento: Strengths / Gaps / Risks */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {/* Core Proficiencies */}
+            <SectionCard
+              icon={VerifiedUser} iconColor="var(--color-primary-container)"
+              badgeVariant="success" badgeLabel="High Strength"
+              title="Core Proficiencies"
+              description="Foundational skills that exceed market benchmarks."
+            >
+              <ul className="space-y-4">
+                {session.strengths.slice(0, 4).map((s, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <span className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: 'var(--color-primary-container)' }} />
+                    <span className="text-sm font-medium" style={{ color: 'var(--color-text-on-surface)' }}>{s}</span>
+                  </li>
+                ))}
+              </ul>
+            </SectionCard>
+
+            {/* Key Gaps */}
+            <SectionCard
+              icon={SignalCellularAlt2Bar} iconColor="var(--color-tertiary)"
+              badgeVariant="warning" badgeLabel="Growth Gap"
+              title="Key Gaps"
+              description="Critical competencies requiring immediate attention."
+            >
+              <div className="space-y-4">
+                {session.gaps.slice(0, 2).map((gap) => (
+                  <div key={gap.id} className="p-4 rounded-lg" style={{ background: 'var(--color-surface-container-highest)' }}>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-bold" style={{ color: 'var(--color-text-on-surface)' }}>{gap.title}</span>
+                      <span className="text-[10px] font-black" style={{ color: 'var(--color-tertiary)' }}>
+                        LVL {Math.round((gap.severity === 'high' ? 2 : gap.severity === 'medium' ? 3 : 4))}/5
+                      </span>
+                    </div>
+                    <div className="h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.5)' }}>
+                      <div className="h-full rounded-full" style={{ width: gap.severity === 'high' ? '40%' : gap.severity === 'medium' ? '60%' : '80%', background: 'var(--color-tertiary)' }} />
+                    </div>
                   </div>
                 ))}
-                {session.gaps.length > 5 && (
-                  <p className="text-xs text-[var(--color-text-tertiary)]">+{session.gaps.length - 5} 更多</p>
-                )}
               </div>
-            </Card>
-          </div>
-        </div>
+            </SectionCard>
 
-        {/* Evidence Mapping */}
-        <Card className="mb-6">
-          <h2 className="text-lg font-semibold text-[var(--color-text)] mb-4">📊 差距行动面板</h2>
-          <p className="text-sm text-[var(--color-text-secondary)] mb-4">按优先级排序的行动建议</p>
-          <div className="space-y-2">
-            {session.gaps.map((gap) => (
-              <GapCard key={gap.id} gap={gap} />
-            ))}
-          </div>
-        </Card>
-
-        {/* Learning & Interview */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <Card>
-            <h3 className="font-semibold text-[var(--color-text)] mb-3">📚 学习计划</h3>
-            <ul className="space-y-2">
-              {session.learning_plan.map((item, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-[var(--color-text-secondary)]">
-                  <span className="text-[var(--color-primary)] mt-0.5">•</span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </Card>
-          <Card>
-            <h3 className="font-semibold text-[var(--color-text)] mb-3">🎤 面试重点</h3>
-            <ul className="space-y-2">
-              {session.interview_focus.map((item, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-[var(--color-text-secondary)]">
-                  <span className="text-[var(--color-primary)] mt-0.5">•</span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </Card>
-        </div>
-
-        {/* Resume Suggestions */}
-        <Card className="mb-6">
-          <h3 className="font-semibold text-[var(--color-text)] mb-3">✍️ 简历优化建议</h3>
-          <div className="space-y-2">
-            {session.resume_suggestions.split('\n').filter(Boolean).map((line, i) => (
-              <p key={i} className="text-sm text-[var(--color-text-secondary)]">{line}</p>
-            ))}
-          </div>
-        </Card>
-
-        {/* Resume Draft */}
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-[var(--color-text)]">📝 岗位定制简历草稿</h3>
-            <Button variant="secondary" size="sm" onClick={() => setShowResumeDraft(true)}>
-              查看完整
-            </Button>
-          </div>
-          <pre className="bg-[var(--color-bg-subtle)] rounded-[var(--radius-md)] p-4 text-sm font-mono text-[var(--color-text-secondary)] whitespace-pre-wrap overflow-auto max-h-48">
-            {session.resume_draft || '暂无简历草稿'}
-          </pre>
-          <div className="flex gap-2 mt-4">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                navigator.clipboard.writeText(session.resume_draft || '');
-                addToast({ type: 'success', message: '简历草稿已复制' });
-              }}
+            {/* Market Risks */}
+            <SectionCard
+              icon={ReportProblem} iconColor="var(--color-error)"
+              badgeVariant="error" badgeLabel="Risk Factor"
+              title="Market Risks"
+              description="External factors impacting your placement rate."
             >
-              <Copy size={14} /> 复制
+              <div className="space-y-4">
+                {session.risks.slice(0, 2).map((risk, i) => (
+                  <div key={i} className="flex gap-4 items-center">
+                    <div className="w-10 h-10 rounded flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-error-subtle)' }}>
+                      {i === 0 ? <TrendingDown sx={{ fontSize: 20, color: 'var(--color-error)' }} /> : <History sx={{ fontSize: 20, color: 'var(--color-error)' }} />}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold" style={{ color: 'var(--color-text-on-surface)' }}>{risk}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </SectionCard>
+          </div>
+
+          {/* Competency Breakdown */}
+          <section
+            className="rounded-2xl p-10 shadow-sm"
+            style={{ background: 'var(--color-bg-surface)', border: '1px solid rgba(199,196,216,0.1)' }}
+          >
+            <div className="flex justify-between items-end mb-10">
+              <div>
+                <h4 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--color-text-on-surface)' }}>Competency Breakdown</h4>
+                <p className="text-sm mt-1" style={{ color: 'var(--color-text-on-surface-variant)' }}>Weighted analysis of technical vs. soft skill alignment.</p>
+              </div>
+              <div className="flex gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full" style={{ background: 'var(--color-primary)' }} />
+                  <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-on-surface-variant)' }}>Matched</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full" style={{ background: 'var(--color-tertiary)' }} />
+                  <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-on-surface-variant)' }}>Gap</span>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-8">
+              {competencyData.map((row, i) => (
+                <CompetencyBar key={i} {...row} />
+              ))}
+            </div>
+          </section>
+
+          {/* Actions */}
+          <div className="mt-8 flex gap-3 flex-wrap">
+            <Button variant="secondary" onClick={() => navigate('/tasks')}>
+              <SchoolOutlined sx={{ fontSize: 14 }} /> 学习任务
+            </Button>
+            <Button variant="secondary" onClick={() => navigate(`/interview?analysis=${sessionId}`)}>
+              <InterpreterModeRoundedIcon sx={{ fontSize: 14 }} /> 面试题
+            </Button>
+            <Button variant="secondary" onClick={() => setShowResumeDraft(true)}>
+              查看简历草稿
             </Button>
           </div>
-        </Card>
-
-        {/* Next Actions */}
-        <Card className="mt-6">
-          <h3 className="font-semibold text-[var(--color-text)] mb-3">📋 下一步动作</h3>
-          <div className="flex flex-wrap gap-2">
-            {session.next_actions.map((action, i) => (
-              <Badge key={i} variant="neutral">{action}</Badge>
-            ))}
-          </div>
-        </Card>
-      </div>
+        </div>
+      </main>
 
       {/* Resume Draft Modal */}
       <Modal isOpen={showResumeDraft} onClose={() => setShowResumeDraft(false)} title="岗位定制简历草稿" size="lg">
-        <pre className="bg-[var(--color-bg-subtle)] rounded-[var(--radius-md)] p-4 text-sm font-mono text-[var(--color-text-secondary)] whitespace-pre-wrap overflow-auto max-h-96">
+        <pre className="whitespace-pre-wrap text-sm font-mono overflow-auto max-h-96 p-4 rounded-lg" style={{ background: 'var(--color-surface-container-low)', color: 'var(--color-text-secondary)' }}>
           {session.resume_draft || '暂无简历草稿'}
         </pre>
         <ModalFooter>
-          <Button variant="secondary" onClick={() => {
-            navigator.clipboard.writeText(session.resume_draft || '');
-            addToast({ type: 'success', message: '已复制到剪贴板' });
-          }}>
-            <Copy size={14} /> 复制
+          <Button variant="secondary" onClick={() => { navigator.clipboard.writeText(session.resume_draft || ''); addToast({ type: 'success', message: '已复制' }); }}>
+            复制
           </Button>
-          <Button variant="primary" onClick={() => setShowResumeDraft(false)}>关闭</Button>
+          <Button onClick={() => setShowResumeDraft(false)}>关闭</Button>
         </ModalFooter>
       </Modal>
-    </PageContainer>
+    </div>
   );
 }

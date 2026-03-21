@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Analysis Creation Wizard - Precision Curator</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "tertiary": "#7e3000",
+              "error-container": "#ffdad6",
+              "on-tertiary-fixed": "#351000",
+              "surface-container-lowest": "#ffffff",
+              "outline": "#777587",
+              "surface": "#fcf8ff",
+              "surface-container-high": "#eae6f4",
+              "primary-fixed-dim": "#c3c0ff",
+              "on-tertiary-fixed-variant": "#7b2f00",
+              "primary-fixed": "#e2dfff",
+              "on-primary-fixed-variant": "#3323cc",
+              "inverse-primary": "#c3c0ff",
+              "tertiary-container": "#a44100",
+              "secondary-container": "#b6b4ff",
+              "surface-container-low": "#f5f2ff",
+              "surface-container-highest": "#e4e1ee",
+              "tertiary-fixed-dim": "#ffb695",
+              "on-surface": "#1b1b24",
+              "on-background": "#1b1b24",
+              "inverse-surface": "#302f39",
+              "outline-variant": "#c7c4d8",
+              "on-tertiary": "#ffffff",
+              "on-secondary": "#ffffff",
+              "surface-dim": "#dcd8e5",
+              "on-secondary-fixed": "#140f54",
+              "surface-bright": "#fcf8ff",
+              "secondary-fixed-dim": "#c3c0ff",
+              "error": "#ba1a1a",
+              "on-surface-variant": "#464555",
+              "background": "#fcf8ff",
+              "surface-tint": "#4d44e3",
+              "primary": "#3525cd",
+              "inverse-on-surface": "#f3effc",
+              "on-primary-container": "#dad7ff",
+              "surface-variant": "#e4e1ee",
+              "on-primary-fixed": "#0f0069",
+              "on-tertiary-container": "#ffd2be",
+              "primary-container": "#4f46e5",
+              "secondary-fixed": "#e2dfff",
+              "secondary": "#58579b",
+              "surface-container": "#f0ecf9",
+              "on-secondary-fixed-variant": "#413f82",
+              "tertiary-fixed": "#ffdbcc",
+              "on-error": "#ffffff",
+              "on-secondary-container": "#454386",
+              "on-primary": "#ffffff",
+              "on-error-container": "#93000a"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen">
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 overflow-y-auto bg-[#e4e1ee] dark:bg-slate-900 flex flex-col py-6 z-50">
+<div class="px-6 mb-10">
+<h1 class="text-xl font-black text-[#1b1b24] dark:text-slate-100 tracking-tighter">Precision Curator</h1>
+<p class="text-xs font-['Inter'] font-medium text-[#464555] dark:text-slate-400 mt-1 uppercase tracking-widest">Elite Analysis</p>
+</div>
+<nav class="flex-1 space-y-1 px-2">
+<a class="flex items-center gap-3 px-4 py-3 text-[#464555] dark:text-slate-400 hover:text-[#1b1b24] dark:hover:text-white hover:bg-[#f0ecf9] dark:hover:bg-slate-800/50 transition-colors font-['Inter'] font-medium text-sm tracking-tight rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#4f46e5] dark:text-indigo-400 bg-[#ffffff] dark:bg-slate-800 rounded-lg mx-2 transition-all duration-200 font-['Inter'] font-medium text-sm tracking-tight" href="#">
+<span class="material-symbols-outlined" data-icon="analytics" style="font-variation-settings: 'FILL' 1;">analytics</span>
+                Analysis
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#464555] dark:text-slate-400 hover:text-[#1b1b24] dark:hover:text-white hover:bg-[#f0ecf9] dark:hover:bg-slate-800/50 transition-colors font-['Inter'] font-medium text-sm tracking-tight rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="assignment">assignment</span>
+                Applications
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#464555] dark:text-slate-400 hover:text-[#1b1b24] dark:hover:text-white hover:bg-[#f0ecf9] dark:hover:bg-slate-800/50 transition-colors font-['Inter'] font-medium text-sm tracking-tight rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="school">school</span>
+                Learning
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#464555] dark:text-slate-400 hover:text-[#1b1b24] dark:hover:text-white hover:bg-[#f0ecf9] dark:hover:bg-slate-800/50 transition-colors font-['Inter'] font-medium text-sm tracking-tight rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="interpreter_mode">interpreter_mode</span>
+                Interviews
+            </a>
+</nav>
+<div class="mt-auto px-4 pt-4 border-t border-[#c7c4d8]/20">
+<div class="flex items-center gap-3 p-2">
+<img alt="User profile" class="w-8 h-8 rounded-full bg-surface-container" data-alt="User profile avatar icon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRfE5B2SlvwFR6wmZ_6AO2fWtfg7mJJcxQvMgOLerV94gOiUmVwInOZQaRSqdFT7DWE-BedkV3MFzhNVBMvGPpVKT1ftx6ub0OZO6dNa_vZeVCp5whHG6c11pIQgLcl8L1IEzo9N-G2lEVD2aMPRIpRAke0s6ZSfknuy5Bu4ZIwhdPYN6dCaZ2nmdEs9bpfBnI_X-ty23oZHI3sx3hsDvGmslBhcuvqhTdPuKJUg_lAam1pHBOr-NE0fT7Svg3TQ_jDThG9FtwYBQ"/>
+<div class="overflow-hidden">
+<p class="text-xs font-bold truncate">Alex Sterling</p>
+<p class="text-[10px] text-on-surface-variant truncate">Premium Curator</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 left-64 h-16 z-40 bg-[#fcf8ff]/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-[#c7c4d8]/20 dark:border-slate-800 shadow-sm flex justify-between items-center px-8">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm" data-icon="search">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary-container transition-all" placeholder="Search analyses..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+<div class="h-8 w-px bg-outline-variant/20"></div>
+<img alt="User avatar" class="w-8 h-8 rounded-lg bg-primary-fixed-dim" data-alt="User circular avatar thumbnail" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD21vrB4pm7nAm2f6UTtYeu51CD5sT1Y27z16cCKMYVwu__Xu5qo509Fx3WF5UzeepKYQVm2ACJWhKoYnrmW3r1NELyyZhxKp5HaRfTHzowsadfs01htXgXJ2_DdiUZR1XDrEN-w8QWV6E8d_c8ZEWx7ySz3cXa-NQi498l1FAcLxKd2XUwA286YE5FXCvQo2RtL70Ak55BfCAL6OI_4RJTErZUuSSsk6FnamwFqNBEHUbBfgrxasRrEH1_R2YmzfgIgyLOV2PB2ro"/>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pl-64 pt-16 min-h-screen bg-surface">
+<div class="max-w-6xl mx-auto px-12 py-16">
+<!-- Header Section -->
+<div class="mb-12">
+<div class="flex items-center gap-2 mb-4">
+<span class="px-2 py-0.5 bg-primary-fixed text-on-primary-fixed-variant text-[10px] font-bold tracking-widest uppercase rounded">New Analysis</span>
+<div class="h-px flex-1 bg-outline-variant/10"></div>
+</div>
+<h2 class="text-[2.75rem] font-extrabold text-on-surface tracking-tight leading-tight mb-4">Create Job Gap Analysis</h2>
+<p class="text-lg text-on-surface-variant max-w-2xl leading-relaxed">
+                    Our AI Digital Architect will map your career DNA against the target role to identify architectural gaps and strategic pivots.
+                </p>
+</div>
+<!-- Progress Indicator -->
+<div class="mb-16 grid grid-cols-4 gap-4">
+<div class="group relative">
+<div class="h-1 bg-primary rounded-full mb-3"></div>
+<p class="text-[11px] font-bold text-primary uppercase tracking-wider">01. Identity Source</p>
+<p class="text-xs text-on-surface-variant">Upload Resume</p>
+</div>
+<div class="group relative">
+<div class="h-1 bg-primary rounded-full mb-3"></div>
+<p class="text-[11px] font-bold text-primary uppercase tracking-wider">02. Destination Meta</p>
+<p class="text-xs text-on-surface-variant">Job Description</p>
+</div>
+<div class="group relative opacity-40">
+<div class="h-1 bg-surface-container-highest rounded-full mb-3"></div>
+<p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">03. AI Processing</p>
+<p class="text-xs text-on-surface-variant">Architecture Mapping</p>
+</div>
+<div class="group relative opacity-40">
+<div class="h-1 bg-surface-container-highest rounded-full mb-3"></div>
+<p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">04. Gap Output</p>
+<p class="text-xs text-on-surface-variant">Final Report</p>
+</div>
+</div>
+<!-- Wizard Content (Asymmetric Layout) -->
+<div class="grid grid-cols-12 gap-8 items-start">
+<!-- Column 1: Upload Resume (Left, Slightly Narrower) -->
+<div class="col-span-12 lg:col-span-5">
+<div class="bg-surface-container rounded-xl p-8 border border-transparent hover:border-primary-container/20 transition-all duration-300">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-xl font-semibold tracking-tight">Identity Source</h3>
+<span class="material-symbols-outlined text-primary" data-icon="description">description</span>
+</div>
+<p class="text-sm text-on-surface-variant mb-8 leading-relaxed">
+                            Upload your latest resume in PDF or DOCX format. We'll extract your skills, tenure, and project impact.
+                        </p>
+<div class="relative group border-2 border-dashed border-outline-variant/30 rounded-xl p-10 flex flex-col items-center justify-center bg-surface-container-low hover:bg-surface-container-lowest hover:border-primary/40 transition-all cursor-pointer">
+<div class="w-16 h-16 rounded-full bg-primary-fixed-dim flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="cloud_upload">cloud_upload</span>
+</div>
+<p class="font-medium text-sm mb-1">Drop Resume Here</p>
+<p class="text-xs text-on-surface-variant">or <span class="text-primary font-semibold">browse files</span></p>
+<input class="absolute inset-0 opacity-0 cursor-pointer" type="file"/>
+</div>
+<div class="mt-8 space-y-3">
+<div class="flex items-center gap-3 p-3 bg-surface-container-highest/50 rounded-lg">
+<span class="material-symbols-outlined text-sm text-on-surface-variant" data-icon="history">history</span>
+<p class="text-xs font-medium truncate">Resume_ProductDesigner_2024.pdf</p>
+<span class="ml-auto text-[10px] text-primary font-bold uppercase">Ready</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Column 2: Job Description (Right, Wider) -->
+<div class="col-span-12 lg:col-span-7">
+<div class="bg-surface-container-low rounded-xl p-8 shadow-sm">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-xl font-semibold tracking-tight">Destination Meta</h3>
+<span class="material-symbols-outlined text-tertiary" data-icon="target">target</span>
+</div>
+<div class="mb-6">
+<label class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-2">Job Title / Role</label>
+<input class="w-full bg-surface-container-lowest border-outline-variant/20 rounded-lg p-3 text-sm focus:ring-1 focus:ring-primary focus:border-primary transition-all" placeholder="e.g. Senior Product Architect" type="text"/>
+</div>
+<div>
+<label class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-2">Job Description</label>
+<div class="relative">
+<textarea class="w-full h-80 bg-surface-container-lowest border-outline-variant/20 rounded-xl p-6 text-sm leading-relaxed resize-none focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-on-surface-variant/40" placeholder="Paste the full job listing here..." spellcheck="false"></textarea>
+<div class="absolute bottom-4 right-4 flex gap-2">
+<button class="p-2 text-on-surface-variant hover:text-primary bg-surface-container rounded-lg transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="content_paste">content_paste</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary bg-surface-container rounded-lg transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="magic_button">magic_button</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Action Bar -->
+<div class="mt-16 flex items-center justify-between py-8 border-t border-outline-variant/10">
+<div class="flex items-center gap-6">
+<button class="flex items-center gap-2 text-on-surface-variant hover:text-on-surface font-medium transition-colors text-sm">
+<span class="material-symbols-outlined text-sm" data-icon="arrow_back">arrow_back</span>
+                        Cancel
+                    </button>
+<div class="h-4 w-px bg-outline-variant/20"></div>
+<div class="flex items-center gap-2 text-on-surface-variant/60 italic text-xs">
+<span class="material-symbols-outlined text-sm" data-icon="info">info</span>
+                        AI will take approx. 45 seconds to curate your gap analysis.
+                    </div>
+</div>
+<div class="flex items-center gap-4">
+<button class="px-6 py-3 font-medium text-primary hover:bg-primary/5 rounded-lg transition-all text-sm">
+                        Save as Draft
+                    </button>
+<button class="px-8 py-3 bg-primary-container text-on-primary font-bold rounded-lg shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5 active:scale-95 transition-all text-sm flex items-center gap-3">
+                        Analyze My Fit
+                        <span class="material-symbols-outlined text-lg" data-icon="bolt" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</button>
+</div>
+</div>
+<!-- Contextual Tip Card (Glassmorphism) -->
+<div class="mt-12 p-6 rounded-2xl bg-surface-container-lowest/40 backdrop-blur-xl border border-white/40 flex gap-6 items-start">
+<div class="w-12 h-12 shrink-0 rounded-xl bg-primary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="lightbulb">lightbulb</span>
+</div>
+<div>
+<h4 class="font-bold text-sm mb-1 tracking-tight">Pro Curator Tip</h4>
+<p class="text-sm text-on-surface-variant leading-relaxed">
+                        For higher precision, ensure the job description includes the "Responsibilities" and "Qualifications" sections. The AI performs best when it can compare specific outcomes rather than generic keywords.
+                    </p>
+</div>
+</div>
+</div>
+</main>
+<!-- FAB Suppression Rule Active -->
+</body></html>
