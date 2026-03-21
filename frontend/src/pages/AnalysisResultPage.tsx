@@ -2,21 +2,12 @@ import {
   VerifiedUser,
   SignalCellularAlt2Bar,
   ReportProblem,
-  TrendingDown,
-  History,
   Download,
-  Search,
-  Notifications,
-  Settings,
-  Dashboard,
-  Analytics,
-  Assignment,
-  School,
-  InterpreterMode,
 } from '@mui/icons-material';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { ProgressBar } from '../components/ui/Progress';
+import { PageContainer } from '../components/layout/PageContainer';
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 
@@ -37,12 +28,12 @@ const MOCK_RESULT = {
   ],
   risks: [
     {
-      icon: TrendingDown,
+      icon: ReportProblem,
       title: 'Niche Oversaturation',
       description: '42% increase in competitive applicants',
     },
     {
-      icon: History,
+      icon: VerifiedUser,
       title: 'Certification Lag',
       description: 'PMP Renewal due in 14 days',
     },
@@ -54,14 +45,6 @@ const MOCK_RESULT = {
     { name: 'Stakeholder Management', matched: 75, gap: 25 },
   ],
 };
-
-const NAV_ITEMS = [
-  { icon: Dashboard, label: 'Dashboard' },
-  { icon: Analytics, label: 'Analysis', active: true },
-  { icon: Assignment, label: 'Applications' },
-  { icon: School, label: 'Learning' },
-  { icon: InterpreterMode, label: 'Interviews' },
-];
 
 // ─── Gap Score Gauge ──────────────────────────────────────────────────────────
 
@@ -348,154 +331,23 @@ function CompetencyBreakdownSection({
   );
 }
 
-// ─── Layout ───────────────────────────────────────────────────────────────────
-
-function SideNav() {
-  return (
-    <aside
-      className="h-screen w-64 fixed left-0 top-0 overflow-y-auto flex flex-col py-6 z-50"
-      style={{ backgroundColor: 'var(--color-surface-container-highest)' }}
-    >
-      <div className="px-6 mb-10">
-        <h1 className="text-xl font-black text-[var(--color-text)] tracking-tighter">
-          Precision Curator
-        </h1>
-        <p className="text-[10px] font-medium text-[var(--color-text-on-surface-variant)] tracking-widest uppercase mt-1">
-          Elite Analysis
-        </p>
-      </div>
-
-      <nav className="flex-1 space-y-1">
-        {NAV_ITEMS.map((item) => {
-          const Icon = item.icon;
-          return (
-            <a
-              key={item.label}
-              href="#"
-              className={`flex items-center gap-3 px-4 py-3 transition-all duration-200 ${
-                item.active
-                  ? 'rounded-lg mx-2 text-[var(--color-primary)]'
-                  : 'text-[var(--color-text-on-surface-variant)] hover:bg-[var(--color-surface-container)]'
-              }`}
-              style={
-                item.active
-                  ? {
-                      backgroundColor: 'var(--color-bg-surface)',
-                      color: 'var(--color-primary)',
-                    }
-                  : {}
-              }
-            >
-              <Icon sx={{ fontSize: 20 }} />
-              <span className="font-medium text-sm tracking-tight">{item.label}</span>
-            </a>
-          );
-        })}
-      </nav>
-
-      <div className="mt-auto px-4">
-        <div
-          className="p-4 rounded-xl flex items-center gap-3"
-          style={{ backgroundColor: 'var(--color-surface-container-low)' }}
-        >
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
-            style={{ backgroundColor: 'var(--color-primary-fixed)', color: 'var(--color-on-primary-fixed-variant)' }}
-          >
-            AC
-          </div>
-          <div>
-            <p className="text-xs font-bold text-[var(--color-text)]">Alex Chen</p>
-            <p className="text-[10px] text-[var(--color-text-on-surface-variant)]">Senior Analyst</p>
-          </div>
-        </div>
-      </div>
-    </aside>
-  );
-}
-
-function TopAppBar() {
-  return (
-    <header
-      className="fixed top-0 right-0 h-16 z-40 flex justify-between items-center px-8"
-      style={{
-        left: '16rem',
-        backgroundColor: 'var(--color-bg-base)',
-        backdropFilter: 'blur(12px)',
-        borderBottom: '1px solid var(--color-outline-variant)',
-      }}
-    >
-      <div className="flex items-center gap-4 flex-1">
-        <div className="relative w-full max-w-md">
-          <Search
-            sx={{ fontSize: 18 }}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-on-surface-variant)]"
-          />
-          <input
-            className="w-full rounded-full py-2 pl-10 pr-4 text-sm border-none outline-none transition-all"
-            style={{
-              backgroundColor: 'var(--color-surface-container-low)',
-              color: 'var(--color-text)',
-            }}
-            placeholder="Search curated data..."
-            type="text"
-          />
-        </div>
-      </div>
-
-      <div className="flex items-center gap-6">
-        <button className="relative text-[var(--color-text-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors">
-          <Notifications sx={{ fontSize: 20 }} />
-          <span
-            className="absolute top-0 right-0 w-2 h-2 rounded-full border-2"
-            style={{
-              backgroundColor: 'var(--color-error)',
-              borderColor: 'var(--color-bg-surface)',
-            }}
-          />
-        </button>
-        <button className="text-[var(--color-text-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors">
-          <Settings sx={{ fontSize: 20 }} />
-        </button>
-        <div
-          className="h-8 w-px mx-2"
-          style={{ backgroundColor: 'var(--color-outline-variant)' }}
-        />
-        <span className="text-sm font-semibold text-[var(--color-text)]">
-          Precision Curator
-        </span>
-      </div>
-    </header>
-  );
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AnalysisResultPage() {
   const data = MOCK_RESULT;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg-base)' }}>
-      <SideNav />
-      <TopAppBar />
+    <PageContainer>
+      <HeroSection data={data} />
 
-      <main
-        className="ml-64 mt-16 p-10"
-        style={{ backgroundColor: 'var(--color-bg-base)' }}
-      >
-        <div className="max-w-6xl mx-auto">
-          <HeroSection data={data} />
+      {/* Bento Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <StrengthsCard items={data.strengths} />
+        <KeyGapsCard gaps={data.gaps} />
+        <RisksCard risks={data.risks} />
+      </div>
 
-          {/* Bento Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <StrengthsCard items={data.strengths} />
-            <KeyGapsCard gaps={data.gaps} />
-            <RisksCard risks={data.risks} />
-          </div>
-
-          <CompetencyBreakdownSection competencies={data.competencies} />
-        </div>
-      </main>
-    </div>
+      <CompetencyBreakdownSection competencies={data.competencies} />
+    </PageContainer>
   );
 }

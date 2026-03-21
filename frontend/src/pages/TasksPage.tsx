@@ -15,37 +15,11 @@ import StarIcon from '@mui/icons-material/Star';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { ProgressBar } from '../components/ui/Progress';
+import { PageContainer } from '../components/layout/PageContainer';
 
 export default function TasksPage() {
   return (
-    <div className="min-h-screen bg-[var(--color-bg)]">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-[var(--color-bg)]/80 backdrop-blur-xl border-b border-[var(--color-border)]">
-        <div className="px-8 py-4 flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold tracking-widest text-[var(--color-text-secondary)] uppercase">
-              Learning Progress
-            </span>
-            <h1 className="text-3xl font-extrabold text-[var(--color-text)] tracking-tight mt-1">
-              Gap Action Dashboard
-            </h1>
-            <p className="text-sm text-[var(--color-text-secondary)] mt-1 max-w-xl">
-              Strategically bridge your expertise deficits with curated action items and elite resources.
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <Button variant="secondary" size="md">
-              View History
-            </Button>
-            <Button variant="primary" size="md">
-              <AddIcon sx={{ fontSize: 16 }} />
-              New Action
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="p-8 max-w-[1400px] mx-auto">
+    <PageContainer>
         {/* Bento Grid */}
         <div className="grid grid-cols-12 gap-6 mb-10">
           {/* Overall Status Card */}
@@ -290,7 +264,6 @@ export default function TasksPage() {
             </div>
           ))}
         </section>
-      </main>
-    </div>
+    </PageContainer>
   );
 }

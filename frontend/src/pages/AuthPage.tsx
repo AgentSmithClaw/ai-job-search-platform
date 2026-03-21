@@ -5,8 +5,8 @@ import { Zap, ArrowRight } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useAuthStore } from '../store';
-import { register, saveToken, saveUser } from '../services/auth';
-import type { AuthResponse } from '../types';
+import { register, saveToken } from '../services/auth';
+import type { User } from '../types';
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -16,11 +16,11 @@ export default function AuthPage() {
 
   const mutation = useMutation({
     mutationFn: () => register(email, name),
-    onSuccess: (data: AuthResponse) => {
+    onSuccess: (data) => {
+      const user: User = { id: data.id, email: data.email, name: data.name, credits: data.credits, created_at: '' };
       saveToken(data.access_token);
-      saveUser(data.user);
       setToken(data.access_token);
-      setUser(data.user);
+      setUser(user);
       navigate('/');
     },
     onError: (err: Error) => {

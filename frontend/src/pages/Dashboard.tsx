@@ -8,9 +8,6 @@ import {
   ArrowForward,
   ChevronRight,
   UploadFile,
-  Notifications,
-  Settings,
-  Search,
 } from '@mui/icons-material';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
@@ -18,9 +15,9 @@ import { Button } from '../components/ui/Button';
 import { ProgressBar } from '../components/ui/Progress';
 import { EmptyState } from '../components/ui/EmptyState';
 import { SkeletonCard } from '../components/ui/Skeleton';
-import { useAuthStore } from '../store';
 import { useQuery } from '@tanstack/react-query';
 import { getDashboard, getSessions } from '../services/analysis';
+import { PageContainer } from '../components/layout/PageContainer';
 
 // ─── Mock data ───────────────────────────────────────────────────────────────
 
@@ -128,8 +125,6 @@ function AnalysisCard({
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
-
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['dashboard'],
     queryFn: getDashboard,
@@ -147,96 +142,7 @@ export default function Dashboard() {
   const applications = stats?.applications ?? MOCK_STATS.applications;
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)]">
-      {/* ── Sidebar ── */}
-      <aside className="fixed left-0 top-0 bottom-0 w-56 bg-[var(--color-surface-container-highest)] flex flex-col py-6 z-50 overflow-y-auto">
-        <div className="px-6 mb-10">
-          <h1 className="text-xl font-black text-[var(--color-text-on-surface)] tracking-tighter">
-            Precision Curator
-          </h1>
-          <p className="text-[10px] uppercase tracking-widest text-[var(--color-text-on-surface-variant)] font-bold mt-1">
-            Elite Analysis
-          </p>
-        </div>
-
-        <nav className="flex-1 space-y-1">
-          {[
-            { href: '/', icon: 'dashboard', label: 'Dashboard', active: true },
-            { href: '/analyze', icon: 'analytics', label: 'Analysis', active: false },
-            { href: '/applications', icon: 'assignment', label: 'Applications', active: false },
-            { href: '/tasks', icon: 'school', label: 'Learning', active: false },
-            { href: '/interview', icon: 'interpreter_mode', label: 'Interviews', active: false },
-          ].map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              className={`
-                flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-all duration-200
-                ${
-                  item.active
-                    ? 'text-[var(--color-primary)] bg-[var(--color-surface-container-lowest)] shadow-sm'
-                    : 'text-[var(--color-text-on-surface-variant)] hover:text-[var(--color-text-on-surface)] hover:bg-[var(--color-surface-container-low)]'
-                }
-              `}
-            >
-              <span className="material-symbols-outlined text-lg">{item.icon}</span>
-              <span className="font-medium text-sm tracking-tight">{item.label}</span>
-            </a>
-          ))}
-        </nav>
-
-        <div className="px-6 mt-auto pt-6 border-t border-[var(--color-outline-variant)]/10">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-[var(--color-primary-fixed-dim)]" />
-            <div className="overflow-hidden">
-              <p className="text-sm font-bold truncate text-[var(--color-text-on-surface)]">
-                {user?.name || 'Guest'}
-              </p>
-              <p className="text-[10px] text-[var(--color-text-on-surface-variant)] truncate">
-                Premium Curator
-              </p>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* ── Topbar ── */}
-      <header className="fixed top-0 right-0 left-56 h-16 z-40 bg-[var(--color-bg)]/80 backdrop-blur-xl border-b border-[var(--color-outline-variant)]/20 flex justify-between items-center px-8">
-        <div className="flex items-center gap-4 flex-1">
-          <div className="relative w-full max-w-md">
-            <Search
-              sx={{ fontSize: 18 }}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-on-surface-variant)]"
-            />
-            <input
-              className="w-full bg-[var(--color-surface-container-low)] border-none rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-[var(--color-primary)]/20 placeholder:text-[var(--color-text-on-surface-variant)]/50"
-              placeholder="Search analyses, roles, or skills..."
-              type="text"
-            />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-6">
-          <button className="text-[var(--color-text-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors relative">
-            <Notifications sx={{ fontSize: 20 }} />
-            <span
-              className="absolute top-0 right-0 w-2 h-2 rounded-full"
-              style={{ background: 'var(--color-error)', border: '2px solid var(--color-bg)' }}
-            />
-          </button>
-          <button className="text-[var(--color-text-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors">
-            <Settings sx={{ fontSize: 20 }} />
-          </button>
-          <div className="h-8 w-px bg-[var(--color-outline-variant)]/30" />
-          <Button size="md" onClick={() => navigate('/analyze')}>
-            <Add sx={{ fontSize: 16 }} />
-            New Analysis
-          </Button>
-        </div>
-      </header>
-
-      {/* ── Main Content ── */}
-      <main className="ml-56 pt-24 px-8 pb-12 min-h-screen bg-[var(--color-bg)]">
+    <PageContainer>
 
         {/* Welcome Section */}
         <section className="mb-14">
@@ -415,7 +321,6 @@ export default function Dashboard() {
             </div>
           )}
         </section>
-      </main>
 
       {/* FAB */}
       <button
@@ -425,6 +330,6 @@ export default function Dashboard() {
       >
         <Add sx={{ fontSize: 24 }} />
       </button>
-    </div>
+    </PageContainer>
   );
 }

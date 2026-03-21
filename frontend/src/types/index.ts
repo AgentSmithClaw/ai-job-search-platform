@@ -9,9 +9,11 @@ export interface User {
 }
 
 export interface AuthResponse {
+  id: number;
+  email: string;
+  name: string;
   access_token: string;
-  token_type: string;
-  user: User;
+  credits: number;
 }
 
 // Analysis
