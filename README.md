@@ -266,25 +266,19 @@ python3 tests/smoke_test.py
 
 ### Docker（推荐）
 
-```dockerfile
-FROM python:3.11-slim
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
-EXPOSE 8080
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
-```
-
 ```bash
-docker build -t ai-job-search-platform .
+# 一键启动
+docker compose up -d
+
+# 或手动构建
+docker build -t gappilot .
 docker run -p 8080:8080 \
   -e OPENAI_API_KEY=sk-xxx \
-  -e STRIPE_SECRET_KEY=sk_test_xxx \
-  -e STRIPE_WEBHOOK_SECRET=whsec_xxx \
   -e APP_URL=https://your-domain.com \
-  ai-job-search-platform
+  gappilot
 ```
+
+项目包含 `Dockerfile` 和 `docker-compose.yml`，开箱即用。
 
 ### Nginx 反向代理
 
