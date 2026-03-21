@@ -1,8 +1,15 @@
 from pathlib import Path
 import sqlite3
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-DATA_DIR = BASE_DIR / 'data'
+
+# Vercel serverless has read-only filesystem, use /tmp
+if os.environ.get('VERCEL'):
+    DATA_DIR = Path('/tmp/data')
+else:
+    DATA_DIR = BASE_DIR / 'data'
+
 DATA_DIR.mkdir(exist_ok=True)
 DB_PATH = DATA_DIR / 'ai_job_search.db'
 
