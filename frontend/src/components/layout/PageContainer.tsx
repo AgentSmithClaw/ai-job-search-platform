@@ -19,8 +19,8 @@ export function PageContainer({
     <div className="min-h-screen bg-[var(--color-bg-base)]">
       {showSidebar && (sidebar || <Sidebar />)}
       {showTopbar && <Topbar />}
-      <main className="pt-12 min-h-screen">
-        <div className="px-6 py-5 max-w-6xl mx-auto">
+      <main className="pt-16 min-h-screen">
+        <div className="px-8 py-6 max-w-7xl mx-auto">
           {children}
         </div>
       </main>
