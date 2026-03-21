@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Optional
 from app.db import get_connection
@@ -31,7 +31,7 @@ def create_job_application(
     salary_range: str = "",
     notes: str = "",
 ) -> int:
-    created_at = datetime.utcnow().isoformat(timespec='seconds') + 'Z'
+    created_at = datetime.now(UTC).isoformat(timespec='seconds') + 'Z'
     conn = get_connection()
     cursor = conn.execute(
         '''INSERT INTO job_applications 
@@ -72,7 +72,7 @@ def update_application_status(application_id: int, user_id: int, status: Applica
         conn.close()
         return False
     
-    updated_at = datetime.utcnow().isoformat(timespec='seconds') + 'Z'
+    updated_at = datetime.now(UTC).isoformat(timespec='seconds') + 'Z'
     conn.execute(
         'UPDATE job_applications SET status = ?, updated_at = ? WHERE id = ?',
         (status.value, updated_at, application_id)
@@ -107,7 +107,7 @@ def create_learning_task(
     target_date: Optional[str] = None,
     priority: str = "medium",
 ) -> int:
-    created_at = datetime.utcnow().isoformat(timespec='seconds') + 'Z'
+    created_at = datetime.now(UTC).isoformat(timespec='seconds') + 'Z'
     conn = get_connection()
     cursor = conn.execute(
         '''INSERT INTO learning_tasks 
@@ -154,7 +154,7 @@ def update_learning_task_status(task_id: int, user_id: int, status: LearningTask
         conn.close()
         return False
     
-    updated_at = datetime.utcnow().isoformat(timespec='seconds') + 'Z'
+    updated_at = datetime.now(UTC).isoformat(timespec='seconds') + 'Z'
     conn.execute(
         'UPDATE learning_tasks SET status = ?, updated_at = ? WHERE id = ?',
         (status.value, updated_at, task_id)
@@ -190,7 +190,7 @@ def create_interview_prep(
     notes: str = "",
     status: str = "pending",
 ) -> int:
-    created_at = datetime.utcnow().isoformat(timespec='seconds') + 'Z'
+    created_at = datetime.now(UTC).isoformat(timespec='seconds') + 'Z'
     conn = get_connection()
     cursor = conn.execute(
         '''INSERT INTO interview_prep 
@@ -225,7 +225,7 @@ def update_interview_prep(prep_id: int, user_id: int, ideal_answer: str = "", no
         conn.close()
         return False
     
-    updated_at = datetime.utcnow().isoformat(timespec='seconds') + 'Z'
+    updated_at = datetime.now(UTC).isoformat(timespec='seconds') + 'Z'
     conn.execute(
         'UPDATE interview_prep SET ideal_answer = ?, notes = ?, status = ?, updated_at = ? WHERE id = ?',
         (ideal_answer, notes, status, updated_at, prep_id)

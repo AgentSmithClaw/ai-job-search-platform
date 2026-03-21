@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import logging
 import secrets
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Optional
 import httpx
@@ -55,7 +55,7 @@ def create_payment_order(
     REAL: Should create order with PENDING and return order_id for payment redirect.
     """
     order_id = f"ORD_{secrets.token_urlsafe(12)}"
-    created_at = datetime.utcnow().isoformat(timespec='seconds') + 'Z'
+    created_at = datetime.now(UTC).isoformat(timespec='seconds') + 'Z'
 
     conn = get_connection()
     conn.execute(
@@ -113,7 +113,7 @@ def complete_payment(order_id: str, payment_method: PaymentMethod = PaymentMetho
         raise ValueError("用户不存在")
 
     new_credits = user['credits'] + order['credits']
-    completed_at = datetime.utcnow().isoformat(timespec='seconds') + 'Z'
+    completed_at = datetime.now(UTC).isoformat(timespec='seconds') + 'Z'
 
     conn.execute('UPDATE users SET credits = ? WHERE id = ?', (new_credits, user['id']))
     conn.execute(
@@ -171,7 +171,7 @@ def refund_order(order_id: str, user_id: int) -> bool:
         return False
 
     new_credits = max(0, user['credits'] - order['credits'])
-    refunded_at = datetime.utcnow().isoformat(timespec='seconds') + 'Z'
+    refunded_at = datetime.now(UTC).isoformat(timespec='seconds') + 'Z'
 
     conn.execute('UPDATE users SET credits = ? WHERE id = ?', (new_credits, user_id))
     conn.execute(

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta, UTC
 import secrets
 
 from fastapi import HTTPException
@@ -8,6 +8,8 @@ from fastapi import HTTPException
 from app.db import get_connection
 from app.schemas import PurchaseResponse, RegisterRequest, UserProfile
 from app.services.pricing import get_package_by_code
+
+TOKEN_EXPIRY_DAYS = 90
 
 
 def register_user(payload: RegisterRequest) -> UserProfile:
@@ -24,10 +26,10 @@ def register_user(payload: RegisterRequest) -> UserProfile:
         )
 
     token = secrets.token_urlsafe(18)
-    created_at = datetime.utcnow().isoformat(timespec='seconds') + 'Z'
+    created_at = datetime.now(UTC).strftime('%Y-%m-%dT%H:%M:%SZ')
     cursor = conn.execute(
-        'INSERT INTO users (created_at, email, name, token, credits) VALUES (?, ?, ?, ?, ?)',
-        (created_at, payload.email, payload.name, token, 1),
+        'INSERT INTO users (created_at, email, name, token, credits, last_used_at) VALUES (?, ?, ?, ?, ?, ?)',
+        (created_at, payload.email, payload.name, token, 1, created_at),
     )
     conn.commit()
     user_id = cursor.lastrowid
@@ -37,10 +39,31 @@ def register_user(payload: RegisterRequest) -> UserProfile:
 
 def get_user_by_token(access_token: str) -> UserProfile:
     conn = get_connection()
-    user = conn.execute('SELECT id, email, name, token, credits FROM users WHERE token = ?', (access_token,)).fetchone()
-    conn.close()
+    user = conn.execute(
+        'SELECT id, email, name, token, credits, last_used_at FROM users WHERE token = ?',
+        (access_token,)
+    ).fetchone()
     if not user:
+        conn.close()
         raise HTTPException(status_code=401, detail='无效的 access token，请先登录。')
+
+    last_used = user['last_used_at']
+    if last_used:
+        try:
+            cleaned = last_used.replace('+00:00Z', 'Z').replace('+00:00', 'Z')
+            last_used_dt = datetime.fromisoformat(cleaned.replace('Z', '+00:00'))
+            if datetime.now(UTC) - last_used_dt > timedelta(days=TOKEN_EXPIRY_DAYS):
+                conn.close()
+                raise HTTPException(status_code=401, detail='Token 已过期，请重新登录。')
+        except HTTPException:
+            raise
+        except (ValueError, Exception):
+            pass
+
+    now = datetime.now(UTC).strftime('%Y-%m-%dT%H:%M:%SZ')
+    conn.execute('UPDATE users SET last_used_at = ? WHERE id = ?', (now, user['id']))
+    conn.commit()
+    conn.close()
     return UserProfile(
         id=user['id'],
         email=user['email'],
@@ -85,7 +108,7 @@ def add_credits(access_token: str, package_code: str) -> PurchaseResponse:
         raise HTTPException(status_code=401, detail='无效的 access token，请先登录。')
 
     credits_total = user['credits'] + package.credits
-    created_at = datetime.utcnow().isoformat(timespec='seconds') + 'Z'
+    created_at = datetime.now(UTC).strftime('%Y-%m-%dT%H:%M:%SZ')
     conn.execute('UPDATE users SET credits = ? WHERE id = ?', (credits_total, user['id']))
     conn.execute(
         'INSERT INTO purchases (created_at, user_id, package_code, package_name, credits_added, price_cny) VALUES (?, ?, ?, ?, ?, ?)',

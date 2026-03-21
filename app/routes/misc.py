@@ -38,7 +38,7 @@ def pricing():
 
 @router.get("/api/dashboard")
 def get_dashboard(user: UserProfile = Depends(get_current_user)) -> dict:
-    from datetime import datetime, timedelta
+    from datetime import datetime, UTC, timedelta
     from app.db import get_connection
 
     conn = get_connection()
@@ -70,7 +70,7 @@ def get_dashboard(user: UserProfile = Depends(get_current_user)) -> dict:
         (user.id,)
     ).fetchone()['avg_score'] or 0
 
-    week_ago = (datetime.utcnow() - timedelta(days=7)).isoformat(timespec='seconds') + 'Z'
+    week_ago = (datetime.now(UTC) - timedelta(days=7)).isoformat(timespec='seconds') + 'Z'
     sessions_this_week = conn.execute(
         'SELECT COUNT(*) as count FROM analysis_sessions WHERE user_id = ? AND created_at >= ?',
         (user.id, week_ago)

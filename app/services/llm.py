@@ -258,13 +258,29 @@ class LLMService:
             questions = [q.strip() for q in (content or '').split('\n') if q.strip()]
             return questions
         except Exception:
-            return [
-                f"请描述你在 {target_role} 相关项目中的具体贡献",
-                "你如何在压力下保证工作质量？",
-                "描述一次你解决复杂技术问题的经历",
-                "你对薪资的期望是多少？",
-                "你为什么想加入我们公司？",
-            ]
+            return _fallback_questions(target_role, gaps)
+
+
+def _fallback_questions(target_role: str, gaps: list[dict]) -> list[str]:
+    questions = [
+        f"请描述你在 {target_role} 相关项目中的具体贡献",
+        "你如何在压力下保证工作质量？",
+        "描述一次你解决复杂技术问题的经历",
+    ]
+    for gap in gaps[:3]:
+        req = gap.get("requirement", "")
+        gap_type = gap.get("gap_type", "")
+        if req:
+            if gap_type == "skill_gap":
+                questions.append(f"你对 {req} 的理解和使用经验是什么？")
+            elif gap_type == "evidence_missing":
+                questions.append(f"能否举例说明你如何在工作中应用 {req}？")
+            else:
+                questions.append(f"你对 {req} 相关的技术发展趋势有什么看法？")
+    if not gaps:
+        questions.append("你对薪资的期望是多少？")
+        questions.append("你为什么想加入我们公司？")
+    return questions[:8]
 
 
 llm_service: Optional[LLMService] = None

@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 import json
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
@@ -128,7 +128,7 @@ def analyze(request: AnalysisRequest) -> AnalysisResponse:
             job_description=request.job_description,
         )
 
-    created_at = datetime.utcnow().isoformat(timespec='seconds') + 'Z'
+    created_at = datetime.now(UTC).isoformat(timespec='seconds') + 'Z'
     from app.db import get_connection
     conn = get_connection()
     cursor = conn.execute(

@@ -38,5 +38,8 @@ def setup_test_db(monkeypatch):
 def test_user():
     from app.services.auth import register_user
     from app.schemas import RegisterRequest
+    import app.db
+    # Ensure columns are added after table recreation
+    app.db.get_connection().close()
     req = RegisterRequest(email="test@example.com", name="Test User")
     return register_user(req)

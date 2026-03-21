@@ -101,7 +101,7 @@ class ProviderCatalogResponse(BaseModel):
 class PricingPackage(BaseModel):
     code: str
     name: str
-    price_cny: int
+    price_cny: float
     credits: int
     description: str
     includes: List[str]
@@ -139,7 +139,7 @@ class PurchaseResponse(BaseModel):
     package_name: str
     credits_added: int
     credits_total: int
-    price_cny: int
+    price_cny: float
 
 
 class PaymentOrderResponse(BaseModel):
@@ -147,7 +147,7 @@ class PaymentOrderResponse(BaseModel):
     created_at: str
     package_name: str
     credits: int
-    price_cny: int
+    price_cny: float
     status: str
     payment_method: str
 

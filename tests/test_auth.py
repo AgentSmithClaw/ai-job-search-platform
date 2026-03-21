@@ -36,6 +36,27 @@ class TestGetUser:
             get_user_by_token("invalid_token_12345")
         assert exc.value.status_code == 401
 
+    def test_get_user_by_token_expired(self, test_user):
+        from datetime import datetime, timedelta, UTC
+        from app.db import get_connection
+        expired = (datetime.now(UTC) - timedelta(days=91)).isoformat(timespec='seconds') + 'Z'
+        conn = get_connection()
+        conn.execute('UPDATE users SET last_used_at = ? WHERE id = ?', (expired, test_user.id))
+        conn.commit()
+        conn.close()
+        with pytest.raises(HTTPException) as exc:
+            get_user_by_token(test_user.access_token)
+        assert exc.value.status_code == 401
+        assert "过期" in exc.value.detail
+
+    def test_get_user_by_token_updates_last_used(self, test_user):
+        from app.db import get_connection
+        get_user_by_token(test_user.access_token)
+        conn = get_connection()
+        row = conn.execute('SELECT last_used_at FROM users WHERE id = ?', (test_user.id,)).fetchone()
+        conn.close()
+        assert row['last_used_at'] is not None
+
 
 class TestConsumeCredit:
     def test_consume_credit_success(self, test_user):

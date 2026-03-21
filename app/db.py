@@ -112,6 +112,7 @@ def get_connection() -> sqlite3.Connection:
     _ensure_column(conn, 'analysis_sessions', 'credits_used', 'credits_used INTEGER NOT NULL DEFAULT 1')
     _ensure_column(conn, 'payment_orders', 'checkout_url', 'checkout_url TEXT')
     _ensure_column(conn, 'payment_orders', 'session_id', 'session_id TEXT')
+    _ensure_column(conn, 'users', 'last_used_at', 'last_used_at TEXT')
     conn.commit()
     return conn
 
