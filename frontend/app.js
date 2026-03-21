@@ -1235,7 +1235,7 @@ document.getElementById('shareReportBtn').addEventListener('click', async () => 
     if (!response.ok) throw new Error('Failed to load');
     const data = await response.json();
     const report = JSON.parse(data.report_json);
-    const shareText = `【AI 求职分析】${data.target_role}\n匹配度：${report.match_score}%\n优势：${report.strengths.slice(0, 3).join('；')}\n主要差距：${report.gaps.slice(0, 3).map(g => g.requirement).join('；')}\n——由 AI Job Search Platform 生成`;
+    const shareText = `【GapPilot 分析】${data.target_role}\n匹配度：${report.match_score}%\n优势：${report.strengths.slice(0, 3).join('；')}\n主要差距：${report.gaps.slice(0, 3).map(g => g.requirement).join('；')}\n——由 GapPilot 生成`;
     await navigator.clipboard.writeText(shareText);
     showToast('分析摘要已复制到剪贴板，可直接粘贴分享', 'success');
   } catch (error) {
