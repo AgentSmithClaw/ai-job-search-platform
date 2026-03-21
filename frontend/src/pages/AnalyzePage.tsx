@@ -1,6 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   CloudUpload,
   ArrowBack,
@@ -13,137 +12,170 @@ import {
   AutoFixHigh,
   History,
 } from '@mui/icons-material';
-import { useDraftStore, useToastStore, useAuthStore } from '../store';
-import { uploadResume, analyze } from '../services/analysis';
+import { Button } from '../components/ui/Button';
+import { Badge } from '../components/ui/Badge';
+import { Card } from '../components/ui/Card';
+import { Input, Textarea } from '../components/ui/Input';
+import { ProgressBar, StepIndicator } from '../components/ui/Progress';
 
-const steps = [
+const WIZARD_STEPS = [
   { id: 1, label: '01. Identity Source', sub: 'Upload Resume' },
   { id: 2, label: '02. Destination Meta', sub: 'Job Description' },
   { id: 3, label: '03. AI Processing', sub: 'Architecture Mapping' },
   { id: 4, label: '04. Gap Output', sub: 'Final Report' },
 ];
 
+const MOCK_UPLOADED_FILE = 'Resume_ProductDesigner_2024.pdf';
+const MOCK_RESUME_TEXT =
+  'Senior Product Designer with 6+ years of experience building consumer-facing mobile and web applications. Led design for 3 unicorn-stage startups, shipping features to 5M+ users. Expert in Figma, design systems, and cross-functional collaboration with engineering and product teams.';
+
+const MOCK_JOB_DESCRIPTION = `Senior Product Architect — Fintech Platform
+
+We are looking for a Senior Product Architect to lead the technical vision for our next-generation payments platform. You will work closely with engineering leadership to define system architecture, drive technical decisions, and mentor senior engineers.
+
+Responsibilities:
+- Architect scalable, high-availability payment processing systems handling $10B+ annually
+- Define and own the technical roadmap in collaboration with Product and Engineering
+- Lead design reviews and establish engineering standards across squads
+- Partner with cross-functional leaders on strategic product initiatives
+
+Requirements:
+- 8+ years of software engineering experience with 3+ years in payment or financial systems
+- Deep expertise in distributed systems, event-driven architecture, and microservices
+- Strong proficiency in TypeScript, Python, or Go
+- Experience with cloud infrastructure (AWS/GCP) and infrastructure-as-code
+- Track record of shipping high-scale, production-grade systems`;
+
+// Simulated AI analysis progress stages
+const ANALYSIS_STAGES = [
+  'Parsing resume structure...',
+  'Extracting skills and experience...',
+  'Mapping job requirements...',
+  'Computing gap vectors...',
+  'Generating strategic recommendations...',
+];
+
 export default function AnalyzePage() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { addToast } = useToastStore();
-  const { user } = useAuthStore();
-  const { targetRole, company, resumeText, jobDescription, setDraft, clearDraft } = useDraftStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [currentStep, setCurrentStep] = useState(0);
-  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
-  const [uploadError, setUploadError] = useState('');
-  const [parsedResume, setParsedResume] = useState('');
+  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success'>('idle');
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [resumeText, setResumeText] = useState('');
+  const [jobTitle, setJobTitle] = useState('');
+  const [jobDescription, setJobDescription] = useState('');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [analysisStage, setAnalysisStage] = useState('');
 
-  const handleDraftChange = useCallback((updates: Partial<typeof useDraftStore.getState>) => {
-    setDraft(updates);
-  }, [setDraft]);
-
-  const uploadMutation = useMutation({
-    mutationFn: (file: File) => uploadResume(file),
-    onSuccess: (data) => {
-      setUploadStatus('success');
-      setParsedResume(data.extracted_text);
-      handleDraftChange({ resumeText: data.extracted_text });
-      addToast({ type: 'success', message: '简历解析成功' });
-    },
-    onError: (err: Error) => {
-      setUploadStatus('error');
-      setUploadError(err.message || '解析失败');
-      addToast({ type: 'error', message: err.message || '简历解析失败' });
-    },
-  });
-
-  const analyzeMutation = useMutation({
-    mutationFn: (payload: { target_role: string; company?: string; resume_text: string; job_description: string }) =>
-      analyze(payload),
-    onSuccess: (data) => {
-      clearDraft();
-      queryClient.invalidateQueries({ queryKey: ['sessions'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      navigate(`/analyze/${data.session_id}`);
-    },
-    onError: (err: Error) => {
-      addToast({ type: 'error', message: err.message || '分析失败，请重试' });
-    },
-  });
+  const canProceedStep0 = uploadStatus === 'success' || resumeText.trim().length > 50;
+  const canProceedStep1 = jobTitle.trim().length > 0 && jobDescription.trim().length > 100;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setFileName(file.name);
     setUploadStatus('uploading');
-    uploadMutation.mutate(file);
+    // Simulate upload parsing
+    setTimeout(() => {
+      setUploadStatus('success');
+      setResumeText(MOCK_RESUME_TEXT);
+    }, 1800);
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
     if (file) {
+      setFileName(file.name);
       setUploadStatus('uploading');
-      uploadMutation.mutate(file);
+      setTimeout(() => {
+        setUploadStatus('success');
+        setResumeText(MOCK_RESUME_TEXT);
+      }, 1800);
     }
   };
 
-  const canProceedStep0 = uploadStatus === 'success' || resumeText.length > 50;
-  const canProceedStep1 = targetRole.trim().length > 0 && jobDescription.trim().length > 100;
-
-  const goNext = () => {
-    if (currentStep < 2) setCurrentStep(currentStep + 1);
+  const handlePasteFromJD = () => {
+    setJobDescription(MOCK_JOB_DESCRIPTION);
+    setJobTitle('Senior Product Architect');
   };
 
-  const goBack = () => {
-    if (currentStep > 0) setCurrentStep(currentStep - 1);
+  const simulateAIAanalysis = () => {
+    setIsAnalyzing(true);
+    setAnalysisProgress(0);
+    let stageIdx = 0;
+    setAnalysisStage(ANALYSIS_STAGES[0]);
+
+    const interval = setInterval(() => {
+      setAnalysisProgress((prev) => {
+        const next = prev + Math.floor(Math.random() * 12) + 4;
+        if (next >= 100) {
+          clearInterval(interval);
+          setTimeout(() => navigate('/history'), 800);
+          return 100;
+        }
+        const newStageIdx = Math.floor((next / 100) * ANALYSIS_STAGES.length);
+        if (newStageIdx > stageIdx && newStageIdx < ANALYSIS_STAGES.length) {
+          stageIdx = newStageIdx;
+          setAnalysisStage(ANALYSIS_STAGES[stageIdx]);
+        }
+        return Math.min(next, 99);
+      });
+    }, 300);
   };
 
   const handleSubmit = () => {
-    if (!user) {
-      addToast({ type: 'error', message: '请先登录' });
-      navigate('/auth');
-      return;
-    }
-    analyzeMutation.mutate({
-      target_role: targetRole,
-      company: company || undefined,
-      resume_text: resumeText,
-      job_description: jobDescription,
-    });
+    setCurrentStep(2); // jump to AI Processing step
+    simulateAIAanalysis();
+  };
+
+  const goNext = () => {
+    if (currentStep < 2) setCurrentStep((s) => s + 1);
+  };
+
+  const goBack = () => {
+    if (isAnalyzing) return;
+    if (currentStep > 0) setCurrentStep((s) => s - 1);
   };
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)]">
-      {/* Sidebar (fixed, 64px offset) */}
+      {/* Sidebar */}
       <aside className="fixed left-0 top-0 bottom-0 w-56 bg-[var(--color-surface-container-highest)] flex flex-col py-6 z-50 overflow-y-auto">
         <div className="px-6 mb-8">
           <h1 className="text-xl font-black text-[var(--color-text-on-surface)] tracking-tighter">Precision Curator</h1>
           <p className="text-[10px] font-medium text-[var(--color-text-on-surface-variant)] uppercase tracking-widest mt-1">Elite Analysis</p>
         </div>
         <nav className="flex-1 space-y-1 px-2">
-          <a className="flex items-center gap-3 px-4 py-3 text-[var(--color-text-on-surface-variant)] hover:text-[var(--color-text-on-surface)] hover:bg-[var(--color-surface-container)] transition-colors font-medium text-sm tracking-tight rounded-lg" href="/">
-            <span className="material-symbols-outlined text-lg">dashboard</span>
-            Dashboard
-          </a>
-          <a className="flex items-center gap-3 px-4 py-3 text-[var(--color-primary-container)] bg-[var(--color-bg-surface)] rounded-lg mx-2 transition-all font-medium text-sm tracking-tight" href="/analyze">
-            <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>analytics</span>
-            Analysis
-          </a>
-          <a className="flex items-center gap-3 px-4 py-3 text-[var(--color-text-on-surface-variant)] hover:text-[var(--color-text-on-surface)] hover:bg-[var(--color-surface-container)] transition-colors font-medium text-sm tracking-tight rounded-lg" href="/applications">
-            <span className="material-symbols-outlined text-lg">assignment</span>
-            Applications
-          </a>
-          <a className="flex items-center gap-3 px-4 py-3 text-[var(--color-text-on-surface-variant)] hover:text-[var(--color-text-on-surface)] hover:bg-[var(--color-surface-container)] transition-colors font-medium text-sm tracking-tight rounded-lg" href="/tasks">
-            <span className="material-symbols-outlined text-lg">school</span>
-            Learning
-          </a>
-          <a className="flex items-center gap-3 px-4 py-3 text-[var(--color-text-on-surface-variant)] hover:text-[var(--color-text-on-surface)] hover:bg-[var(--color-surface-container)] transition-colors font-medium text-sm tracking-tight rounded-lg" href="/interview">
-            <span className="material-symbols-outlined text-lg">interpreter_mode</span>
-            Interviews
-          </a>
+          {[
+            { icon: 'dashboard', label: 'Dashboard', href: '/' },
+            { icon: 'analytics', label: 'Analysis', href: '/analyze', active: true },
+            { icon: 'assignment', label: 'Applications', href: '/applications' },
+            { icon: 'school', label: 'Learning', href: '/tasks' },
+            { icon: 'interpreter_mode', label: 'Interviews', href: '/interview' },
+          ].map((item) => (
+            <a
+              key={item.label}
+              href={item.href}
+              className={`
+                flex items-center gap-3 px-4 py-3 text-sm font-medium tracking-tight rounded-lg transition-all
+                ${item.active
+                  ? 'bg-[var(--color-bg-surface)] text-[var(--color-primary-container)]'
+                  : 'text-[var(--color-text-on-surface-variant)] hover:text-[var(--color-text-on-surface)] hover:bg-[var(--color-surface-container)] mx-2'}
+              `}
+            >
+              <span className="material-symbols-outlined text-lg">{item.icon}</span>
+              {item.label}
+            </a>
+          ))}
         </nav>
         <div className="mt-auto px-4 pt-4 border-t border-[var(--color-outline-variant)]/20">
           <div className="flex items-center gap-3 p-2">
             <div className="w-8 h-8 rounded-full bg-[var(--color-surface-container)]" />
             <div className="overflow-hidden">
-              <p className="text-xs font-bold truncate text-[var(--color-text-on-surface)]">{user?.name || 'Guest'}</p>
+              <p className="text-xs font-bold truncate text-[var(--color-text-on-surface)]">Alex Sterling</p>
               <p className="text-[10px] text-[var(--color-text-on-surface-variant)] truncate">Premium Curator</p>
             </div>
           </div>
@@ -179,12 +211,11 @@ export default function AnalyzePage() {
       {/* Main Content */}
       <main className="pl-56 pt-16 min-h-screen bg-[var(--color-bg)]">
         <div className="max-w-6xl mx-auto px-12 py-16">
+
           {/* Header Section */}
           <div className="mb-12">
             <div className="flex items-center gap-2 mb-4">
-              <span className="px-2 py-0.5 bg-[var(--color-primary-fixed)] text-[var(--color-on-primary-fixed-variant)] text-[10px] font-bold tracking-widest uppercase rounded">
-                New Analysis
-              </span>
+              <Badge variant="primary">New Analysis</Badge>
               <div className="h-px flex-1 bg-[var(--color-outline-variant)]/10" />
             </div>
             <h2 className="text-[2.75rem] font-extrabold text-[var(--color-text-on-surface)] tracking-tight leading-tight mb-4">
@@ -195,222 +226,205 @@ export default function AnalyzePage() {
             </p>
           </div>
 
-          {/* Progress Indicator */}
-          <div className="mb-16 grid grid-cols-4 gap-4">
-            {steps.map((step, idx) => {
-              const isActive = idx === currentStep;
-              const isCompleted = idx < currentStep;
-              const isPending = idx > currentStep;
-              return (
-                <div key={step.id} className="group relative">
-                  <div
-                    className={`h-1 rounded-full mb-3 transition-all ${
-                      isActive ? 'bg-[var(--color-primary)]' :
-                      isCompleted ? 'bg-[var(--color-primary)]' :
-                      'bg-[var(--color-surface-container-highest)]'
-                    }`}
-                  />
-                  <p className={`text-[11px] font-bold uppercase tracking-wider ${
-                    isPending ? 'text-[var(--color-text-on-surface-variant)] opacity-40' : 'text-[var(--color-primary)]'
-                  }`}>
-                    {step.label}
-                  </p>
-                  <p className="text-xs text-[var(--color-text-on-surface-variant)]">{step.sub}</p>
-                </div>
-              );
-            })}
+          {/* Step Indicator */}
+          <div className="mb-12">
+            <StepIndicator steps={WIZARD_STEPS} currentStep={isAnalyzing ? 2 : currentStep} />
           </div>
 
-          {/* Wizard Content (Asymmetric Layout) */}
-          <div className="grid grid-cols-12 gap-8 items-start">
-            {/* Column 1: Upload Resume (Left, Slightly Narrower) */}
-            <div className="col-span-12 lg:col-span-5">
-              <div className="bg-[var(--color-surface-container)] rounded-xl p-8 border border-transparent hover:border-[var(--color-primary-container)]/20 transition-all duration-300">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-semibold tracking-tight text-[var(--color-text-on-surface)]">Identity Source</h3>
-                  <Description sx={{ color: 'var(--color-primary)', fontSize: 20 }} />
-                </div>
-                <p className="text-sm text-[var(--color-text-on-surface-variant)] mb-8 leading-relaxed">
-                  Upload your latest resume in PDF or DOCX format. We'll extract your skills, tenure, and project impact.
-                </p>
-
-                {/* Dropzone */}
-                <div
-                  onDrop={handleDrop}
-                  onDragOver={(e) => e.preventDefault()}
-                  onClick={() => document.getElementById('resume-file-input')?.click()}
-                  className="relative group border-2 border-dashed border-[var(--color-outline-variant)]/30 rounded-xl p-10 flex flex-col items-center justify-center bg-[var(--color-surface-container-low)] hover:bg-[var(--color-surface-container-lowest)] hover:border-[var(--color-primary)]/40 transition-all cursor-pointer"
-                >
-                  <input
-                    id="resume-file-input"
-                    type="file"
-                    accept=".pdf,.docx,.doc,.txt"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                  <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform ${
-                    uploadStatus === 'uploading' ? 'bg-[var(--color-primary-fixed-dim)]' :
-                    uploadStatus === 'success' ? 'bg-[var(--color-success-subtle)]' :
-                    uploadStatus === 'error' ? 'bg-[var(--color-error-subtle)]' :
-                    'bg-[var(--color-primary-fixed-dim)]'
-                  }`}>
-                    <CloudUpload sx={{ fontSize: 32, color: 'var(--color-primary)' }} />
+          {/* AI Processing Overlay */}
+          {isAnalyzing && (
+            <Card className="mb-8 p-8 text-center">
+              <div className="flex flex-col items-center gap-6">
+                <div className="relative w-20 h-20">
+                  <div className="absolute inset-0 rounded-full border-4 border-[var(--color-surface-container-highest)]" />
+                  <svg viewBox="0 0 80 80" className="absolute inset-0 w-full h-full -rotate-90">
+                    <circle
+                      cx="40" cy="40" r="36"
+                      fill="none"
+                      stroke="var(--color-primary)"
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                      strokeDasharray={`${2 * Math.PI * 36}`}
+                      strokeDashoffset={`${2 * Math.PI * 36 * (1 - analysisProgress / 100)}`}
+                      style={{ transition: 'stroke-dashoffset 0.3s ease' }}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-lg font-bold text-[var(--color-primary)]">{analysisProgress}%</span>
                   </div>
-                  {uploadStatus === 'uploading' && (
-                    <p className="text-sm font-medium text-[var(--color-primary)] animate-pulse">正在解析...</p>
-                  )}
-                  {uploadStatus === 'success' && (
-                    <p className="text-sm font-medium text-[var(--color-success)]">解析成功</p>
-                  )}
-                  {uploadStatus === 'error' && (
-                    <p className="text-sm font-medium text-[var(--color-error)]">{uploadError}</p>
-                  )}
-                  {uploadStatus === 'idle' && (
-                    <>
-                      <p className="font-medium text-sm mb-1 text-[var(--color-text-on-surface)]">Drop Resume Here</p>
-                      <p className="text-xs text-[var(--color-text-on-surface-variant)]">
-                        or <span className="text-[var(--color-primary)] font-semibold">browse files</span>
-                      </p>
-                    </>
-                  )}
                 </div>
+                <div>
+                  <p className="text-base font-semibold text-[var(--color-text-on-surface)] mb-1">AI is analyzing your profile...</p>
+                  <p className="text-sm text-[var(--color-text-on-surface-variant)] italic">{analysisStage}</p>
+                </div>
+                <ProgressBar value={analysisProgress} size="md" showLabel={false} color="primary" />
+                <p className="text-xs text-[var(--color-text-on-surface-variant)]">This usually takes about 45 seconds</p>
+              </div>
+            </Card>
+          )}
 
-                {/* Resume text paste alternative */}
-                <div className="mt-6">
-                  <label className="block text-[11px] font-bold text-[var(--color-text-on-surface-variant)] uppercase tracking-widest mb-2">
-                    Or paste resume text
-                  </label>
-                  <textarea
+          {/* Wizard Content */}
+          {!isAnalyzing && (
+            <div className="grid grid-cols-12 gap-8 items-start">
+
+              {/* Left Column: Resume Upload */}
+              <div className="col-span-12 lg:col-span-5">
+                <Card className="p-8 hover:border-[var(--color-primary-container)]/20 transition-all duration-300">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-semibold tracking-tight text-[var(--color-text-on-surface)]">Identity Source</h3>
+                    <Description sx={{ color: 'var(--color-primary)', fontSize: 20 }} />
+                  </div>
+                  <p className="text-sm text-[var(--color-text-on-surface-variant)] mb-6 leading-relaxed">
+                    Upload your latest resume in PDF or DOCX format. We'll extract your skills, tenure, and project impact.
+                  </p>
+
+                  {/* Dropzone */}
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onDrop={handleDrop}
+                    onDragOver={(e) => e.preventDefault()}
+                    onClick={() => fileInputRef.current?.click()}
+                    onKeyDown={(e) => e.key === 'Enter' && fileInputRef.current?.click()}
+                    className="relative group border-2 border-dashed border-[var(--color-outline-variant)]/30 rounded-xl p-10 flex flex-col items-center justify-center bg-[var(--color-surface-container-low)] hover:bg-[var(--color-surface-container-lowest)] hover:border-[var(--color-primary)]/40 transition-all cursor-pointer mb-6"
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf,.docx,.doc,.txt"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    <div className={`
+                      w-16 h-16 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform
+                      ${uploadStatus === 'uploading' ? 'bg-[var(--color-primary-fixed-dim)] animate-pulse' :
+                        uploadStatus === 'success' ? 'bg-[var(--color-success-subtle)]' :
+                        'bg-[var(--color-primary-fixed-dim)]'}
+                    `}>
+                      {uploadStatus === 'success' ? (
+                        <History sx={{ fontSize: 32, color: 'var(--color-success)' }} />
+                      ) : (
+                        <CloudUpload sx={{ fontSize: 32, color: 'var(--color-primary)' }} />
+                      )}
+                    </div>
+                    {uploadStatus === 'uploading' && (
+                      <>
+                        <p className="font-medium text-sm mb-1 text-[var(--color-primary)]">Parsing Resume...</p>
+                        <p className="text-xs text-[var(--color-text-on-surface-variant)]">Extracting skills and experience</p>
+                      </>
+                    )}
+                    {uploadStatus === 'success' && (
+                      <p className="font-medium text-sm text-[var(--color-success)]">Resume Parsed Successfully</p>
+                    )}
+                    {uploadStatus === 'idle' && (
+                      <>
+                        <p className="font-medium text-sm mb-1 text-[var(--color-text-on-surface)]">Drop Resume Here</p>
+                        <p className="text-xs text-[var(--color-text-on-surface-variant)]">
+                          or <span className="text-[var(--color-primary)] font-semibold">browse files</span>
+                        </p>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Or paste text */}
+                  <Textarea
+                    label="Or paste resume text"
                     value={resumeText}
                     onChange={(e) => {
-                      setDraft({ resumeText: e.target.value });
+                      setResumeText(e.target.value);
                       if (e.target.value.length > 50) setUploadStatus('success');
                     }}
-                    placeholder="Paste resume content here..."
-                    className="w-full h-32 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)]/20 rounded-lg p-3 text-sm resize-none focus:ring-1 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] transition-all placeholder:text-[var(--color-text-on-surface-variant)]/40"
+                    placeholder="Paste your resume content here..."
+                    className="mb-4 min-h-[100px]"
                   />
-                </div>
 
-                {/* Uploaded file history */}
-                {parsedResume && (
-                  <div className="mt-6 space-y-3">
+                  {/* Uploaded file chip */}
+                  {(fileName || uploadStatus === 'success') && (
                     <div className="flex items-center gap-3 p-3 bg-[var(--color-surface-container-highest)]/50 rounded-lg">
                       <History sx={{ fontSize: 16, color: 'var(--color-text-on-surface-variant)' }} />
-                      <p className="text-xs font-medium truncate text-[var(--color-text-on-surface)]">
-                        {parsedResume.slice(0, 50)}...
+                      <p className="text-xs font-medium truncate text-[var(--color-text-on-surface)] flex-1">
+                        {fileName || MOCK_UPLOADED_FILE}
                       </p>
-                      <span className="ml-auto text-[10px] text-[var(--color-primary)] font-bold uppercase">Ready</span>
+                      <Badge variant="success">Ready</Badge>
                     </div>
+                  )}
+
+                  <div className="mt-6 flex justify-end">
+                    <Button
+                      variant="primary"
+                      size="md"
+                      onClick={goNext}
+                      disabled={!canProceedStep0}
+                    >
+                      Next Step →
+                    </Button>
                   </div>
-                )}
-
-                <div className="mt-8 flex justify-end">
-                  <button
-                    onClick={goNext}
-                    disabled={!canProceedStep0}
-                    className={`px-6 py-2.5 rounded-lg font-semibold text-sm transition-all ${
-                      canProceedStep0
-                        ? 'bg-[var(--color-primary-container)] text-[var(--color-on-primary)] hover:opacity-90'
-                        : 'bg-[var(--color-surface-container-highest)] text-[var(--color-text-on-surface-variant)] cursor-not-allowed'
-                    }`}
-                  >
-                    Next Step →
-                  </button>
-                </div>
+                </Card>
               </div>
-            </div>
 
-            {/* Column 2: Job Description (Right, Wider) */}
-            <div className="col-span-12 lg:col-span-7">
-              <div className="bg-[var(--color-surface-container-low)] rounded-xl p-8 shadow-sm">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-semibold tracking-tight text-[var(--color-text-on-surface)]">Destination Meta</h3>
-                  <GpsFixed sx={{ color: 'var(--color-tertiary)', fontSize: 20 }} />
-                </div>
+              {/* Right Column: Job Description */}
+              <div className="col-span-12 lg:col-span-7">
+                <Card className="p-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-semibold tracking-tight text-[var(--color-text-on-surface)]">Destination Meta</h3>
+                    <GpsFixed sx={{ color: 'var(--color-tertiary)', fontSize: 20 }} />
+                  </div>
 
-                <div className="mb-6">
-                  <label className="block text-[11px] font-bold text-[var(--color-text-on-surface-variant)] uppercase tracking-widest mb-2">
-                    Job Title / Role
-                  </label>
-                  <input
-                    value={targetRole}
-                    onChange={(e) => handleDraftChange({ targetRole: e.target.value })}
-                    className="w-full bg-[var(--color-surface-container-lowest)] border-[var(--color-outline-variant)]/20 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] transition-all placeholder:text-[var(--color-text-on-surface-variant)]/40"
-                    placeholder="e.g. Senior Product Architect"
-                    type="text"
-                  />
-                </div>
-
-                <div className="mb-4">
-                  <label className="block text-[11px] font-bold text-[var(--color-text-on-surface-variant)] uppercase tracking-widest mb-2">
-                    Company (Optional)
-                  </label>
-                  <input
-                    value={company}
-                    onChange={(e) => handleDraftChange({ company: e.target.value })}
-                    className="w-full bg-[var(--color-surface-container-lowest)] border-[var(--color-outline-variant)]/20 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] transition-all placeholder:text-[var(--color-text-on-surface-variant)]/40"
-                    placeholder="e.g. Stripe, Google"
-                    type="text"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-[var(--color-text-on-surface-variant)] uppercase tracking-widest mb-2">
-                    Job Description
-                  </label>
-                  <div className="relative">
-                    <textarea
-                      value={jobDescription}
-                      onChange={(e) => handleDraftChange({ jobDescription: e.target.value })}
-                      className="w-full h-80 bg-[var(--color-surface-container-lowest)] border-[var(--color-outline-variant)]/20 rounded-xl p-6 text-sm leading-relaxed resize-none focus:ring-1 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] transition-all placeholder:text-[var(--color-text-on-surface-variant)]/40"
-                      placeholder="Paste the full job listing here..."
-                      spellCheck={false}
+                  <div className="mb-4">
+                    <Input
+                      label="Job Title / Role"
+                      value={jobTitle}
+                      onChange={(e) => setJobTitle(e.target.value)}
+                      placeholder="e.g. Senior Product Architect"
                     />
-                    <div className="absolute bottom-4 right-4 flex gap-2">
-                      <button className="p-2 text-[var(--color-text-on-surface-variant)] hover:text-[var(--color-primary)] bg-[var(--color-surface-container)] rounded-lg transition-colors">
-                        <ContentPaste sx={{ fontSize: 18 }} />
-                      </button>
-                      <button className="p-2 text-[var(--color-text-on-surface-variant)] hover:text-[var(--color-primary)] bg-[var(--color-surface-container)] rounded-lg transition-colors">
-                        <AutoFixHigh sx={{ fontSize: 18 }} />
-                      </button>
+                  </div>
+
+                  <div className="mb-4">
+                    <Textarea
+                      label="Job Description"
+                      value={jobDescription}
+                      onChange={(e) => setJobDescription(e.target.value)}
+                      placeholder="Paste the full job listing here — include Responsibilities and Qualifications for best results..."
+                      className="min-h-[200px]"
+                    />
+                    <div className="flex gap-2 mt-2 justify-end">
+                      <Button variant="ghost" size="sm" onClick={handlePasteFromJD}>
+                        <ContentPaste sx={{ fontSize: 14 }} />
+                        Paste JD
+                      </Button>
+                      <Button variant="ghost" size="sm">
+                        <AutoFixHigh sx={{ fontSize: 14 }} />
+                        Enhance
+                      </Button>
                     </div>
                   </div>
-                </div>
 
-                <div className="mt-6 flex justify-between">
-                  <button
-                    onClick={goBack}
-                    className="flex items-center gap-2 text-[var(--color-text-on-surface-variant)] hover:text-[var(--color-text-on-surface)] font-medium transition-colors text-sm"
-                  >
-                    <ArrowBack sx={{ fontSize: 16 }} />
-                    Back
-                  </button>
-                  <button
-                    onClick={goNext}
-                    disabled={!canProceedStep1}
-                    className={`px-6 py-2.5 rounded-lg font-semibold text-sm transition-all ${
-                      canProceedStep1
-                        ? 'bg-[var(--color-primary-container)] text-[var(--color-on-primary)] hover:opacity-90'
-                        : 'bg-[var(--color-surface-container-highest)] text-[var(--color-text-on-surface-variant)] cursor-not-allowed'
-                    }`}
-                  >
-                    Next →
-                  </button>
-                </div>
+                  <div className="mt-6 flex justify-between">
+                    <Button variant="ghost" size="md" onClick={goBack}>
+                      <ArrowBack sx={{ fontSize: 16 }} />
+                      Back
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="md"
+                      onClick={goNext}
+                      disabled={!canProceedStep1}
+                    >
+                      Next →
+                    </Button>
+                  </div>
+                </Card>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Footer Action Bar */}
           <div className="mt-16 flex items-center justify-between py-8 border-t border-[var(--color-outline-variant)]/10">
             <div className="flex items-center gap-6">
-              <button
-                onClick={() => navigate('/')}
-                className="flex items-center gap-2 text-[var(--color-text-on-surface-variant)] hover:text-[var(--color-text-on-surface)] font-medium transition-colors text-sm"
-              >
+              <Button variant="ghost" size="md" onClick={() => navigate('/')}>
                 <ArrowBack sx={{ fontSize: 16 }} />
                 Cancel
-              </button>
+              </Button>
               <div className="h-4 w-px bg-[var(--color-outline-variant)]/20" />
               <div className="flex items-center gap-2 text-[var(--color-text-on-surface-variant)]/60 italic text-xs">
                 <Info sx={{ fontSize: 16 }} />
@@ -418,32 +432,36 @@ export default function AnalyzePage() {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <button className="px-6 py-3 font-medium text-[var(--color-primary)] hover:bg-[var(--color-primary)]/5 rounded-lg transition-all text-sm">
+              <Button variant="secondary" size="md">
                 Save as Draft
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="primary"
+                size="lg"
                 onClick={handleSubmit}
-                disabled={analyzeMutation.isPending}
-                className="px-8 py-3 bg-[var(--color-primary-container)] text-[var(--color-on-primary)] font-bold rounded-lg shadow-lg hover:opacity-90 active:scale-95 transition-all text-sm flex items-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed"
+                disabled={!canProceedStep0 || !canProceedStep1}
               >
                 Analyze My Fit
                 <Bolt sx={{ fontSize: 18 }} />
-              </button>
+              </Button>
             </div>
           </div>
 
-          {/* Contextual Tip Card (Glassmorphism) */}
-          <div className="mt-12 p-6 rounded-2xl bg-[var(--color-surface-container-lowest)]/40 backdrop-blur-xl border border-white/40 flex gap-6 items-start">
-            <div className="w-12 h-12 shrink-0 rounded-xl bg-[var(--color-primary-fixed)] flex items-center justify-center">
-              <Lightbulb sx={{ color: 'var(--color-primary)', fontSize: 22 }} />
+          {/* Pro Tip Card */}
+          <Card className="mt-6 p-6 bg-[var(--color-surface-container-low)]/40 backdrop-blur-xl border border-white/40">
+            <div className="flex gap-6 items-start">
+              <div className="w-12 h-12 shrink-0 rounded-xl bg-[var(--color-primary-fixed)] flex items-center justify-center">
+                <Lightbulb sx={{ color: 'var(--color-primary)', fontSize: 22 }} />
+              </div>
+              <div>
+                <h4 className="font-bold text-sm mb-1 tracking-tight text-[var(--color-text-on-surface)]">Pro Curator Tip</h4>
+                <p className="text-sm text-[var(--color-text-on-surface-variant)] leading-relaxed">
+                  For higher precision, ensure the job description includes the &quot;Responsibilities&quot; and &quot;Qualifications&quot; sections. The AI performs best when it can compare specific outcomes rather than generic keywords.
+                </p>
+              </div>
             </div>
-            <div>
-              <h4 className="font-bold text-sm mb-1 tracking-tight text-[var(--color-text-on-surface)]">Pro Curator Tip</h4>
-              <p className="text-sm text-[var(--color-text-on-surface-variant)] leading-relaxed">
-                For higher precision, ensure the job description includes the "Responsibilities" and "Qualifications" sections. The AI performs best when it can compare specific outcomes rather than generic keywords.
-              </p>
-            </div>
-          </div>
+          </Card>
+
         </div>
       </main>
     </div>
