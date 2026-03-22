@@ -9,15 +9,14 @@
       "src": "frontend/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "frontend/dist"
+        "buildCommand": "npm ci && npm run build",
+        "outputDirectory": "dist"
       }
     }
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "app/main.py" },
-    { "src": "/assets/(.*)", "dest": "frontend/dist/assets/$1" },
-    { "src": "/favicon.svg", "dest": "frontend/dist/favicon.svg" },
-    { "src": "/icons.svg", "dest": "frontend/dist/icons.svg" },
-    { "src": "/(.*)", "dest": "frontend/dist/index.html", "status": 200 }
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html", "status": 200 }
   ]
 }
