@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import Response, JSONResponse
+from starlette.responses import Response, JSONResponse, FileResponse, HTMLResponse
 from app.config import settings
 from app.db import init_db
 import logging
@@ -105,6 +105,16 @@ app.include_router(misc.router)
 app.include_router(analysis.router)
 app.include_router(payment.router)
 app.include_router(tracking.router)
+
+
+def _get_index_html():
+    """Read the built index.html at runtime from the public/ directory."""
+    import os
+    for candidate in ['public/index.html', 'frontend/dist/index.html', 'index.html']:
+        if os.path.isfile(candidate):
+            with open(candidate, 'r', encoding='utf-8') as f:
+                return f.read()
+    return '<html><body><h1>GapPilot</h1><p>Build not found. Run: cd frontend && npm run build</p></body></html>'
 
 
 @app.get('/')
