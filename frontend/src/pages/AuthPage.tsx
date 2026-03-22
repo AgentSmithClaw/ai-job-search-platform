@@ -83,7 +83,7 @@ export default function AuthPage() {
               type="submit"
               className="w-full"
               size="lg"
-              isLoading={mutation.isPending}
+              loading={mutation.isPending}
               disabled={!isValid}
             >
               开始使用 GapPilot

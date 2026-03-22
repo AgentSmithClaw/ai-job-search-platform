@@ -145,7 +145,7 @@ export default function HistoryPage() {
           <Button variant="ghost" onClick={() => setDeleteTarget(null)}>取消</Button>
           <Button
             variant="danger"
-            isLoading={deleteMutation.isPending}
+            loading={deleteMutation.isPending}
             onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
           >
             删除

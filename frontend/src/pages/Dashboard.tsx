@@ -2,12 +2,16 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getDashboard, getSessions } from '../services/analysis';
 import { PageContainer } from '../components/layout/PageContainer';
-import { MatchScoreCard } from '../components/features/dashboard/MatchScoreCard';
 import { StatCard } from '../components/features/dashboard/StatCard';
 import { AnalysisCard } from '../components/features/dashboard/AnalysisCard';
 import { NextPriorityBanner } from '../components/features/dashboard/NextPriorityBanner';
 import { SkillGapTag } from '../components/features/dashboard/SkillGapTag';
 import { SkeletonCard } from '../components/ui/Skeleton';
+import { MetricCard } from '../components/ui/MetricCard';
+import { SectionHeader } from '../components/ui/SectionHeader';
+import { EmptyState } from '../components/ui/EmptyState';
+import { FAB } from '../components/ui/FAB';
+import { Button } from '../components/ui/Button';
 
 const MOCK_STATS = { avg_match: 84, applications: 12, interviews: 8, analyses_total: 3 };
 const DEFAULT_SKILL_GAPS = ['Kubernetes', 'Golang', 'Rust'];
@@ -35,115 +39,113 @@ export default function Dashboard() {
   return (
     <PageContainer>
       {/* Welcome Section */}
-      <section className="mb-14">
-        <p className="text-[10px] font-bold tracking-[0.2em] uppercase mb-2" style={{ color: 'var(--color-on-surface-variant)' }}>
+      <section className="mb-10">
+        <p
+          className="text-[10px] font-bold tracking-[0.2em] uppercase mb-2"
+          style={{ color: 'var(--color-on-surface-variant)' }}
+        >
           Workspace Overview
         </p>
-        <div className="flex justify-between items-end">
+        <div className="flex items-end justify-between gap-4">
           <div>
-            <h2 className="text-4xl font-extrabold tracking-tight" style={{ color: 'var(--color-on-surface)' }}>
+            <h2
+              className="text-3xl font-bold tracking-tight"
+              style={{ color: 'var(--color-on-surface)' }}
+            >
               Precision Dashboard
             </h2>
-            <p className="mt-2 text-lg" style={{ color: 'var(--color-on-surface-variant)' }}>
-              You have {analysesTotal} critical skill gaps across {applications} targeted roles.
+            <p className="mt-1.5 text-base" style={{ color: 'var(--color-on-surface-variant)' }}>
+              {analysesTotal} critical skill gaps across {applications} targeted roles
             </p>
           </div>
         </div>
       </section>
 
       {/* Stats Bento Grid */}
-      <section className="grid grid-cols-12 gap-6 mb-14">
-        {/* Match Score Card - col-span-5 */}
+      {/* Layout: 12-col grid — MatchScore col-span-5, right col-span-7 */}
+      <section className="grid grid-cols-12 gap-6 mb-10">
+        {/* MetricCard — col-span-5 */}
         <div className="col-span-12 lg:col-span-5">
-          <MatchScoreCard
-            score={avgMatch}
+          <MetricCard
+            value={avgMatch}
+            unit="%"
+            label="Average Match Score"
             trend={12}
-            description="Your match profile has improved significantly after completing the Advanced System Design module."
+            description="Your match profile has improved after completing the Advanced System Design module."
           />
         </div>
 
-        {/* Right 2x2 grid - col-span-7 */}
-        <div className="col-span-12 lg:col-span-7 grid grid-cols-2 gap-6">
-          {/* Active Applications */}
-          <StatCard
-            iconName="description"
-            iconBgColor="rgba(53,37,205,0.1)"
-            iconColor="var(--color-primary)"
-            label="Active Applications"
-            value={applications}
-            progressValue={65}
-            progressMax={100}
-            description={`${interviews} in interview stage`}
-          />
-
-          {/* Critical Skill Gaps */}
-          <StatCard
-            iconName="warning"
-            iconBgColor="rgba(126,48,0,0.1)"
-            iconColor="var(--color-tertiary)"
-            label="Critical Skill Gaps"
-            value={String(analysesTotal).padStart(2, '0')}
-          >
-            {DEFAULT_SKILL_GAPS.map(tag => (
-              <SkillGapTag key={tag} label={tag} />
-            ))}
-          </StatCard>
-
-          {/* Next Priority Step - spans full width */}
-          <div className="col-span-2">
-            <NextPriorityBanner
-              title="Next Priority Step"
-              description='Update your portfolio with the recent "EcoStream" project analysis.'
-              actionLabel="Take Action"
-              actionPath="/analyze"
+        {/* Right column — col-span-7: 2 stat cards + full-width banner */}
+        <div className="col-span-12 lg:col-span-7 flex flex-col gap-6">
+          {/* 2x1 grid for stat cards */}
+          <div className="grid grid-cols-2 gap-6">
+            <StatCard
+              iconName="description"
+              iconBgColor="rgba(53,37,205,0.1)"
+              iconColor="var(--color-primary)"
+              label="Active Applications"
+              value={applications}
+              progressValue={65}
+              progressMax={100}
+              description={`${interviews} in interview stage`}
             />
+            <StatCard
+              iconName="warning"
+              iconBgColor="rgba(126,48,0,0.1)"
+              iconColor="var(--color-tertiary)"
+              label="Critical Skill Gaps"
+              value={analysesTotal}
+            >
+              <div className="flex flex-wrap gap-1.5 mt-3">
+                {DEFAULT_SKILL_GAPS.map(tag => (
+                  <SkillGapTag key={tag} label={tag} />
+                ))}
+              </div>
+            </StatCard>
           </div>
+
+          {/* Full-width Next Priority Banner */}
+          <NextPriorityBanner
+            title="Next Priority Step"
+            description='Update your portfolio with the recent "EcoStream" project analysis.'
+            actionLabel="Take Action"
+            actionPath="/analyze"
+          />
         </div>
       </section>
 
       {/* Recent Analyses */}
       <section>
-        <div className="flex items-center justify-between mb-8">
-          <h3 className="text-xl font-bold tracking-tight" style={{ color: 'var(--color-on-surface)' }}>
-            Recent Job Analyses
-          </h3>
-          <button
-            className="text-sm font-medium flex items-center gap-2 hover:opacity-80 transition-opacity"
-            style={{ color: 'var(--color-on-surface-variant)' }}
-            onClick={() => navigate('/history')}
-          >
-            View All Analyses
-            <span className="material-symbols-outlined text-base">chevron_right</span>
-          </button>
-        </div>
+        <SectionHeader
+          title="Recent Job Analyses"
+          action={
+            <Button
+              variant="ghost"
+              size="sm"
+              icon="chevron_right"
+              iconPosition="right"
+              onClick={() => navigate('/history')}
+            >
+              View all
+            </Button>
+          }
+        />
 
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
+            {[0, 1, 2].map(i => <SkeletonCard key={i} />)}
           </div>
         ) : sessions.length === 0 ? (
-          <div
-            className="rounded-xl p-12 flex flex-col items-center justify-center text-center"
-            style={{ background: 'var(--color-surface-container-lowest)', border: '1px solid var(--color-outline-variant)' }}
-          >
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: 'var(--color-surface-container-low)' }}>
-              <span className="material-symbols-outlined text-3xl" style={{ color: 'var(--color-on-surface-variant)' }}>analytics</span>
-            </div>
-            <h4 className="text-lg font-bold mb-2" style={{ color: 'var(--color-on-surface)' }}>No analyses yet</h4>
-            <p className="text-sm mb-6" style={{ color: 'var(--color-on-surface-variant)' }}>
-              Upload a resume + paste a job description to get started
-            </p>
-            <button
-              className="px-6 py-3 rounded-lg text-sm font-semibold transition-opacity"
-              style={{ background: 'var(--color-primary-container)', color: 'var(--color-on-primary)' }}
-              onClick={() => navigate('/analyze')}
-            >
-              <span className="material-symbols-outlined text-sm mr-2">add</span>
-              Start Analysis
-            </button>
-          </div>
+          <EmptyState
+            icon="analytics"
+            title="No analyses yet"
+            description="Upload a resume and paste a job description to get started"
+            action={{
+              label: 'Start Analysis',
+              icon: 'add',
+              onClick: () => navigate('/analyze'),
+            }}
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {sessions.slice(0, 2).map(session => (
@@ -154,22 +156,8 @@ export default function Dashboard() {
         )}
       </section>
 
-      {/* FAB */}
-      <button
-        className="fixed rounded-full flex items-center justify-center shadow-2xl hover:scale-105 transition-transform z-50"
-        style={{
-          bottom: 40,
-          right: 40,
-          width: 56,
-          height: 56,
-          background: 'var(--color-primary)',
-          color: 'var(--color-on-primary)',
-          boxShadow: '0 8px 32px rgba(53,37,205,0.4)',
-        }}
-        onClick={() => navigate('/analyze')}
-      >
-        <span className="material-symbols-outlined" style={{ fontSize: 24 }}>add</span>
-      </button>
+      {/* Floating Action Button */}
+      <FAB href="/analyze" />
     </PageContainer>
   );
 }

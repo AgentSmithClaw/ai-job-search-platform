@@ -1,52 +1,78 @@
-import { type ButtonHTMLAttributes, forwardRef } from 'react';
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
+
+// ─── Button Variants ───────────────────────────────────────────────────────────
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
 
+// ─── Button Component ──────────────────────────────────────────────────────────
+
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
   size?: Size;
-  isLoading?: boolean;
+  icon?: ReactNode;
+  iconPosition?: 'left' | 'right';
+  loading?: boolean;
+  children?: ReactNode;
 }
 
-const variantClasses: Record<Variant, string> = {
-  primary: 'bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] shadow-[var(--shadow-xs)]',
-  secondary: 'bg-[var(--color-bg-subtle)] text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-border)] hover:border-[var(--color-border-strong)]',
-  ghost: 'bg-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-subtle)] hover:text-[var(--color-text)]',
-  danger: 'bg-[var(--color-error)] text-white hover:bg-[var(--color-error)]/90',
+const variantStyles: Record<Variant, string> = {
+  primary:
+    'bg-[var(--color-primary-container)] text-[var(--color-on-primary)] hover:opacity-90 focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/40',
+  secondary:
+    'bg-[var(--color-surface-container-low)] text-[var(--color-on-surface)] border border-[var(--color-outline-variant)] hover:bg-[var(--color-surface-container-high)] hover:border-[var(--color-outline)]',
+  ghost:
+    'bg-transparent text-[var(--color-on-surface-variant)] hover:bg-[var(--color-surface-container-low)] hover:text-[var(--color-on-surface)]',
+  danger:
+    'bg-[var(--color-error)] text-[var(--color-on-error)] hover:opacity-90',
 };
 
-const sizeClasses: Record<Size, string> = {
-  sm: 'h-7 px-2.5 text-[12px] gap-1.5',
-  md: 'h-8 px-3 text-[12px] gap-1.5',
-  lg: 'h-9 px-4 text-[13px] gap-2',
+const sizeStyles: Record<Size, string> = {
+  sm: 'h-8 px-3 text-xs gap-1.5 rounded-md',
+  md: 'h-9 px-4 text-sm gap-2 rounded-lg',
+  lg: 'h-11 px-6 text-sm gap-2 rounded-xl',
 };
 
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = 'primary', size = 'md', isLoading, disabled, className = '', children, ...props }, ref) => {
-    return (
-      <button
-        ref={ref}
-        disabled={disabled || isLoading}
-        className={`
-          inline-flex items-center justify-center font-medium rounded-[var(--radius-md)]
-          transition-all duration-100 ease-out cursor-pointer
-          disabled:opacity-50 disabled:cursor-not-allowed
-          active:scale-[0.98]
-          whitespace-nowrap
-          ${variantClasses[variant]}
-          ${sizeClasses[size]}
-          ${className}
-        `}
-        {...props}
-      >
-        {isLoading && (
-          <span className="inline-block w-3.5 h-3.5 border-[1.5px] border-current border-t-transparent rounded-full animate-spin flex-shrink-0" />
-        )}
-        {children}
-      </button>
-    );
-  }
-);
+export function Button({
+  variant = 'primary',
+  size = 'md',
+  icon,
+  iconPosition = 'left',
+  loading = false,
+  children,
+  className = '',
+  disabled,
+  ...rest
+}: ButtonProps) {
+  const isDisabled = disabled || loading;
 
-Button.displayName = 'Button';
+  return (
+    <button
+      className={[
+        'inline-flex items-center justify-center font-semibold transition-all duration-150',
+        'disabled:opacity-50 disabled:cursor-not-allowed',
+        variantStyles[variant],
+        sizeStyles[size],
+        className,
+      ].join(' ')}
+      disabled={isDisabled}
+      {...rest}
+    >
+      {loading ? (
+        <span
+          className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin flex-shrink-0"
+        />
+      ) : (
+        <>
+          {icon && iconPosition === 'left' && (
+            <span className="material-symbols-outlined text-base flex-shrink-0">{icon}</span>
+          )}
+          {children && <span>{children}</span>}
+          {icon && iconPosition === 'right' && (
+            <span className="material-symbols-outlined text-base flex-shrink-0">{icon}</span>
+          )}
+        </>
+      )}
+    </button>
+  );
+}

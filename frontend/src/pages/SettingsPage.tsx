@@ -50,7 +50,7 @@ export default function SettingsPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
-            <Button onClick={handleSave} isLoading={updateMutation.isPending}>
+            <Button onClick={handleSave} loading={updateMutation.isPending}>
               保存更改
             </Button>
           </div>
