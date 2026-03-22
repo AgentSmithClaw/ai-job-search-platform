@@ -34,3 +34,9 @@ Thumbs.db
 build/
 *.egg-info/
 .vercel
+
+# Build output
+public/
+frontend/dist/
+frontend/node_modules/
+node_modules/
