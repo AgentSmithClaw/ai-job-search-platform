@@ -39,7 +39,7 @@ export function MetricCard({ value, unit = '', label, trend, description, classN
         </p>
         <div className="flex items-baseline gap-2 mt-3">
           <h3
-            className="text-6xl font-black tracking-tighter"
+            className="text-5xl font-black tracking-tight"
             style={{ color: 'var(--color-primary)' }}
           >
             {value}{unit}

@@ -26,7 +26,7 @@ export function StatCard({
 }: StatCardProps) {
   return (
     <div
-      className="rounded-xl p-6"
+      className="rounded-xl p-6 flex flex-col min-h-[160px]"
       style={{ background: 'var(--color-surface-container-low)' }}
     >
       <div
@@ -42,7 +42,7 @@ export function StatCard({
         {label}
       </p>
       <p
-        className="text-3xl font-extrabold mt-1"
+        className="text-2xl font-bold mt-1"
         style={{ color: 'var(--color-on-surface)' }}
       >
         {value}

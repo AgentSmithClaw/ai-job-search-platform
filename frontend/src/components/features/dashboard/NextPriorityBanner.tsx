@@ -12,7 +12,7 @@ export function NextPriorityBanner({ title, description, actionLabel = 'Take Act
 
   return (
     <div
-      className="rounded-xl p-6 flex items-center justify-between"
+      className="rounded-xl p-6 flex items-center justify-between min-h-[160px]"
       style={{
         background: 'var(--color-surface-container-lowest)',
         border: '1px solid var(--color-outline-variant)',
