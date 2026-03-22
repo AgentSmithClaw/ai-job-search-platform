@@ -3,7 +3,6 @@ from collections import defaultdict
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
@@ -102,8 +101,6 @@ async def global_exception_handler(request, exc):
     )
 
 
-app.mount('/assets', StaticFiles(directory='frontend/dist'), name='static')
-
 app.include_router(auth.router)
 app.include_router(misc.router)
 app.include_router(analysis.router)
@@ -113,5 +110,10 @@ app.include_router(tracking.router)
 
 @app.get('/{path:path}')
 def serve_frontend(path: str) -> FileResponse:
-    # SPA fallback — serve index.html for all non-API routes
-    return FileResponse('frontend/dist/index.html')
+    import os
+    # Serve assets from public/ directory
+    file_path = os.path.join('public', path)
+    if os.path.isfile(file_path):
+        return FileResponse(file_path)
+    # SPA fallback
+    return FileResponse('public/index.html')
