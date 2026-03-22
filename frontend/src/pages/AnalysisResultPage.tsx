@@ -61,8 +61,6 @@ function GapScoreGauge({ score }: { score: number }) {
 // ─── Hero Section ─────────────────────────────────────────────────────────────
 
 function HeroSection({
-  roleTitle,
-  company,
   matchScore,
   summary,
 }: {
@@ -232,7 +230,6 @@ function RisksCard({ risks }: { risks: { title: string; description: string }[] 
 // ─── Competency Breakdown ─────────────────────────────────────────────────────
 
 function CompetencyBreakdownSection({
-  roleTitle,
   matchScore,
 }: {
   roleTitle: string;

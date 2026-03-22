@@ -29,12 +29,8 @@ export default function Dashboard() {
   const sessions = sessionsData?.sessions ?? [];
   const avgMatch = stats?.avg_match ?? MOCK_STATS.avg_match;
   const applications = stats?.applications ?? MOCK_STATS.applications;
-  const interviews = stats?.interviews ?? MOCK_STATS.interviews;
+  const interviews = MOCK_STATS.interviews;
   const analysesTotal = stats?.analyses_total ?? MOCK_STATS.analyses_total;
-
-  const skillGaps = sessions.length > 0
-    ? sessions.flatMap(s => s.summary ? [] : []).slice(0, 3)
-    : DEFAULT_SKILL_GAPS;
 
   return (
     <PageContainer>

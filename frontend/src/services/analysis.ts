@@ -1,6 +1,8 @@
 import api from './api';
 import type { AnalysisSession, SessionSummary, ResumeUploadResponse, DashboardStats, PricingPlan, ModelProvider } from '../types';
 
+export type { AnalysisSession, SessionSummary, ResumeUploadResponse, DashboardStats, PricingPlan, ModelProvider };
+
 export async function uploadResume(file: File): Promise<ResumeUploadResponse> {
   const formData = new FormData();
   formData.append('file', file);
