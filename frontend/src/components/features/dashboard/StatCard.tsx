@@ -27,7 +27,7 @@ export function StatCard({
   return (
     <div
       className="rounded-xl p-5 flex flex-col"
-      style={{ background: 'var(--color-surface-container-low)', minHeight: 160 }}
+      style={{ background: 'var(--color-surface-container-low)', minHeight: 256 }}
     >
       {/* Icon row */}
       <div className="flex items-start justify-between mb-4">
@@ -49,7 +49,7 @@ export function StatCard({
         {label}
       </p>
       <p
-        className="text-3xl font-bold leading-none"
+        className="text-4xl font-bold leading-none"
         style={{ color: 'var(--color-on-surface)' }}
       >
         {value}
@@ -57,7 +57,7 @@ export function StatCard({
 
       {/* Progress bar */}
       {progressValue !== undefined && progressMax !== undefined && (
-        <div className="mt-auto pt-3">
+        <div className="mt-auto">
           <ProgressBar
             value={progressValue}
             max={progressMax}

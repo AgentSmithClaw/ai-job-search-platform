@@ -16,8 +16,8 @@ interface MetricCardProps {
 export function MetricCard({ value, unit = '', label, trend, description, className = '' }: MetricCardProps) {
   return (
     <div
-      className={`rounded-xl p-8 flex flex-col justify-between relative overflow-hidden ${className}`}
-      style={{ background: 'var(--color-surface-container)' }}
+      className={`rounded-xl p-6 flex flex-col justify-between relative overflow-hidden ${className}`}
+      style={{ background: 'var(--color-surface-container)', minHeight: 256 }}
     >
       {/* Decorative circle top-right */}
       <div
@@ -58,7 +58,7 @@ export function MetricCard({ value, unit = '', label, trend, description, classN
 
       {description && (
         <p
-          className="text-sm mt-6 max-w-[240px]"
+          className="text-sm mt-auto"
           style={{ color: 'var(--color-on-surface-variant)', position: 'relative', zIndex: 1 }}
         >
           {description}
