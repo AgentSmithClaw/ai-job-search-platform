@@ -108,7 +108,7 @@ export default function SettingsPage() {
           <h2 className="text-base font-semibold text-[var(--color-text)] mb-4">关于</h2>
           <div className="space-y-2 text-sm text-[var(--color-text-secondary)]">
             <p>GapPilot Platform — AI 求职差距分析平台</p>
-            <p>版本 2.0.0</p>
+            <p>版本 2.0.0 <span className="text-xs text-[var(--color-text-tertiary)]">[deploy-check 2026-03-23]</span></p>
             <p className="text-xs text-[var(--color-text-tertiary)]">
               前端框架: React + Vite + TypeScript + Tailwind CSS
             </p>
