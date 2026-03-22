@@ -32,7 +32,7 @@ export function MetricCard({ value, unit = '', label, trend, description, classN
 
       <div style={{ position: 'relative', zIndex: 1 }}>
         <p
-          className="text-[10px] font-bold tracking-widest uppercase"
+          className="text-xs font-medium uppercase tracking-wider"
           style={{ color: 'var(--color-on-surface-variant)' }}
         >
           {label}

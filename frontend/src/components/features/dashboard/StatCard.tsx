@@ -26,41 +26,56 @@ export function StatCard({
 }: StatCardProps) {
   return (
     <div
-      className="rounded-xl p-6 flex flex-col min-h-[160px]"
-      style={{ background: 'var(--color-surface-container-low)' }}
+      className="rounded-xl p-5 flex flex-col"
+      style={{ background: 'var(--color-surface-container-low)', minHeight: 160 }}
     >
-      <div
-        className="w-10 h-10 rounded-lg flex items-center justify-center mb-4"
-        style={{ background: iconBgColor }}
-      >
-        <span className="material-symbols-outlined" style={{ color: iconColor, fontSize: 20 }}>{iconName}</span>
+      {/* Icon row */}
+      <div className="flex items-start justify-between mb-4">
+        <div
+          className="w-10 h-10 rounded-lg flex items-center justify-center"
+          style={{ background: iconBgColor }}
+        >
+          <span className="material-symbols-outlined text-xl" style={{ color: iconColor }}>
+            {iconName}
+          </span>
+        </div>
       </div>
+
+      {/* Label + value */}
       <p
-        className="text-[10px] font-bold uppercase tracking-widest"
+        className="text-xs font-medium uppercase tracking-wider mb-1"
         style={{ color: 'var(--color-on-surface-variant)' }}
       >
         {label}
       </p>
       <p
-        className="text-2xl font-bold mt-1"
+        className="text-3xl font-bold leading-none"
         style={{ color: 'var(--color-on-surface)' }}
       >
         {value}
       </p>
 
+      {/* Progress bar */}
       {progressValue !== undefined && progressMax !== undefined && (
-        <div className="mt-4">
-          <ProgressBar value={progressValue} max={progressMax} size="sm" color="primary" />
+        <div className="mt-auto pt-3">
+          <ProgressBar
+            value={progressValue}
+            max={progressMax}
+            size="sm"
+            color="primary"
+            showLabel={false}
+          />
+          {description && (
+            <p className="text-xs mt-1.5" style={{ color: 'var(--color-on-surface-variant)' }}>
+              {description}
+            </p>
+          )}
         </div>
       )}
 
-      {description && (
-        <p className="text-[10px] mt-2 font-medium" style={{ color: 'var(--color-on-surface-variant)' }}>
-          {description}
-        </p>
+      {children && (
+        <div className="mt-4 flex flex-wrap gap-1.5">{children}</div>
       )}
-
-      {children && <div className="mt-4 flex flex-wrap gap-2">{children}</div>}
     </div>
   );
 }

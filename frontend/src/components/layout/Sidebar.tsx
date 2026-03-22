@@ -14,7 +14,7 @@ const BOTTOM_NAV = [
 ];
 
 function navItemClass(isActive: boolean) {
-  const base = 'flex items-center gap-3 h-9 px-3 rounded-lg text-sm font-medium transition-colors';
+  const base = 'flex items-center gap-3 h-10 px-3 rounded-lg text-sm font-medium transition-colors';
   if (isActive) {
     return `${base} text-[var(--color-primary)] bg-[var(--color-surface-container-low)]`;
   }

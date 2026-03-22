@@ -38,23 +38,39 @@ export default function Dashboard() {
   return (
     <PageContainer>
       {/* ── A. Welcome / Overview ─────────────────────────────────────── */}
-      <section className="mb-8">
-        <h2
-          className="text-2xl font-bold tracking-tight"
-          style={{ color: 'var(--color-on-surface)' }}
-        >
-          Your Workspace
-        </h2>
-        <p className="mt-1 text-sm" style={{ color: 'var(--color-on-surface-variant)' }}>
-          {analysesTotal} skill gap{analysesTotal !== 1 ? 's' : ''} across {applications} targeted role{applications !== 1 ? 's' : ''} — keep building
-        </p>
+      <section className="mb-10">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <h2
+              className="text-3xl font-bold tracking-tight"
+              style={{ color: 'var(--color-on-surface)' }}
+            >
+              Your Workspace
+            </h2>
+            <p className="mt-2 text-sm" style={{ color: 'var(--color-on-surface-variant)' }}>
+              {analysesTotal} skill gap{analysesTotal !== 1 ? 's' : ''} across{' '}
+              <span className="font-semibold" style={{ color: 'var(--color-on-surface)' }}>
+                {applications}
+              </span>{' '}
+              targeted role{applications !== 1 ? 's' : ''} — keep building
+            </p>
+          </div>
+          <Button
+            variant="primary"
+            size="md"
+            icon="add"
+            onClick={() => navigate('/analyze')}
+          >
+            New Analysis
+          </Button>
+        </div>
       </section>
 
       {/* ── B. Stats Bento Grid ───────────────────────────────────────── */}
-      {/* 12-col: MetricCard col-5, right column col-7 with 2 stat cards + priority banner */}
-      <section className="grid grid-cols-12 gap-5 mb-8">
-        {/* Primary metric — col-span-5 */}
-        <div className="col-span-12 lg:col-span-5">
+      {/* 3-column: MetricCard | Active Applications | Skill Gaps */}
+      <section className="mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          {/* MetricCard — primary, spans 1 column */}
           <MetricCard
             value={avgMatch}
             unit="%"
@@ -62,48 +78,47 @@ export default function Dashboard() {
             trend={12}
             description="Match profile improved after completing Advanced System Design."
           />
-        </div>
 
-        {/* Secondary metrics — col-span-7 */}
-        <div className="col-span-12 lg:col-span-7 flex flex-col gap-5">
-          {/* 2 stat cards in 2-column grid */}
-          <div className="grid grid-cols-2 gap-5">
-            <StatCard
-              iconName="description"
-              iconBgColor="rgba(53,37,205,0.1)"
-              iconColor="var(--color-primary)"
-              label="Active Applications"
-              value={applications}
-              progressValue={65}
-              progressMax={100}
-              description={`${interviews} in interview stage`}
-            />
-            <StatCard
-              iconName="warning"
-              iconBgColor="rgba(126,48,0,0.1)"
-              iconColor="var(--color-tertiary)"
-              label="Skill Gaps"
-              value={analysesTotal}
-            >
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {DEFAULT_SKILL_GAPS.map(tag => (
-                  <SkillGapTag key={tag} label={tag} />
-                ))}
-              </div>
-            </StatCard>
-          </div>
-
-          {/* Priority action — full width of right column */}
-          <NextPriorityBanner
-            title="Next Priority"
-            description='Complete the "EcoStream" portfolio update before your next interview.'
-            actionLabel="Take Action"
-            actionPath="/analyze"
+          {/* StatCard — Active Applications */}
+          <StatCard
+            iconName="description"
+            iconBgColor="rgba(53,37,205,0.1)"
+            iconColor="var(--color-primary)"
+            label="Active Applications"
+            value={applications}
+            progressValue={65}
+            progressMax={100}
+            description={`${interviews} in interview stage`}
           />
+
+          {/* StatCard — Skill Gaps */}
+          <StatCard
+            iconName="warning"
+            iconBgColor="rgba(126,48,0,0.1)"
+            iconColor="var(--color-tertiary)"
+            label="Critical Skill Gaps"
+            value={analysesTotal}
+          >
+            <div className="flex flex-wrap gap-1.5">
+              {DEFAULT_SKILL_GAPS.map(tag => (
+                <SkillGapTag key={tag} label={tag} />
+              ))}
+            </div>
+          </StatCard>
         </div>
       </section>
 
-      {/* ── C. Recent Analyses ─────────────────────────────────────────── */}
+      {/* ── C. Next Priority Banner ─────────────────────────────────── */}
+      <section className="mb-10">
+        <NextPriorityBanner
+          title="Next Priority"
+          description='Complete the "EcoStream" portfolio update before your next interview.'
+          actionLabel="Take Action"
+          actionPath="/analyze"
+        />
+      </section>
+
+      {/* ── D. Recent Analyses ─────────────────────────────────────────── */}
       <section>
         <SectionHeader
           title="Recent Analyses"
@@ -137,10 +152,12 @@ export default function Dashboard() {
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {sessions.slice(0, 2).map(session => (
+            {sessions.map(session => (
               <AnalysisCard key={session.id} session={session} />
             ))}
-            <AnalysisCard isNewAnalysis onNewAnalysis={() => navigate('/analyze')} />
+            {sessions.length < 3 && (
+              <AnalysisCard isNewAnalysis onNewAnalysis={() => navigate('/analyze')} />
+            )}
           </div>
         )}
       </section>

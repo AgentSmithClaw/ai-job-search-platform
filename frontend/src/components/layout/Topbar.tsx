@@ -7,7 +7,7 @@ export function Topbar() {
 
   return (
     <header
-      className="sticky top-0 z-30 flex items-center h-14 px-6 gap-4"
+      className="sticky top-0 z-30 flex items-center h-16 px-6 gap-4"
       style={{
         background: 'rgba(252,248,255,0.88)',
         backdropFilter: 'blur(20px)',
