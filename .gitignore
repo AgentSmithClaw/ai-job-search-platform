@@ -31,6 +31,6 @@ Thumbs.db
 *.swo
 
 # Distribution / packaging
-dist/
 build/
 *.egg-info/
+.vercel

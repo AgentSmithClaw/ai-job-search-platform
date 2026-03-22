@@ -2,15 +2,15 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store';
 
 const navItems = [
-  { to: '/', label: 'Dashboard' },
-  { to: '/history', label: 'Analysis' },
-  { to: '/applications', label: 'Applications' },
-  { to: '/tasks', label: 'Learning' },
-  { to: '/interview', label: 'Interviews' },
+  { to: '/', label: 'Dashboard', icon: 'dashboard' },
+  { to: '/history', label: 'Analysis', icon: 'analytics' },
+  { to: '/applications', label: 'Applications', icon: 'assignment' },
+  { to: '/tasks', label: 'Learning', icon: 'school' },
+  { to: '/interview', label: 'Interviews', icon: 'interpreter_mode' },
 ];
 
 const bottomNavItems = [
-  { to: '/settings', label: 'Settings' },
+  { to: '/settings', label: 'Settings', icon: 'settings' },
 ];
 
 function navClass(isActive: boolean) {
@@ -33,7 +33,7 @@ export function Sidebar() {
 
       {/* Main Nav */}
       <nav className="flex-1 px-2 space-y-0.5">
-        {navItems.map(({ to, label }) => {
+        {navItems.map(({ to, label, icon }) => {
           const isActive = to === '/' ? location.pathname === '/' : location.pathname.startsWith(to);
           return (
             <NavLink
@@ -42,7 +42,7 @@ export function Sidebar() {
               className={navClass(isActive)}
               style={isActive ? { margin: '0 8px' } : {}}
             >
-              <span className="material-symbols-outlined text-lg" style={{ fontSize: 18 }}>{label.toLowerCase()}</span>
+              <span className="material-symbols-outlined" style={{ fontSize: 20 }}>{icon}</span>
               {label}
             </NavLink>
           );
@@ -51,7 +51,7 @@ export function Sidebar() {
 
       {/* Bottom Nav */}
       <div className="px-2 py-4 border-t space-y-0.5" style={{ borderColor: 'var(--color-outline-variant)' }}>
-        {bottomNavItems.map(({ to, label }) => {
+        {bottomNavItems.map(({ to, label, icon }) => {
           const isActive = location.pathname.startsWith(to);
           return (
             <NavLink
@@ -60,7 +60,7 @@ export function Sidebar() {
               className={navClass(isActive)}
               style={isActive ? { margin: '0 8px' } : {}}
             >
-              <span className="material-symbols-outlined text-lg" style={{ fontSize: 18 }}>{label.toLowerCase()}</span>
+              <span className="material-symbols-outlined" style={{ fontSize: 20 }}>{icon}</span>
               {label}
             </NavLink>
           );

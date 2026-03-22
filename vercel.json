@@ -4,18 +4,12 @@
     {
       "src": "app/main.py",
       "use": "@vercel/python"
-    },
-    {
-      "src": "frontend/**",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "app/main.py" },
-    { "src": "/static/(.*)", "dest": "frontend/$1" },
-    { "src": "/health", "dest": "app/main.py" },
-    { "src": "/docs", "dest": "app/main.py" },
-    { "src": "/openapi.json", "dest": "app/main.py" },
     { "src": "/(.*)", "dest": "app/main.py" }
-  ]
+  ],
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "installCommand": "pip install -r requirements.txt"
 }

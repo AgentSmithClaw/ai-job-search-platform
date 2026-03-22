@@ -1,23 +1,12 @@
 import { useState } from 'react';
-import {
-  Architecture,
-  Token,
-  CloudDone,
-  Terminal,
-  Videocam,
-  Bolt,
-  Forum,
-  HelpCenter,
-  AutoAwesome,
-  Refresh,
-  ChevronRight,
-} from '@mui/icons-material';
-import { PageContainer, PageHeader } from '../components/layout/PageContainer';
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { PageContainer } from '../components/layout/PageContainer';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import { Card } from '../components/ui/Card';
+import { generateQuestions } from '../services/analysis';
 
-// ─── Mock Data ───────────────────────────────────────────────────────────────
+// ─── Types ─────────────────────────────────────────────────────────────────────
 
 interface AppCard {
   id: string;
@@ -28,7 +17,20 @@ interface AppCard {
   nextStep?: string;
   date?: string;
   lastUpdate?: string;
+  sessionId?: number;
 }
+
+interface Question {
+  id: string;
+  type: 'technical' | 'behavioral';
+  probability?: string;
+  question: string;
+  answer: string;
+  keywords: string[];
+  borderColor: 'primary' | 'secondary';
+}
+
+// ─── Mock Data ─────────────────────────────────────────────────────────────────
 
 const mockApplications: AppCard[] = [
   {
@@ -39,6 +41,7 @@ const mockApplications: AppCard[] = [
     status: 'interviewing',
     nextStep: 'Technical Deep-dive',
     date: 'May 24',
+    sessionId: 1,
   },
   {
     id: '2',
@@ -65,43 +68,13 @@ const mockApplications: AppCard[] = [
   },
 ];
 
-interface ResumeAnchor {
-  number: string;
-  title: string;
-  description: string;
-}
-
-const mockResumeAnchors: ResumeAnchor[] = [
-  {
-    number: '01',
-    title: 'Scaling Monolith\'s Design Ops',
-    description: 'Relevant to Quantum\'s current "Expansion Phase" mentioned in job post.',
-  },
-  {
-    number: '02',
-    title: 'The "Hologram" Project API integration',
-    description: 'Strong proof of technical empathy for their engineering-heavy culture.',
-  },
-];
-
-interface PredictedQuestion {
-  id: string;
-  type: 'technical' | 'behavioral';
-  probability?: string;
-  question: string;
-  answer: string;
-  keywords: string[];
-  borderColor: 'primary' | 'secondary';
-}
-
-const mockQuestions: PredictedQuestion[] = [
+const mockQuestions: Question[] = [
   {
     id: '1',
     type: 'technical',
     probability: '85%',
     question: '"How do you bridge the gap between abstract design concepts and technical feasibility?"',
-    answer:
-      'Use the STAR method focusing on your work at Nebula Cloud. Mention specific handoff tools and how you participated in "Design QA" sprints to ensure dev fidelity.',
+    answer: 'Use the STAR method focusing on your work at Nebula Cloud. Mention specific handoff tools and how you participated in "Design QA" sprints to ensure dev fidelity.',
     keywords: ['Technical Debt', 'System Thinking', 'Handoff Ops'],
     borderColor: 'primary',
   },
@@ -109,38 +82,77 @@ const mockQuestions: PredictedQuestion[] = [
     id: '2',
     type: 'behavioral',
     question: '"Describe a time when you had to make a design trade-off due to time constraints."',
-    answer:
-      'Highlight the "Tiered MVP" approach. Explain how you prioritized core user flows while documenting secondary enhancements for Version 1.1.',
+    answer: 'Highlight the "Tiered MVP" approach. Explain how you prioritized core user flows while documenting secondary enhancements for Version 1.1.',
     keywords: [],
     borderColor: 'secondary',
   },
 ];
 
-// ─── Status Badge ─────────────────────────────────────────────────────────────
+const resumeAnchors = [
+  { number: '01', title: 'Scaling Monolith\'s Design Ops', description: 'Relevant to Quantum\'s current "Expansion Phase" mentioned in job post.' },
+  { number: '02', title: 'The "Hologram" Project API integration', description: 'Strong proof of technical empathy for their engineering-heavy culture.' },
+];
 
-const statusConfig: Record<
-  AppCard['status'],
-  { label: string; variant: 'warning' | 'info' | 'success' | 'error' | 'neutral'; className: string }
-> = {
-  interviewing: { label: 'INTERVIEWING', variant: 'warning', className: 'bg-[var(--color-tertiary-fixed)] text-[var(--color-on-tertiary-fixed)]' },
-  applied: { label: 'APPLIED', variant: 'info', className: 'bg-[var(--color-surface-container-high)] text-[var(--color-text-on-surface-variant)]' },
-  offer: { label: 'OFFER', variant: 'success', className: 'bg-[var(--color-secondary-container)] text-[var(--color-on-secondary-container)]' },
-  rejected: { label: 'REJECTED', variant: 'error', className: 'bg-[var(--color-error-container)] text-[var(--color-on-error-container)]' },
+// ─── Status Config ─────────────────────────────────────────────────────────────
+
+const statusConfig: Record<AppCard['status'], { label: string; bgClass: string; textClass: string }> = {
+  interviewing: {
+    label: 'INTERVIEWING',
+    bgClass: '',
+    textClass: '',
+  },
+  applied: {
+    label: 'APPLIED',
+    bgClass: '',
+    textClass: '',
+  },
+  offer: {
+    label: 'OFFER',
+    bgClass: '',
+    textClass: '',
+  },
+  rejected: {
+    label: 'REJECTED',
+    bgClass: '',
+    textClass: '',
+  },
 };
 
-// ─── Icon Map ─────────────────────────────────────────────────────────────────
-
-function AppIcon({ status }: { status: AppCard['status'] }) {
-  const iconClass = 'text-[var(--color-text-on-surface-variant)]';
+function getStatusStyles(status: AppCard['status']) {
   switch (status) {
-    case 'interviewing': return <Architecture className={iconClass} fontSize="small" />;
-    case 'applied': return <Token className={iconClass} fontSize="small" />;
-    case 'offer': return <CloudDone className={iconClass} fontSize="small" />;
-    case 'rejected': return <Terminal className={iconClass} fontSize="small" />;
+    case 'interviewing':
+      return {
+        bg: 'var(--color-tertiary-fixed)',
+        text: 'var(--color-on-tertiary-fixed)',
+      };
+    case 'applied':
+      return {
+        bg: 'var(--color-surface-container-high)',
+        text: 'var(--color-on-surface-variant)',
+      };
+    case 'offer':
+      return {
+        bg: 'var(--color-secondary-container)',
+        text: 'var(--color-on-secondary-container)',
+      };
+    case 'rejected':
+      return {
+        bg: 'var(--color-error-container)',
+        text: 'var(--color-on-error-container)',
+      };
   }
 }
 
-// ─── Application Card ─────────────────────────────────────────────────────────
+function getAppIcon(status: AppCard['status']) {
+  switch (status) {
+    case 'interviewing': return 'architecture';
+    case 'applied': return 'token';
+    case 'offer': return 'cloud_done';
+    case 'rejected': return 'terminal';
+  }
+}
+
+// ─── Application Card ──────────────────────────────────────────────────────────
 
 function ApplicationCard({
   app,
@@ -151,69 +163,61 @@ function ApplicationCard({
   isSelected: boolean;
   onClick: () => void;
 }) {
-  const cfg = statusConfig[app.status];
+  const styles = getStatusStyles(app.status);
   const isRejected = app.status === 'rejected';
 
   return (
-    <Card
-      padding={false}
-      hoverable={!isSelected}
-      onClick={onClick}
-      className={`
-        p-4 rounded-xl transition-all duration-150
-        ${isSelected
-          ? 'bg-[var(--color-surface-container-lowest)] border-2 border-[var(--color-primary-container)] shadow-sm'
+    <div
+      className={`p-4 rounded-xl transition-all duration-150 cursor-pointer ${
+        isSelected
+          ? 'border-2 shadow-sm'
           : isRejected
-          ? 'bg-[var(--color-surface-container)] opacity-60'
-          : 'bg-[var(--color-surface-container)] hover:bg-[var(--color-surface-container-high)]'}
-      `}
+          ? 'opacity-60'
+          : 'hover:bg-[var(--color-surface-container-high)]'
+      }`}
+      style={{
+        background: isSelected ? 'var(--color-surface-container-lowest)' : 'var(--color-surface-container)',
+        borderColor: isSelected ? 'var(--color-primary-container)' : 'transparent',
+      }}
+      onClick={onClick}
     >
       <div className="flex justify-between items-start mb-3">
         <div
-          className={`
-            w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0
-            ${isSelected
-              ? 'bg-[var(--color-primary-fixed-dim)]'
-              : 'bg-[var(--color-surface-container-highest)]'}
-          `}
+          className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{
+            background: isSelected ? 'var(--color-primary-fixed-dim)' : 'var(--color-surface-container-highest)',
+          }}
         >
-          <AppIcon status={app.status} />
+          <span className="material-symbols-outlined text-lg" style={{ color: 'var(--color-on-surface-variant)' }}>
+            {getAppIcon(app.status)}
+          </span>
         </div>
         <span
-          className={`
-            text-[10px] font-bold px-2 py-1 rounded
-            ${cfg.className}
-          `}
+          className="text-[10px] font-bold px-2 py-1 rounded"
+          style={{ background: styles.bg, color: styles.text }}
         >
-          {cfg.label}
+          {statusConfig[app.status].label}
         </span>
       </div>
 
       <h3
-        className={`
-          font-bold text-[var(--color-text-on-surface)]
-          group-hover:text-[var(--color-primary)] transition-colors
-          ${isRejected ? 'opacity-60' : ''}
-        `}
+        className={`font-bold ${isRejected ? 'opacity-60' : ''}`}
+        style={{ color: 'var(--color-on-surface)' }}
       >
         {app.role}
       </h3>
-      <p className={`text-xs mb-4 ${isRejected ? 'opacity-60' : 'text-[var(--color-text-on-surface-variant)]'}`}>
+      <p className={`text-xs mb-4 ${isRejected ? 'opacity-60' : ''}`} style={{ color: 'var(--color-on-surface-variant)' }}>
         {app.company} · {app.location}
       </p>
 
-      <div className="flex justify-between items-center text-[10px] font-bold text-[var(--color-text-on-surface-variant)]">
-        <span>
-          {app.nextStep ?? app.lastUpdate ?? ''}
-        </span>
+      <div className="flex justify-between items-center text-[10px] font-bold" style={{ color: 'var(--color-on-surface-variant)' }}>
+        <span>{app.nextStep ?? app.lastUpdate ?? ''}</span>
+        {app.status === 'interviewing' && app.date && <span>{app.date}</span>}
         {!isRejected && app.status !== 'interviewing' && (
-          <ChevronRight className="text-sm" />
-        )}
-        {app.status === 'interviewing' && app.date && (
-          <span>{app.date}</span>
+          <span className="material-symbols-outlined text-sm">chevron_right</span>
         )}
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -221,42 +225,54 @@ function ApplicationCard({
 
 function ConfidenceCard({ score }: { score: number }) {
   return (
-    <div className="bg-[var(--color-surface-container)] rounded-2xl p-8 relative overflow-hidden">
+    <div className="rounded-2xl p-8 relative overflow-hidden" style={{ background: 'var(--color-surface-container)' }}>
       <div className="relative z-10">
-        <span className="text-[10px] font-bold tracking-widest text-[var(--color-text-on-surface-variant)] uppercase">
+        <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: 'var(--color-on-surface-variant)' }}>
           Confidence Score
         </span>
         <div className="mt-4 flex items-baseline gap-2">
-          <span className="text-6xl font-black text-[var(--color-primary)]">{score}</span>
-          <span className="text-xl font-bold text-[var(--color-text-on-surface-variant)]">/ 100</span>
+          <span className="text-6xl font-black" style={{ color: 'var(--color-primary)' }}>{score}</span>
+          <span className="text-xl font-bold" style={{ color: 'var(--color-on-surface-variant)' }}>/ 100</span>
         </div>
-        <p className="mt-4 text-sm text-[var(--color-text-on-surface-variant)] leading-relaxed">
+        <p className="mt-4 text-sm leading-relaxed" style={{ color: 'var(--color-on-surface-variant)' }}>
           Your profile matches 94% of the technical requirements. Focus on articulating your "Leadership under Constraint" examples.
         </p>
       </div>
-      <div className="absolute -right-8 -bottom-8 w-40 h-40 bg-[var(--color-primary-fixed-dim)] rounded-full blur-[60px] opacity-40" />
+      <div
+        className="absolute rounded-full blur-[60px] opacity-40"
+        style={{
+          right: -32,
+          bottom: -32,
+          width: 160,
+          height: 160,
+          background: 'var(--color-primary-fixed-dim)',
+        }}
+      />
     </div>
   );
 }
 
 // ─── Resume Anchors ────────────────────────────────────────────────────────────
 
-function ResumeAnchors({ anchors }: { anchors: ResumeAnchor[] }) {
+function ResumeAnchors({ anchors }: { anchors: typeof resumeAnchors }) {
   return (
-    <div className="bg-[var(--color-surface-container-high)] rounded-2xl p-8">
+    <div className="rounded-2xl p-8" style={{ background: 'var(--color-surface-container-high)' }}>
       <div className="flex items-center gap-2 mb-6">
-        <Bolt className="text-[var(--color-primary)]" fontSize="small" />
-        <h3 className="text-lg font-bold text-[var(--color-text-on-surface)]">Key Resume Anchors</h3>
+        <span className="material-symbols-outlined" style={{ color: 'var(--color-primary)' }}>bolt</span>
+        <h3 className="text-lg font-bold" style={{ color: 'var(--color-on-surface)' }}>Key Resume Anchors</h3>
       </div>
       <ul className="space-y-4">
-        {anchors.map((anchor) => (
+        {anchors.map(anchor => (
           <li key={anchor.number} className="flex gap-4">
-            <span className="text-xs font-black text-[var(--color-primary-container)] bg-white/50 w-6 h-6 rounded flex items-center justify-center flex-shrink-0">
+            <span
+              className="text-xs font-black w-6 h-6 rounded flex items-center justify-center flex-shrink-0"
+              style={{ background: 'rgba(255,255,255,0.5)', color: 'var(--color-primary-container)' }}
+            >
               {anchor.number}
             </span>
             <div>
-              <p className="text-sm font-bold text-[var(--color-text-on-surface)]">{anchor.title}</p>
-              <p className="text-xs text-[var(--color-text-on-surface-variant)]">{anchor.description}</p>
+              <p className="text-sm font-bold" style={{ color: 'var(--color-on-surface)' }}>{anchor.title}</p>
+              <p className="text-xs" style={{ color: 'var(--color-on-surface-variant)' }}>{anchor.description}</p>
             </div>
           </li>
         ))}
@@ -267,61 +283,77 @@ function ResumeAnchors({ anchors }: { anchors: ResumeAnchor[] }) {
 
 // ─── Question Card ────────────────────────────────────────────────────────────
 
-function QuestionCard({ q }: { q: PredictedQuestion }) {
+function QuestionCard({ q }: { q: Question }) {
   const isPrimary = q.borderColor === 'primary';
 
   return (
-    <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)]/10 rounded-2xl p-6 hover:shadow-xl transition-all duration-300">
+    <div
+      className="rounded-2xl p-6 hover:shadow-xl transition-all duration-300"
+      style={{
+        background: 'var(--color-surface-container-lowest)',
+        border: '1px solid var(--color-outline-variant)',
+      }}
+    >
       <div className="flex gap-4">
-        <div className="flex-shrink-0 w-12 h-12 bg-[var(--color-surface-container)] rounded-xl flex items-center justify-center">
-          {q.type === 'technical' ? (
-            <Forum className="text-[var(--color-text-on-surface-variant)]" />
-          ) : (
-            <HelpCenter className="text-[var(--color-text-on-surface-variant)]" />
-          )}
+        <div
+          className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+          style={{ background: 'var(--color-surface-container)' }}
+        >
+          <span className="material-symbols-outlined" style={{ color: 'var(--color-on-surface-variant)' }}>
+            {q.type === 'technical' ? 'forum' : 'help_center'}
+          </span>
         </div>
         <div className="space-y-4 w-full">
           <div>
             <div className="flex items-center gap-2 mb-1">
               {q.probability ? (
-                <span className="text-[10px] font-bold text-[var(--color-tertiary-container)] uppercase tracking-wider">
+                <span
+                  className="text-[10px] font-bold uppercase tracking-wider"
+                  style={{ color: 'var(--color-tertiary-container)' }}
+                >
                   High Probability ({q.probability})
                 </span>
               ) : (
-                <span className="text-[10px] font-bold text-[var(--color-text-on-surface-variant)] uppercase tracking-wider">
+                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-on-surface-variant)' }}>
                   Behavioral
                 </span>
               )}
             </div>
-            <h4 className="text-lg font-bold text-[var(--color-text-on-surface)]">{q.question}</h4>
+            <h4 className="text-lg font-bold" style={{ color: 'var(--color-on-surface)' }}>{q.question}</h4>
           </div>
           <div
-            className={`
-              bg-[var(--color-surface-container-low)] rounded-xl p-5
-              border-l-4
-              ${isPrimary ? 'border-[var(--color-primary)]' : 'border-[var(--color-secondary)]'}
-            `}
+            className="rounded-xl p-5 border-l-4"
+            style={{
+              background: 'var(--color-surface-container-low)',
+              borderColor: isPrimary ? 'var(--color-primary)' : 'var(--color-secondary)',
+            }}
           >
             <div className="flex items-center gap-2 mb-2">
-              <AutoAwesome
-                className={isPrimary ? 'text-[var(--color-primary)]' : 'text-[var(--color-secondary)]'}
-                fontSize="small"
-              />
               <span
-                className={`text-xs font-bold ${
-                  isPrimary ? 'text-[var(--color-primary)]' : 'text-[var(--color-secondary)]'
-                }`}
+                className="material-symbols-outlined text-sm"
+                style={{ color: isPrimary ? 'var(--color-primary)' : 'var(--color-secondary)' }}
+              >
+                auto_awesome
+              </span>
+              <span
+                className="text-xs font-bold"
+                style={{ color: isPrimary ? 'var(--color-primary)' : 'var(--color-secondary)' }}
               >
                 AI STRATEGY
               </span>
             </div>
-            <p className="text-sm text-[var(--color-text-on-surface-variant)] leading-relaxed">{q.answer}</p>
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--color-on-surface-variant)' }}>{q.answer}</p>
             {q.keywords.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-2">
-                {q.keywords.map((kw) => (
+                {q.keywords.map(kw => (
                   <span
                     key={kw}
-                    className="text-[10px] bg-white px-2 py-1 rounded border border-[var(--color-outline-variant)]/20 font-medium text-[var(--color-text-secondary)]"
+                    className="text-[10px] px-2 py-1 rounded border font-medium"
+                    style={{
+                      background: 'white',
+                      borderColor: 'var(--color-outline-variant)',
+                      color: 'var(--color-text-secondary)',
+                    }}
                   >
                     {kw}
                   </span>
@@ -338,30 +370,78 @@ function QuestionCard({ q }: { q: PredictedQuestion }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function InterviewPage() {
+  const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState<string>('1');
 
-  const selectedApp = mockApplications.find((a) => a.id === selectedId) ?? mockApplications[0];
-  const activeCount = mockApplications.filter((a) => a.status !== 'rejected').length;
+  const selectedApp = mockApplications.find(a => a.id === selectedId) ?? mockApplications[0];
+  const activeCount = mockApplications.filter(a => a.status !== 'rejected').length;
+
+  // Fetch questions if we have a session ID
+  const { data: questionsData } = useQuery({
+    queryKey: ['questions', selectedApp.sessionId],
+    queryFn: () => generateQuestions(selectedApp.sessionId!),
+    enabled: !!selectedApp.sessionId,
+  });
+
+  const questions: Question[] = questionsData?.questions
+    ? questionsData.questions.map((q, i) => ({
+        id: String(i),
+        type: 'technical' as const,
+        question: q,
+        answer: 'AI-generated answer will appear here based on your resume and the job requirements.',
+        keywords: [],
+        borderColor: 'primary' as const,
+      }))
+    : mockQuestions;
 
   return (
     <PageContainer>
-      <PageHeader
-        title="面试准备"
-        description={`${activeCount} 个进行中`}
-        action={
-          <Button size="sm">
-            <Refresh fontSize="small" />
-            刷新洞察
-          </Button>
-        }
-      />
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-8">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Badge variant="primary">Elite Interview Prep</Badge>
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--color-primary)' }} />
+            <span className="text-[11px]" style={{ color: 'var(--color-on-surface-variant)' }}>
+              {activeCount} active · May 24, 14:00 CET
+            </span>
+          </div>
+          <h2 className="text-2xl font-extrabold tracking-tight" style={{ color: 'var(--color-on-surface)' }}>
+            {selectedApp.role}
+            <span className="opacity-40 ml-2" style={{ color: 'var(--color-on-surface-variant)' }}>
+              at {selectedApp.company}
+            </span>
+          </h2>
+        </div>
+        <Button onClick={() => navigate('/applications')}>
+          <span className="material-symbols-outlined text-sm">videocam</span>
+          Join Session
+        </Button>
+      </div>
 
       {/* Two-panel layout */}
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Left: Application Cards */}
         <div className="w-full lg:w-[340px] flex-shrink-0 space-y-4">
+          <div>
+            <span
+              className="text-[10px] font-bold tracking-[0.05em] uppercase mb-2 block"
+              style={{ color: 'var(--color-on-surface-variant)' }}
+            >
+              Tracked Activity
+            </span>
+            <h3 className="text-2xl font-bold tracking-tight mb-4" style={{ color: 'var(--color-on-surface)' }}>
+              Active Roles
+            </h3>
+            <span
+              className="text-xs font-medium px-2 py-0.5 rounded-full"
+              style={{ background: 'var(--color-primary-fixed)', color: 'var(--color-on-primary-fixed-variant)' }}
+            >
+              {activeCount} Active
+            </span>
+          </div>
           <div className="space-y-3">
-            {mockApplications.map((app) => (
+            {mockApplications.map(app => (
               <ApplicationCard
                 key={app.id}
                 app={app}
@@ -374,27 +454,6 @@ export default function InterviewPage() {
 
         {/* Right: Interview Details */}
         <div className="flex-1 min-w-0 space-y-6">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Badge variant="primary">Elite Interview Prep</Badge>
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)]" />
-                <span className="text-[11px] text-[var(--color-text-on-surface-variant)]">May 24, 14:00 CET</span>
-              </div>
-              <h2 className="text-2xl font-extrabold tracking-tight text-[var(--color-text-on-surface)]">
-                {selectedApp.role}
-                <span className="text-[var(--color-text-on-surface-variant)] opacity-40 ml-2">
-                  at {selectedApp.company}
-                </span>
-              </h2>
-            </div>
-            <Button>
-              <Videocam fontSize="small" />
-              加入会议
-            </Button>
-          </div>
-
           {/* Bento Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Confidence Score */}
@@ -404,18 +463,26 @@ export default function InterviewPage() {
 
             {/* Resume Anchors */}
             <div className="lg:col-span-7">
-              <ResumeAnchors anchors={mockResumeAnchors} />
+              <ResumeAnchors anchors={resumeAnchors} />
             </div>
 
             {/* Predicted Questions */}
             <div className="lg:col-span-12 space-y-4">
               <div className="flex justify-between items-end">
-                <h3 className="text-xl font-bold tracking-tight text-[var(--color-text-on-surface)]">
+                <h3 className="text-xl font-bold tracking-tight" style={{ color: 'var(--color-on-surface)' }}>
                   Predicted Questions
                 </h3>
+                <button
+                  className="text-xs font-bold flex items-center gap-1 hover:opacity-80 transition-opacity"
+                  style={{ color: 'var(--color-primary)' }}
+                  onClick={() => navigate(`/analyze/${selectedApp.sessionId}`)}
+                >
+                  <span className="material-symbols-outlined text-sm">refresh</span>
+                  Regenerate Insights
+                </button>
               </div>
               <div className="space-y-4">
-                {mockQuestions.map((q) => (
+                {questions.map(q => (
                   <QuestionCard key={q.id} q={q} />
                 ))}
               </div>

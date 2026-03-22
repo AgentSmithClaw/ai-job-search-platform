@@ -102,26 +102,16 @@ async def global_exception_handler(request, exc):
     )
 
 
-app.mount('/static', StaticFiles(directory='frontend'), name='static')
-
-
-@app.get('/')
-def root() -> FileResponse:
-    return FileResponse('frontend/index.html')
-
-
-@app.get('/payment/success')
-def payment_success() -> FileResponse:
-    return FileResponse('frontend/index.html')
-
-
-@app.get('/payment/cancel')
-def payment_cancel() -> FileResponse:
-    return FileResponse('frontend/index.html')
-
+app.mount('/assets', StaticFiles(directory='frontend/dist'), name='static')
 
 app.include_router(auth.router)
 app.include_router(misc.router)
 app.include_router(analysis.router)
 app.include_router(payment.router)
 app.include_router(tracking.router)
+
+
+@app.get('/{path:path}')
+def serve_frontend(path: str) -> FileResponse:
+    # SPA fallback — serve index.html for all non-API routes
+    return FileResponse('frontend/dist/index.html')
