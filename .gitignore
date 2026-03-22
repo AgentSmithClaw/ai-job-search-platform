@@ -36,7 +36,6 @@ build/
 .vercel
 
 # Build output
-public/
 frontend/dist/
 frontend/node_modules/
 node_modules/

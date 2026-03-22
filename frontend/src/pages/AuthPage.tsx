@@ -94,6 +94,9 @@ export default function AuthPage() {
           <p className="text-xs text-center text-[var(--color-text-tertiary)] mt-4">
             登录即表示你同意我们的服务条款
           </p>
+          <p className="text-[10px] text-center text-[var(--color-text-tertiary)] mt-1 opacity-50">
+            build: c9f7
+          </p>
         </div>
 
         {/* Feature highlights */}
