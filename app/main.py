@@ -2,7 +2,6 @@ from contextlib import asynccontextmanager
 from collections import defaultdict
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
@@ -106,22 +105,6 @@ app.include_router(misc.router)
 app.include_router(analysis.router)
 app.include_router(payment.router)
 app.include_router(tracking.router)
-
-
-_INDEX_HTML = None
-
-def _get_index_html():
-    global _INDEX_HTML
-    if _INDEX_HTML is None:
-        import os
-        for candidate in ['public/index.html', 'frontend/dist/index.html', 'index.html']:
-            if os.path.isfile(candidate):
-                with open(candidate, 'r') as f:
-                    _INDEX_HTML = f.read()
-                break
-        if _INDEX_HTML is None:
-            _INDEX_HTML = '<html><body><h1>GapPilot</h1><p>Frontend build not found. Run: cd frontend && npm run build</p></body></html>'
-    return _INDEX_HTML
 
 
 @app.get('/')
