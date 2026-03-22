@@ -108,12 +108,36 @@ app.include_router(payment.router)
 app.include_router(tracking.router)
 
 
+_INDEX_HTML = None
+
+def _get_index_html():
+    global _INDEX_HTML
+    if _INDEX_HTML is None:
+        import os
+        for candidate in ['public/index.html', 'frontend/dist/index.html', 'index.html']:
+            if os.path.isfile(candidate):
+                with open(candidate, 'r') as f:
+                    _INDEX_HTML = f.read()
+                break
+        if _INDEX_HTML is None:
+            _INDEX_HTML = '<html><body><h1>GapPilot</h1><p>Frontend build not found. Run: cd frontend && npm run build</p></body></html>'
+    return _INDEX_HTML
+
+
+@app.get('/')
+def root():
+    from starlette.responses import HTMLResponse
+    return HTMLResponse(_get_index_html())
+
+
 @app.get('/{path:path}')
-def serve_frontend(path: str) -> FileResponse:
+def serve_frontend(path: str):
     import os
-    # Serve assets from public/ directory
-    file_path = os.path.join('public', path)
-    if os.path.isfile(file_path):
-        return FileResponse(file_path)
+    from starlette.responses import HTMLResponse
+    # Serve assets if they exist
+    for base in ['public', 'frontend/dist', '.']:
+        file_path = os.path.join(base, path)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
     # SPA fallback
-    return FileResponse('public/index.html')
+    return HTMLResponse(_get_index_html())
