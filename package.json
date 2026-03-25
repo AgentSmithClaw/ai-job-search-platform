@@ -1,6 +1,6 @@
 {
   "private": true,
   "scripts": {
-    "build": "cd frontend && npm ci && npm run build && powershell -NoProfile -ExecutionPolicy Bypass -File ..\\scripts\\publish-frontend.ps1"
+    "build": "cd frontend && npm ci && npm run build && node ../scripts/publish-frontend.js"
   }
 }
