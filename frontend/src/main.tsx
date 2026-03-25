@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import './index.css'
 import App from './App'
 import { ToastContainer } from './components/ui/Toast'
-import { useAuthStore } from './store'
+import { useAuthStore, useThemeStore } from './store'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,6 +18,7 @@ const queryClient = new QueryClient({
 
 // Init auth store from localStorage
 useAuthStore.getState().init()
+useThemeStore.getState().init()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -1,148 +1,185 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Trash2, ExternalLink } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PageContainer, PageHeader } from '../components/layout/PageContainer';
-import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Input, Textarea } from '../components/ui/Input';
+import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
+import { Input, Textarea } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
-import { SkeletonCard } from '../components/ui/Skeleton';
 import { useToastStore } from '../store';
-import { getApplications, createApplication, updateApplication, deleteApplication } from '../services/tracking';
-import type { Application } from '../types';
+import { createApplication, deleteApplication, getApplications, updateApplicationStatus } from '../services/tracking';
+import type { Application, ApplicationCreatePayload } from '../types';
+import { formatDate } from '../utils/format';
 
-const statusConfig: Record<Application['status'], { label: string; variant: 'success' | 'warning' | 'error' | 'info' | 'neutral' }> = {
-  interested: { label: '感兴趣', variant: 'info' },
-  applied: { label: '已投递', variant: 'success' },
-  interviewing: { label: '面试中', variant: 'warning' },
-  offer: { label: '拿到 Offer', variant: 'success' },
-  rejected: { label: '已拒绝', variant: 'error' },
-  pending: { label: '待处理', variant: 'neutral' },
+const STATUS_META: Record<Application['status'], { label: string; badge: 'primary' | 'success' | 'warning' | 'error' | 'secondary' }> = {
+  interested: { label: 'Interested', badge: 'secondary' },
+  applied: { label: 'Applied', badge: 'primary' },
+  interviewing: { label: 'Interviewing', badge: 'warning' },
+  offer: { label: 'Offer', badge: 'success' },
+  rejected: { label: 'Rejected', badge: 'error' },
+  withdrawn: { label: 'Withdrawn', badge: 'secondary' },
 };
 
-function ApplicationForm({ onSubmit, initial }: { onSubmit: (data: Omit<Application, 'id' | 'created_at' | 'updated_at'>) => void; initial?: Partial<Application> }) {
-  const [form, setForm] = useState<Omit<Application, 'id' | 'created_at' | 'updated_at'>>({
-    company: initial?.company || '',
-    role: initial?.role || '',
-    description: initial?.description || '',
-    url: initial?.url || '',
-    salary: initial?.salary || '',
-    notes: initial?.notes || '',
-    status: initial?.status || 'interested',
-    match_score: initial?.match_score,
+function ApplicationForm({ onSubmit }: { onSubmit: (payload: ApplicationCreatePayload) => void }) {
+  const [form, setForm] = useState<ApplicationCreatePayload>({
+    company_name: '',
+    target_role: '',
+    job_description: '',
+    application_url: '',
+    salary_range: '',
+    notes: '',
+    status: 'interested',
   });
 
   return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
-        <Input label="公司名称" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} />
-        <Input label="目标岗位" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} />
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Input label="Company" value={form.company_name} onChange={(event) => setForm({ ...form, company_name: event.target.value })} />
+        <Input label="Role" value={form.target_role} onChange={(event) => setForm({ ...form, target_role: event.target.value })} />
       </div>
-      <Textarea label="职位描述" value={form.description || ''} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-      <div className="grid grid-cols-2 gap-3">
-        <Input label="投递链接" value={form.url || ''} onChange={(e) => setForm({ ...form, url: e.target.value })} />
-        <Input label="薪资范围" value={form.salary || ''} onChange={(e) => setForm({ ...form, salary: e.target.value })} />
+      <Textarea label="Job description" value={form.job_description} onChange={(event) => setForm({ ...form, job_description: event.target.value })} className="min-h-[140px]" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Input label="Application URL" value={form.application_url} onChange={(event) => setForm({ ...form, application_url: event.target.value })} />
+        <Input label="Salary range" value={form.salary_range} onChange={(event) => setForm({ ...form, salary_range: event.target.value })} />
       </div>
-      <Textarea label="备注" value={form.notes || ''} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-      <div>
-        <label className="text-sm font-semibold text-[var(--color-text)] mb-1 block">状态</label>
-        <select
-          value={form.status}
-          onChange={(e) => setForm({ ...form, status: e.target.value as Application['status'] })}
-          className="w-full px-3 py-2.5 text-sm bg-[var(--color-bg-surface)] border-2 border-[var(--color-border)] rounded-[var(--radius-md)]"
-        >
-          {Object.entries(statusConfig).map(([val, cfg]) => (
-            <option key={val} value={val}>{cfg.label}</option>
-          ))}
-        </select>
-      </div>
-      <Button className="w-full" onClick={() => onSubmit(form)}>{initial ? '更新' : '添加'}</Button>
+      <Textarea label="Notes" value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} className="min-h-[120px]" />
+      <Button className="w-full" disabled={!form.company_name || !form.target_role} onClick={() => onSubmit(form)}>
+        Save application
+      </Button>
     </div>
   );
 }
 
 export default function ApplicationsPage() {
+  const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
   const { addToast } = useToastStore();
-  const [showForm, setShowForm] = useState(false);
-  const [editTarget, setEditTarget] = useState<Application | null>(null);
 
-  const { data: apps = [], isLoading } = useQuery({
+  const { data: applications = [], isLoading } = useQuery({
     queryKey: ['applications'],
     queryFn: getApplications,
   });
 
   const createMutation = useMutation({
-    mutationFn: (payload: Omit<Application, 'id' | 'created_at' | 'updated_at'>) => createApplication(payload),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['applications'] }); addToast({ type: 'success', message: '添加成功' }); setShowForm(false); },
-    onError: () => addToast({ type: 'error', message: '添加失败' }),
+    mutationFn: createApplication,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['applications'] });
+      setOpen(false);
+      addToast({ type: 'success', message: 'Application added.' });
+    },
+    onError: (error: Error) => addToast({ type: 'error', message: error.message || 'Could not add the application.' }),
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, ...updates }: Application) => updateApplication(id, updates),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['applications'] }); addToast({ type: 'success', message: '更新成功' }); setEditTarget(null); },
-    onError: () => addToast({ type: 'error', message: '更新失败' }),
+    mutationFn: ({ id, status }: { id: number; status: Application['status'] }) => updateApplicationStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['applications'] });
+      addToast({ type: 'success', message: 'Application status updated.' });
+    },
+    onError: (error: Error) => addToast({ type: 'error', message: error.message || 'Could not update the status.' }),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => deleteApplication(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['applications'] }); addToast({ type: 'success', message: '删除成功' }); },
-    onError: () => addToast({ type: 'error', message: '删除失败' }),
+    mutationFn: deleteApplication,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['applications'] });
+      addToast({ type: 'success', message: 'Application removed.' });
+    },
+    onError: (error: Error) => addToast({ type: 'error', message: error.message || 'Could not remove the application.' }),
   });
 
   return (
     <PageContainer>
       <PageHeader
-        title="投递追踪"
-        description={`${apps.length} 个投递记录`}
-        action={<Button onClick={() => setShowForm(true)}><Plus size={16} /> 添加投递</Button>}
+        title="Applications"
+        description="Keep your target roles, status changes, and notes in one clean place so the analysis work actually turns into a managed pipeline."
+        action={
+          <Button icon="add" onClick={() => setOpen(true)}>
+            Add application
+          </Button>
+        }
       />
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4"><SkeletonCard /><SkeletonCard /></div>
-      ) : apps.length === 0 ? (
-        <Card><EmptyState icon="📨" title="暂无投递记录" description="记录你的求职投递进度" action={{ label: '添加', onClick: () => setShowForm(true) }} /></Card>
+        <Card className="p-6 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+          Loading applications...
+        </Card>
+      ) : applications.length === 0 ? (
+        <EmptyState
+          icon="assignment"
+          title="No applications yet"
+          description="Once you find target roles worth pursuing, add them here so you can track progress and keep notes in one place."
+          action={{ label: 'Add your first application', icon: 'add', onClick: () => setOpen(true) }}
+        />
       ) : (
-        <div className="space-y-3">
-          {apps.map((app) => {
-            const cfg = statusConfig[app.status];
-            return (
-              <Card key={app.id} className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-semibold text-[var(--color-text)]">{app.role}</span>
-                    <Badge variant={cfg.variant}>{cfg.label}</Badge>
-                  </div>
-                  <p className="text-sm text-[var(--color-text-secondary)]">{app.company}</p>
-                  {app.salary && <p className="text-xs text-[var(--color-text-tertiary)] mt-1">💰 {app.salary}</p>}
-                  {app.notes && <p className="text-xs text-[var(--color-text-tertiary)] mt-1">{app.notes}</p>}
-                  <p className="text-xs text-[var(--color-text-tertiary)] mt-2">{new Date(app.created_at).toLocaleDateString('zh-CN')}</p>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          {applications.map((application) => (
+            <Card key={application.id} className="p-5">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold tracking-tight">{application.target_role}</h3>
+                  <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{application.company_name}</p>
                 </div>
-                <div className="flex gap-1 flex-shrink-0">
-                  {app.url && (
-                    <Button variant="ghost" size="sm" onClick={() => window.open(app.url, '_blank')}>
-                      <ExternalLink size={14} />
-                    </Button>
-                  )}
-                  <Button variant="ghost" size="sm" onClick={() => setEditTarget(app)}>编辑</Button>
-                  <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate(app.id)} className="hover:text-[var(--color-error)]">
-                    <Trash2 size={14} />
+                <Badge variant={STATUS_META[application.status].badge}>{STATUS_META[application.status].label}</Badge>
+              </div>
+
+              {application.job_description && (
+                <p className="text-sm line-clamp-3 mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+                  {application.job_description}
+                </p>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                <div className="rounded-[var(--radius-xl)] p-3" style={{ background: 'var(--color-surface-container-low)' }}>
+                  <p className="editorial-kicker mb-1">Created</p>
+                  <p className="text-sm">{formatDate(application.created_at)}</p>
+                </div>
+                <div className="rounded-[var(--radius-xl)] p-3" style={{ background: 'var(--color-surface-container-low)' }}>
+                  <p className="editorial-kicker mb-1">Salary</p>
+                  <p className="text-sm">{application.salary_range || 'Not provided'}</p>
+                </div>
+              </div>
+
+              {application.notes && (
+                <div className="rounded-[var(--radius-xl)] p-3 mb-4" style={{ background: 'var(--color-surface-container-low)' }}>
+                  <p className="editorial-kicker mb-1">Notes</p>
+                  <p className="text-sm">{application.notes}</p>
+                </div>
+              )}
+
+              <div className="flex flex-wrap items-center gap-3">
+                <select
+                  value={application.status}
+                  onChange={(event) => updateMutation.mutate({ id: application.id, status: event.target.value as Application['status'] })}
+                  className="h-10 px-3 rounded-[var(--radius-xl)] text-sm"
+                  style={{
+                    background: 'var(--color-surface-container-low)',
+                    border: '1px solid var(--color-border)',
+                  }}
+                >
+                  {Object.entries(STATUS_META).map(([value, meta]) => (
+                    <option key={value} value={value}>
+                      {meta.label}
+                    </option>
+                  ))}
+                </select>
+                {application.application_url && (
+                  <Button variant="secondary" icon="open_in_new" onClick={() => window.open(application.application_url, '_blank')}>
+                    Open link
                   </Button>
-                </div>
-              </Card>
-            );
-          })}
+                )}
+                <Button variant="ghost" icon="delete" onClick={() => deleteMutation.mutate(application.id)}>
+                  Remove
+                </Button>
+              </div>
+            </Card>
+          ))}
         </div>
       )}
 
-      <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="添加投递">
-        <ApplicationForm onSubmit={(data) => createMutation.mutate(data)} />
-      </Modal>
-
-      <Modal isOpen={!!editTarget} onClose={() => setEditTarget(null)} title="编辑投递">
-        <ApplicationForm onSubmit={(data) => editTarget && updateMutation.mutate({ ...editTarget, ...data })} initial={editTarget ?? undefined} />
+      <Modal isOpen={open} onClose={() => setOpen(false)} title="Add application">
+        <ApplicationForm onSubmit={(payload) => createMutation.mutate(payload)} />
       </Modal>
     </PageContainer>
   );

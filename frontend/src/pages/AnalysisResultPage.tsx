@@ -1,377 +1,328 @@
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { getSession } from '../services/analysis';
+import { useMemo } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { exportReport, generateQuestions, getSession } from '../services/analysis';
+import { createInterviewPrep, createTask } from '../services/tracking';
 import { PageContainer } from '../components/layout/PageContainer';
+import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
-import { ProgressBar } from '../components/ui/Progress';
+import { Button } from '../components/ui/Button';
+import { EmptyState } from '../components/ui/EmptyState';
+import { useToastStore } from '../store';
+import { formatDateTime, scoreLabel } from '../utils/format';
 
-// ─── Gap Score Gauge ──────────────────────────────────────────────────────────
+function downloadBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(url);
+}
 
-function GapScoreGauge({ score }: { score: number }) {
-  const size = 256;
-  const strokeWidth = 8;
-  const radius = (size - strokeWidth) / 2;
+function Gauge({ score }: { score: number }) {
+  const size = 220;
+  const stroke = 10;
+  const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (score / 100) * circumference;
-  const color = score >= 80
-    ? 'var(--color-success)'
-    : score >= 60
-    ? 'var(--color-primary)'
-    : 'var(--color-warning)';
 
   return (
-    <div
-      className="relative flex items-center justify-center"
-      style={{ width: size, height: size }}
-    >
+    <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--color-surface-container-highest)" strokeWidth={stroke} />
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="var(--color-surface-container-highest)"
-          strokeWidth={strokeWidth}
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke={color}
-          strokeWidth={strokeWidth}
+          stroke="var(--color-primary)"
+          strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
-          style={{ transition: 'stroke-dashoffset 1s ease' }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-5xl font-black tracking-tighter" style={{ color: 'var(--color-on-surface)' }}>
-          {score}%
-        </span>
-        <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: 'var(--color-on-surface-variant)' }}>
-          Match Score
-        </span>
+        <p className="text-5xl font-black tracking-tight">{score}</p>
+        <p className="editorial-kicker">Match Score</p>
       </div>
     </div>
   );
 }
-
-// ─── Hero Section ─────────────────────────────────────────────────────────────
-
-function HeroSection({
-  matchScore,
-  summary,
-}: {
-  roleTitle: string;
-  company?: string;
-  matchScore: number;
-  summary: string;
-}) {
-  const navigate = useNavigate();
-
-  return (
-    <section className="mb-14 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-      <div className="lg:col-span-7">
-        <span
-          className="text-[11px] font-bold tracking-[0.05em] uppercase mb-3 block"
-          style={{ color: 'var(--color-primary)' }}
-        >
-          Analysis Complete
-        </span>
-        <h2 className="text-5xl font-extrabold tracking-tight mb-6 leading-tight" style={{ color: 'var(--color-on-surface)' }}>
-          Strategic Capability<br />Match Report
-        </h2>
-        <p className="text-lg leading-relaxed max-w-xl" style={{ color: 'var(--color-on-surface-variant)' }}>
-          {summary}
-        </p>
-        <div className="mt-8 flex gap-4">
-          <button
-            className="px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-opacity hover:opacity-90"
-            style={{ background: 'var(--color-primary-container)', color: 'var(--color-on-primary)' }}
-          >
-            <span className="material-symbols-outlined text-sm">download</span>
-            Export Analysis
-          </button>
-          <button
-            className="px-6 py-3 font-semibold rounded-lg border transition-all hover:bg-[var(--color-surface-container-low)]"
-            style={{ borderColor: 'var(--color-outline-variant)', color: 'var(--color-primary)' }}
-            onClick={() => navigate('/tasks')}
-          >
-            View Roadmap
-          </button>
-        </div>
-      </div>
-      <div className="lg:col-span-5 flex justify-center">
-        <div
-          className="rounded-full flex items-center justify-center p-4"
-          style={{ background: 'var(--color-surface-container-low)' }}
-        >
-          <GapScoreGauge score={matchScore} />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ─── Strengths Card ────────────────────────────────────────────────────────────
-
-function StrengthsCard({ items }: { items: string[] }) {
-  return (
-    <div
-      className="rounded-xl p-8 flex flex-col transition-all hover:bg-[var(--color-surface-container)]"
-      style={{
-        background: 'var(--color-surface-container-low)',
-        borderColor: 'transparent',
-      }}
-    >
-      <div className="flex items-center justify-between mb-6">
-        <span className="material-symbols-outlined text-3xl" style={{ color: 'var(--color-primary)' }}>verified_user</span>
-        <Badge variant="success">High Strength</Badge>
-      </div>
-      <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--color-on-surface)' }}>Core Proficiencies</h3>
-      <p className="text-sm mb-6" style={{ color: 'var(--color-on-surface-variant)' }}>
-        Foundational skills that exceed market benchmarks.
-      </p>
-      <ul className="space-y-4 flex-1">
-        {items.map(item => (
-          <li key={item} className="flex items-start gap-3">
-            <span
-              className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0"
-              style={{ backgroundColor: 'var(--color-primary)' }}
-            />
-            <span className="text-sm font-medium" style={{ color: 'var(--color-on-surface)' }}>{item}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-// ─── Key Gaps Card ─────────────────────────────────────────────────────────────
-
-function KeyGapsCard({ gaps }: { gaps: { title: string; description: string; severity: string }[] }) {
-  return (
-    <div
-      className="rounded-xl p-8 flex flex-col transition-all hover:bg-[var(--color-surface-container)]"
-      style={{ background: 'var(--color-surface-container-low)', borderColor: 'transparent' }}
-    >
-      <div className="flex items-center justify-between mb-6">
-        <span className="material-symbols-outlined text-3xl" style={{ color: 'var(--color-tertiary)' }}>signal_cellular_alt_2_bar</span>
-        <Badge variant="warning">Growth Gap</Badge>
-      </div>
-      <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--color-on-surface)' }}>Key Gaps</h3>
-      <p className="text-sm mb-6" style={{ color: 'var(--color-on-surface-variant)' }}>
-        Critical competencies requiring immediate attention.
-      </p>
-      <div className="flex-1 space-y-4">
-        {gaps.map((gap) => {
-          const level = gap.severity === 'high' ? 2 : gap.severity === 'medium' ? 3 : 4;
-          return (
-            <div
-              key={gap.title}
-              className="p-4 rounded-lg"
-              style={{ background: 'var(--color-surface-container-highest)' }}
-            >
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-bold" style={{ color: 'var(--color-on-surface)' }}>{gap.title}</span>
-                <span className="text-[10px] font-black" style={{ color: 'var(--color-tertiary)' }}>
-                  LVL {level}/5
-                </span>
-              </div>
-              <ProgressBar value={level} max={5} size="sm" color="warning" />
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ─── Risks Card ───────────────────────────────────────────────────────────────
-
-function RisksCard({ risks }: { risks: { title: string; description: string }[] }) {
-  return (
-    <div
-      className="rounded-xl p-8 flex flex-col transition-all hover:bg-[var(--color-surface-container)]"
-      style={{ background: 'var(--color-surface-container-low)', borderColor: 'transparent' }}
-    >
-      <div className="flex items-center justify-between mb-6">
-        <span className="material-symbols-outlined text-3xl" style={{ color: 'var(--color-error)' }}>report_problem</span>
-        <Badge variant="error">Risk Factor</Badge>
-      </div>
-      <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--color-on-surface)' }}>Market Risks</h3>
-      <p className="text-sm mb-6" style={{ color: 'var(--color-on-surface-variant)' }}>
-        External factors impacting your placement rate.
-      </p>
-      <div className="flex-1 space-y-4">
-        {risks.map((risk, i) => (
-          <div key={i} className="flex gap-4 items-center">
-            <div
-              className="w-10 h-10 rounded flex items-center justify-center flex-shrink-0"
-              style={{ background: 'var(--color-error-container)' }}
-            >
-              <span className="material-symbols-outlined text-xl" style={{ color: 'var(--color-error)' }}>
-                {i === 0 ? 'trending_down' : 'history'}
-              </span>
-            </div>
-            <div>
-              <p className="text-sm font-bold" style={{ color: 'var(--color-on-surface)' }}>{risk.title}</p>
-              <p className="text-[10px]" style={{ color: 'var(--color-on-surface-variant)' }}>{risk.description}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── Competency Breakdown ─────────────────────────────────────────────────────
-
-function CompetencyBreakdownSection({
-  matchScore,
-}: {
-  roleTitle: string;
-  matchScore: number;
-}) {
-  const competencies = [
-    { name: 'Technical Strategy', matched: Math.min(matchScore + 5, 100), gap: Math.max(100 - matchScore - 5, 0) },
-    { name: 'Financial Planning', matched: Math.max(matchScore - 20, 0), gap: Math.min(100 - matchScore + 20, 100) },
-    { name: 'Product Engineering', matched: Math.min(matchScore + 10, 100), gap: Math.max(100 - matchScore - 10, 0) },
-    { name: 'Stakeholder Management', matched: Math.max(matchScore - 10, 0), gap: Math.min(100 - matchScore + 10, 100) },
-  ];
-
-  return (
-    <section
-      className="mt-16 rounded-2xl p-10 shadow-sm"
-      style={{
-        background: 'var(--color-surface-container-lowest)',
-        border: '1px solid var(--color-outline-variant)',
-      }}
-    >
-      <div className="flex justify-between items-end mb-10">
-        <div>
-          <h4 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--color-on-surface)' }}>
-            Competency Breakdown
-          </h4>
-          <p className="text-sm mt-1" style={{ color: 'var(--color-on-surface-variant)' }}>
-            Weighted analysis of technical vs. soft skill alignment.
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full" style={{ background: 'var(--color-primary)' }} />
-            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-on-surface-variant)' }}>Matched</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full" style={{ background: 'var(--color-tertiary)' }} />
-            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-on-surface-variant)' }}>Gap</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-8">
-        {competencies.map(comp => (
-          <div key={comp.name} className="grid grid-cols-12 gap-6 items-center">
-            <div className="col-span-3 text-sm font-semibold" style={{ color: 'var(--color-on-surface)' }}>
-              {comp.name}
-            </div>
-            <div className="col-span-9 flex items-center gap-4">
-              <div
-                className="flex-1 h-3 rounded-full overflow-hidden flex"
-                style={{ background: 'var(--color-surface-container-highest)' }}
-              >
-                <div
-                  className="h-full"
-                  style={{ width: `${comp.matched}%`, background: 'var(--color-primary)' }}
-                />
-                <div
-                  className="h-full"
-                  style={{ width: `${comp.gap}%`, background: 'var(--color-tertiary)' }}
-                />
-              </div>
-              <span className="text-xs font-bold w-8 text-right" style={{ color: 'var(--color-on-surface)' }}>
-                {comp.matched}%
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AnalysisResultPage() {
   const { id } = useParams<{ id: string }>();
-  const sessionId = id ? parseInt(id, 10) : 0;
+  const sessionId = Number(id);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { addToast } = useToastStore();
 
-  const { data: session, isLoading, error } = useQuery({
+  const { data: session, isLoading, isError } = useQuery({
     queryKey: ['session', sessionId],
     queryFn: () => getSession(sessionId),
-    enabled: !!sessionId,
+    enabled: Number.isFinite(sessionId) && sessionId > 0,
   });
+
+  const exportMutation = useMutation({
+    mutationFn: (format: 'docx' | 'pdf') => exportReport(sessionId, format),
+    onSuccess: (blob, format) => {
+      downloadBlob(blob, `analysis-${sessionId}.${format}`);
+      addToast({ type: 'success', message: `${format.toUpperCase()} export is ready.` });
+    },
+    onError: (error: Error) => addToast({ type: 'error', message: error.message || 'Export failed.' }),
+  });
+
+  const taskMutation = useMutation({
+    mutationFn: async () => {
+      if (!session) return;
+      await Promise.all(
+        session.report.learning_plan.map((item) =>
+          createTask({
+            title: item,
+            description: `Created from analysis report #${session.id}.`,
+            session_id: session.id,
+            priority: 'medium',
+          }),
+        ),
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['learning-tasks'] });
+      addToast({ type: 'success', message: 'Learning tasks created.' });
+      navigate('/tasks');
+    },
+    onError: (error: Error) => addToast({ type: 'error', message: error.message || 'Could not create tasks.' }),
+  });
+
+  const interviewMutation = useMutation({
+    mutationFn: async () => {
+      if (!session) return;
+      const generated = await generateQuestions({
+        session_id: session.id,
+        target_role: session.target_role,
+        resume_text: session.resume_text,
+        job_description: session.job_description,
+        gaps: session.report.gaps,
+      });
+
+      await Promise.all(
+        generated.questions.map((question) =>
+          createInterviewPrep({
+            question,
+            session_id: session.id,
+          }),
+        ),
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['interview-prep'] });
+      addToast({ type: 'success', message: 'Interview questions added to your library.' });
+      navigate('/interview');
+    },
+    onError: (error: Error) => addToast({ type: 'error', message: error.message || 'Could not generate interview questions.' }),
+  });
+
+  const topGaps = useMemo(() => session?.report.gaps.slice(0, 4) ?? [], [session]);
+  const strengths = session?.report.strengths ?? [];
+  const risks = session?.report.risks ?? [];
 
   if (isLoading) {
     return (
       <PageContainer>
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Loading analysis...</p>
-          </div>
+        <div className="min-h-[60vh] flex items-center justify-center text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+          Loading analysis report...
         </div>
       </PageContainer>
     );
   }
 
-  if (error || !session) {
+  if (isError || !session) {
     return (
       <PageContainer>
-        <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
-          <span className="material-symbols-outlined text-5xl mb-4" style={{ color: 'var(--color-error)' }}>error</span>
-          <h2 className="text-xl font-bold mb-2" style={{ color: 'var(--color-on-surface)' }}>Analysis not found</h2>
-          <p className="text-sm" style={{ color: 'var(--color-on-surface-variant)' }}>
-            This analysis session could not be loaded.
-          </p>
-        </div>
+        <EmptyState
+          icon="error"
+          title="This analysis report is unavailable"
+          description="The session may not exist, or your account may not have access to it."
+          action={{ label: 'Back to history', icon: 'arrow_back', onClick: () => navigate('/history') }}
+        />
       </PageContainer>
     );
   }
-
-  const gaps = session.gaps.slice(0, 3).map(g => ({
-    title: g.title,
-    description: g.description,
-    severity: g.severity,
-  }));
-
-  const risks = session.risks.slice(0, 2).map((r, i) => ({
-    title: r,
-    description: i === 0 ? '42% increase in competitive applicants' : 'PMP Renewal due in 14 days',
-  }));
 
   return (
     <PageContainer>
-      <HeroSection
-        roleTitle={session.target_role}
-        company={session.company}
-        matchScore={session.match_score}
-        summary={session.summary}
-      />
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-6 mb-8">
+        <Card className="xl:col-span-8 p-8 overflow-hidden relative">
+          <div
+            className="absolute inset-0"
+            style={{ background: 'radial-gradient(circle at top right, rgba(79,70,229,0.12), transparent 32%)' }}
+          />
+          <div className="relative">
+            <div className="flex flex-wrap items-center gap-3 mb-4">
+              <Badge variant="primary">Analysis complete</Badge>
+              <Badge variant="secondary">{scoreLabel(session.report.match_score)}</Badge>
+              <span className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                {formatDateTime(session.created_at)}
+              </span>
+            </div>
+            <h1 className="text-4xl font-black tracking-tight mb-3">{session.target_role}</h1>
+            <p className="text-base max-w-3xl" style={{ color: 'var(--color-text-secondary)' }}>
+              {session.report.summary}
+            </p>
 
-      {/* Bento Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StrengthsCard items={session.strengths} />
-        <KeyGapsCard gaps={gaps} />
-        <RisksCard risks={risks} />
-      </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+              <div className="rounded-[var(--radius-xl)] p-4" style={{ background: 'var(--color-surface-container-low)' }}>
+                <p className="editorial-kicker mb-2">Confidence</p>
+                <p className="text-2xl font-black">{session.report.validation.confidence}%</p>
+              </div>
+              <div className="rounded-[var(--radius-xl)] p-4" style={{ background: 'var(--color-surface-container-low)' }}>
+                <p className="editorial-kicker mb-2">Critical Gaps</p>
+                <p className="text-2xl font-black">{session.report.validation.critical_gaps.length || topGaps.length}</p>
+              </div>
+              <div className="rounded-[var(--radius-xl)] p-4" style={{ background: 'var(--color-surface-container-low)' }}>
+                <p className="editorial-kicker mb-2">Next Actions</p>
+                <p className="text-2xl font-black">{session.report.next_actions.length}</p>
+              </div>
+            </div>
+          </div>
+        </Card>
 
-      <CompetencyBreakdownSection
-        roleTitle={session.target_role}
-        matchScore={session.match_score}
-      />
+        <Card className="xl:col-span-4 p-8 flex flex-col items-center justify-center">
+          <Gauge score={session.report.match_score} />
+          <div className="w-full mt-6 space-y-3">
+            <Button className="w-full" icon="download" onClick={() => exportMutation.mutate('pdf')} loading={exportMutation.isPending}>
+              Export PDF report
+            </Button>
+            <Button className="w-full" variant="secondary" icon="description" onClick={() => exportMutation.mutate('docx')} loading={exportMutation.isPending}>
+              Export DOCX draft
+            </Button>
+          </div>
+        </Card>
+      </section>
+
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-6 mb-8">
+        <Card className="xl:col-span-4 p-6">
+          <p className="editorial-kicker mb-2">Strengths</p>
+          <h3 className="text-xl font-bold tracking-tight mb-4">What already matches well</h3>
+          <div className="space-y-3">
+            {strengths.map((item) => (
+              <div key={item} className="rounded-[var(--radius-xl)] p-4" style={{ background: 'var(--color-surface-container-low)' }}>
+                <div className="flex gap-3">
+                  <span className="material-symbols-outlined" style={{ color: 'var(--color-primary)' }}>verified</span>
+                  <p className="text-sm">{item}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card className="xl:col-span-4 p-6">
+          <p className="editorial-kicker mb-2">Key Gaps</p>
+          <h3 className="text-xl font-bold tracking-tight mb-4">Where the role still needs evidence</h3>
+          <div className="space-y-3">
+            {topGaps.map((gap) => (
+              <div key={`${gap.requirement}-${gap.evidence}`} className="rounded-[var(--radius-xl)] p-4" style={{ background: 'var(--color-surface-container-low)' }}>
+                <div className="flex items-center justify-between mb-2 gap-3">
+                  <p className="font-semibold">{gap.requirement}</p>
+                  <Badge variant={gap.severity === 'high' ? 'error' : gap.severity === 'medium' ? 'warning' : 'secondary'}>
+                    {gap.severity}
+                  </Badge>
+                </div>
+                <p className="text-sm mb-2" style={{ color: 'var(--color-text-secondary)' }}>{gap.evidence}</p>
+                <p className="text-sm">{gap.recommendation}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card className="xl:col-span-4 p-6">
+          <p className="editorial-kicker mb-2">Risk Signals</p>
+          <h3 className="text-xl font-bold tracking-tight mb-4">Potential concerns to address</h3>
+          <div className="space-y-3">
+            {(risks.length ? risks : ['No major risk signals were found. Keep strengthening concrete examples and impact statements.']).map((item) => (
+              <div key={item} className="rounded-[var(--radius-xl)] p-4" style={{ background: 'var(--color-surface-container-low)' }}>
+                <div className="flex gap-3">
+                  <span className="material-symbols-outlined" style={{ color: 'var(--color-tertiary)' }}>report_problem</span>
+                  <p className="text-sm">{item}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </section>
+
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-6 mb-8">
+        <Card className="xl:col-span-7 p-6">
+          <div className="flex items-center justify-between mb-5 gap-4">
+            <div>
+              <p className="editorial-kicker mb-2">Execution Plan</p>
+              <h3 className="text-xl font-bold tracking-tight">Recommended next steps</h3>
+            </div>
+            <Button variant="secondary" icon="school" onClick={() => taskMutation.mutate()} loading={taskMutation.isPending}>
+              Create learning tasks
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="rounded-[var(--radius-xl)] p-4" style={{ background: 'var(--color-surface-container-low)' }}>
+              <p className="font-semibold mb-3">Next Actions</p>
+              <ul className="space-y-2">
+                {session.report.next_actions.map((item) => (
+                  <li key={item} className="text-sm flex gap-2">
+                    <span className="material-symbols-outlined text-base" style={{ color: 'var(--color-primary)' }}>arrow_forward</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="rounded-[var(--radius-xl)] p-4" style={{ background: 'var(--color-surface-container-low)' }}>
+              <p className="font-semibold mb-3">Learning Roadmap</p>
+              <ul className="space-y-2">
+                {session.report.learning_plan.map((item) => (
+                  <li key={item} className="text-sm flex gap-2">
+                    <span className="material-symbols-outlined text-base" style={{ color: 'var(--color-primary)' }}>school</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="xl:col-span-5 p-6">
+          <div className="flex items-center justify-between mb-5 gap-4">
+            <div>
+              <p className="editorial-kicker mb-2">Interview Prep</p>
+              <h3 className="text-xl font-bold tracking-tight">Turn this report into practice</h3>
+            </div>
+            <Button icon="record_voice_over" onClick={() => interviewMutation.mutate()} loading={interviewMutation.isPending}>
+              Generate questions
+            </Button>
+          </div>
+
+          <div className="space-y-3 mb-5">
+            {session.report.interview_focus.map((item) => (
+              <div key={item} className="rounded-[var(--radius-xl)] p-4" style={{ background: 'var(--color-surface-container-low)' }}>
+                <p className="text-sm">{item}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="rounded-[var(--radius-xl)] p-4" style={{ background: 'var(--color-surface-container-low)' }}>
+            <p className="font-semibold mb-2">Resume improvement notes</p>
+            <div className="space-y-3">
+              {session.report.resume_suggestions.slice(0, 2).map((item) => (
+                <div key={`${item.original}-${item.optimized}`} className="text-sm">
+                  <p className="font-medium">{item.original}</p>
+                  <p style={{ color: 'var(--color-text-secondary)' }}>{item.optimized}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+      </section>
     </PageContainer>
   );
 }

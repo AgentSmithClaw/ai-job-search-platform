@@ -21,13 +21,11 @@ const sizeClasses = {
 
 export function ProgressBar({ value, max = 100, size = 'md', showLabel = false, color = 'primary' }: ProgressBarProps) {
   const pct = Math.min(Math.max((value / max) * 100, 0), 100);
+
   return (
     <div className="flex items-center gap-3">
       <div className={`flex-1 bg-[var(--color-bg-subtle)] rounded-full overflow-hidden ${sizeClasses[size]}`}>
-        <div
-          className={`h-full rounded-full transition-all duration-500 ${colorClasses[color]}`}
-          style={{ width: `${pct}%` }}
-        />
+        <div className={`h-full rounded-full transition-all duration-500 ${colorClasses[color]}`} style={{ width: `${pct}%` }} />
       </div>
       {showLabel && (
         <span className="text-xs font-mono font-semibold text-[var(--color-text-secondary)] w-10 text-right">
@@ -52,14 +50,7 @@ export function MatchScoreRing({ score, size = 160 }: MatchScoreRingProps) {
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke="var(--color-border)"
-          strokeWidth="12"
-        />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--color-border)" strokeWidth="12" />
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -94,18 +85,15 @@ interface StepIndicatorProps {
 
 export function StepIndicator({ steps, currentStep }: StepIndicatorProps) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 flex-wrap">
       {steps.map((step, idx) => {
-        const status = currentStep !== undefined
-          ? idx < currentStep ? 'completed' : idx === currentStep ? 'active' : 'pending'
-          : step.status || 'pending';
+        const status = currentStep !== undefined ? (idx < currentStep ? 'completed' : idx === currentStep ? 'active' : 'pending') : step.status || 'pending';
 
         return (
           <div key={step.id} className="flex items-center gap-2">
             <div
               className={`
-                flex items-center justify-center gap-2 px-4 py-2 rounded-full text-xs font-semibold
-                transition-all duration-200
+                flex items-center justify-center gap-2 px-4 py-2 rounded-full text-xs font-semibold transition-all duration-200
                 ${status === 'completed' ? 'bg-[var(--color-success-subtle)] text-[var(--color-success)] border border-[var(--color-success)]/20' : ''}
                 ${status === 'active' ? 'bg-[var(--color-primary-subtle)] text-[var(--color-primary-text)] border border-[var(--color-primary)] font-bold' : ''}
                 ${status === 'pending' ? 'bg-[var(--color-bg-subtle)] text-[var(--color-text-tertiary)] border border-[var(--color-border)]' : ''}

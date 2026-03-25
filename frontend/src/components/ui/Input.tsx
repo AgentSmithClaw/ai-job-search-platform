@@ -24,13 +24,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           id={inputId}
           className={`
             w-full px-3 py-2.5 text-sm
-            bg-[var(--color-bg-surface)]
-            border-2 rounded-[var(--radius-md)]
-            border-[var(--color-border)]
+            bg-[var(--color-surface-container-low)]
+            border rounded-[var(--radius-xl)]
+            border-[color-mix(in_srgb,var(--color-outline-variant)_35%,transparent)]
             text-[var(--color-text)]
             placeholder:text-[var(--color-text-tertiary)]
             transition-all duration-150
-            focus:border-[var(--color-primary)] focus:shadow-[var(--shadow-focus)]
+            focus:bg-[var(--color-bg-surface)] focus:border-[var(--color-primary)] focus:shadow-[var(--shadow-focus)]
             disabled:opacity-60 disabled:cursor-not-allowed
             ${error ? 'border-[var(--color-error)] focus:border-[var(--color-error)]' : ''}
             ${className}
@@ -81,13 +81,13 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           value={value}
           className={`
             w-full px-3 py-2.5 text-sm resize-y min-h-[120px]
-            bg-[var(--color-bg-surface)]
-            border-2 rounded-[var(--radius-md)]
-            border-[var(--color-border)]
+            bg-[var(--color-surface-container-low)]
+            border rounded-[var(--radius-xl)]
+            border-[color-mix(in_srgb,var(--color-outline-variant)_35%,transparent)]
             text-[var(--color-text)]
             placeholder:text-[var(--color-text-tertiary)]
             transition-all duration-150
-            focus:border-[var(--color-primary)] focus:shadow-[var(--shadow-focus)]
+            focus:bg-[var(--color-bg-surface)] focus:border-[var(--color-primary)] focus:shadow-[var(--shadow-focus)]
             disabled:opacity-60 disabled:cursor-not-allowed
             ${error ? 'border-[var(--color-error)]' : ''}
             ${className}

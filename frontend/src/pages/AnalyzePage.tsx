@@ -1,439 +1,265 @@
-import { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { analyze, getPricing, mockPurchase, uploadResume } from '../services/analysis';
+import { useAuthStore, useDraftStore, useToastStore } from '../store';
+import { PageContainer, PageHeader } from '../components/layout/PageContainer';
+import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import { Card } from '../components/ui/Card';
 import { Input, Textarea } from '../components/ui/Input';
-import { ProgressBar } from '../components/ui/Progress';
-import { PageContainer } from '../components/layout/PageContainer';
+import { deriveSessionFromAnalysis } from '../utils/analysis';
 
-const WIZARD_STEPS = [
-  { id: 1, label: '01. Identity Source', sub: 'Upload Resume' },
-  { id: 2, label: '02. Destination Meta', sub: 'Job Description' },
-  { id: 3, label: '03. AI Processing', sub: 'Architecture Mapping' },
-  { id: 4, label: '04. Gap Output', sub: 'Final Report' },
-];
-
-const MOCK_RESUME_TEXT =
-  'Senior Product Designer with 6+ years of experience building consumer-facing mobile and web applications. Led design for 3 unicorn-stage startups, shipping features to 5M+ users. Expert in Figma, design systems, and cross-functional collaboration.';
-
-const MOCK_JOB_DESCRIPTION = `Senior Product Architect — Fintech Platform
-
-We are looking for a Senior Product Architect to lead the technical vision for our next-generation payments platform.
-
-Responsibilities:
-- Architect scalable, high-availability payment processing systems
-- Define and own the technical roadmap in collaboration with Product and Engineering
-- Lead design reviews and establish engineering standards across squads
-
-Requirements:
-- 8+ years of software engineering experience with 3+ years in payment or financial systems
-- Deep expertise in distributed systems and microservices
-- Strong proficiency in TypeScript, Python, or Go`;
-
-const ANALYSIS_STAGES = [
-  'Parsing resume structure...',
-  'Extracting skills and experience...',
-  'Mapping job requirements...',
-  'Computing gap vectors...',
-  'Generating strategic recommendations...',
+const STEP_LABELS = [
+  { title: '01 Resume Input', subtitle: 'Resume text' },
+  { title: '02 Target Role', subtitle: 'Job description' },
+  { title: '03 AI Analysis', subtitle: 'Strategic mapping' },
+  { title: '04 Final Report', subtitle: 'Action plan' },
 ];
 
 export default function AnalyzePage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user, setUser } = useAuthStore();
+  const { addToast } = useToastStore();
+  const { targetRole, resumeText, jobDescription, setDraft, clearDraft } = useDraftStore();
 
-  const [currentStep, setCurrentStep] = useState(0);
-  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success'>('idle');
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [resumeText, setResumeText] = useState('');
-  const [jobTitle, setJobTitle] = useState('');
-  const [jobDescription, setJobDescription] = useState('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisProgress, setAnalysisProgress] = useState(0);
-  const [analysisStage, setAnalysisStage] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadName, setUploadName] = useState('');
 
-  const canProceedStep0 = uploadStatus === 'success' || resumeText.trim().length > 50;
-  const canProceedStep1 = jobTitle.trim().length > 0 && jobDescription.trim().length > 100;
+  const { data: pricing = [] } = useQuery({
+    queryKey: ['pricing'],
+    queryFn: getPricing,
+  });
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const uploadMutation = useMutation({
+    mutationFn: uploadResume,
+    onSuccess: (data) => {
+      setDraft({ resumeText: data.extracted_text });
+      setUploadName(data.file_name);
+      addToast({ type: 'success', message: `Resume parsed: ${data.char_count} chars` });
+    },
+    onError: (error: Error) => addToast({ type: 'error', message: error.message || 'Resume upload failed' }),
+  });
+
+  const analyzeMutation = useMutation({
+    mutationFn: () =>
+      analyze({
+        target_role: targetRole,
+        resume_text: resumeText,
+        job_description: jobDescription,
+      }),
+    onSuccess: (data) => {
+      if (user) {
+        setUser({ ...user, credits: data.credits_remaining });
+      }
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      const adapted = deriveSessionFromAnalysis(data, resumeText, jobDescription);
+      queryClient.setQueryData(['session', data.session_id], adapted);
+      clearDraft();
+      addToast({ type: 'success', message: 'Analysis complete. Opening report...' });
+      navigate(`/analyze/${data.session_id}`);
+    },
+    onError: (error: Error) => addToast({ type: 'error', message: error.message || 'Analysis failed. Please retry.' }),
+  });
+
+  const purchaseMutation = useMutation({
+    mutationFn: (packageCode: string) => mockPurchase(packageCode),
+    onSuccess: (data) => {
+      if (user) {
+        setUser({ ...user, credits: data.credits_total });
+      }
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      addToast({ type: 'success', message: `Purchased ${data.package_name}. Credits: ${data.credits_total}` });
+    },
+    onError: (error: Error) => addToast({ type: 'error', message: error.message || 'Purchase failed' }),
+  });
+
+  const canAnalyze = targetRole.trim().length >= 2 && resumeText.trim().length >= 20 && jobDescription.trim().length >= 20;
+  const credits = user?.credits ?? 0;
+  const currentStep = analyzeMutation.isPending ? 2 : canAnalyze ? 1 : resumeText.trim() ? 1 : 0;
+
+  const handleFile = (file?: File) => {
     if (!file) return;
-    setFileName(file.name);
-    setUploadStatus('uploading');
-    setTimeout(() => {
-      setUploadStatus('success');
-      setResumeText(MOCK_RESUME_TEXT);
-    }, 1800);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      setFileName(file.name);
-      setUploadStatus('uploading');
-      setTimeout(() => {
-        setUploadStatus('success');
-        setResumeText(MOCK_RESUME_TEXT);
-      }, 1800);
-    }
-  };
-
-  const handlePasteFromJD = () => {
-    setJobDescription(MOCK_JOB_DESCRIPTION);
-    setJobTitle('Senior Product Architect');
-  };
-
-  const simulateAnalysis = () => {
-    setIsAnalyzing(true);
-    setAnalysisProgress(0);
-    let stageIdx = 0;
-    setAnalysisStage(ANALYSIS_STAGES[0]);
-
-    const interval = setInterval(() => {
-      setAnalysisProgress(prev => {
-        const next = prev + Math.floor(Math.random() * 12) + 4;
-        if (next >= 100) {
-          clearInterval(interval);
-          setTimeout(() => navigate('/history'), 800);
-          return 100;
-        }
-        const newStageIdx = Math.floor((next / 100) * ANALYSIS_STAGES.length);
-        if (newStageIdx > stageIdx && newStageIdx < ANALYSIS_STAGES.length) {
-          stageIdx = newStageIdx;
-          setAnalysisStage(ANALYSIS_STAGES[stageIdx]);
-        }
-        return Math.min(next, 99);
-      });
-    }, 300);
-  };
-
-  const handleSubmit = () => {
-    setCurrentStep(2);
-    simulateAnalysis();
-  };
-
-  const goNext = () => {
-    if (currentStep < 2) setCurrentStep(s => s + 1);
-  };
-
-  const goBack = () => {
-    if (isAnalyzing) return;
-    if (currentStep > 0) setCurrentStep(s => s - 1);
+    setUploadName(file.name);
+    uploadMutation.mutate(file);
   };
 
   return (
     <PageContainer>
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-3">
-          <Badge variant="primary">New Analysis</Badge>
-          <div className="flex-1 h-px" style={{ background: 'var(--color-outline-variant)' }} />
-        </div>
-        <h2
-          className="text-2xl font-bold tracking-tight mb-2"
-          style={{ color: 'var(--color-on-surface)' }}
-        >
-          Create Job Gap Analysis
-        </h2>
-        <p className="text-sm" style={{ color: 'var(--color-on-surface-variant)' }}>
-          Map your profile against a target role to identify gaps and strategic pivots.
-        </p>
-      </div>
+      <PageHeader
+        title="Create a Role-Fit Analysis"
+        description="Use a real resume and a real job description to generate a professional report with match score, risks, skill gaps, and next-step actions."
+      />
 
-      {/* Step Indicator */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2">
-          {WIZARD_STEPS.map((step, idx) => (
-            <div key={step.id} className="flex items-center gap-2 flex-1">
-              <div
-                className="flex items-center gap-2 flex-1 h-1 rounded-full"
-                style={{
-                  background: idx <= (isAnalyzing ? 2 : currentStep)
-                    ? 'var(--color-primary)'
-                    : 'var(--color-surface-container-highest)',
-                }}
-              />
+      <section className="mb-8 grid grid-cols-1 xl:grid-cols-4 gap-4">
+        {STEP_LABELS.map((step, index) => {
+          const active = index <= currentStep;
+          return (
+            <div key={step.title}>
+              <div className="h-1 rounded-full mb-3" style={{ background: active ? 'var(--color-primary)' : 'var(--color-surface-container-highest)' }} />
+              <p className="text-[11px] font-bold tracking-wider uppercase" style={{ color: active ? 'var(--color-primary)' : 'var(--color-text-secondary)' }}>
+                {step.title}
+              </p>
+              <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{step.subtitle}</p>
             </div>
-          ))}
-        </div>
-        <div className="flex justify-between mt-2">
-          {WIZARD_STEPS.map(step => (
-            <p
-              key={step.id}
-              className="text-[10px] font-medium"
-              style={{ color: 'var(--color-on-surface-variant)' }}
-            >
-              {step.sub}
-            </p>
-          ))}
-        </div>
-      </div>
+          );
+        })}
+      </section>
 
-      {/* AI Processing Overlay */}
-      {isAnalyzing && (
-        <Card className="mb-8 p-8 text-center">
-          <div className="flex flex-col items-center gap-5">
-            {/* Circular progress */}
-            <div className="relative w-16 h-16">
-              <div
-                className="absolute inset-0 rounded-full"
-                style={{ background: 'var(--color-surface-container-highest)' }}
-              />
-              <svg viewBox="0 0 64 64" className="absolute inset-0 w-full h-full -rotate-90">
-                <circle
-                  cx="32" cy="32" r="28"
-                  fill="none"
-                  stroke="var(--color-primary)"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                  strokeDasharray={`${2 * Math.PI * 28}`}
-                  strokeDashoffset={`${2 * Math.PI * 28 * (1 - analysisProgress / 100)}`}
-                  style={{ transition: 'stroke-dashoffset 0.3s ease' }}
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-sm font-bold" style={{ color: 'var(--color-primary)' }}>
-                  {analysisProgress}%
-                </span>
-              </div>
-            </div>
-
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+        <Card className="xl:col-span-5 p-6">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-sm font-semibold mb-1" style={{ color: 'var(--color-on-surface)' }}>
-                AI is analyzing your profile...
-              </p>
-              <p className="text-xs italic" style={{ color: 'var(--color-on-surface-variant)' }}>
-                {analysisStage}
-              </p>
+              <p className="editorial-kicker mb-2">Resume Intake</p>
+              <h3 className="text-xl font-bold tracking-tight">Resume input</h3>
             </div>
+            <Badge variant="secondary">{uploadMutation.isPending ? 'Parsing...' : 'PDF / DOCX / TXT'}</Badge>
+          </div>
 
-            <div className="w-full max-w-xs">
-              <ProgressBar value={analysisProgress} size="sm" showLabel={false} color="primary" />
+          <div
+            role="button"
+            tabIndex={0}
+            className="rounded-[var(--radius-xl)] p-8 text-center transition-all"
+            style={{
+              background: isDragging ? 'var(--color-primary-subtle)' : 'var(--color-surface-container-low)',
+              border: '1px dashed color-mix(in srgb, var(--color-outline-variant) 60%, transparent)',
+            }}
+            onDragOver={(event) => {
+              event.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={(event) => {
+              event.preventDefault();
+              setIsDragging(false);
+              handleFile(event.dataTransfer.files?.[0]);
+            }}
+            onClick={() => fileInputRef.current?.click()}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') fileInputRef.current?.click();
+            }}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept=".pdf,.doc,.docx,.txt,.md"
+              onChange={(event) => handleFile(event.target.files?.[0])}
+            />
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--color-primary-fixed)' }}>
+              <span className="material-symbols-outlined text-3xl" style={{ color: 'var(--color-primary)' }}>
+                {uploadMutation.isPending ? 'sync' : 'upload_file'}
+              </span>
             </div>
-
-            <p className="text-[10px]" style={{ color: 'var(--color-on-surface-variant)' }}>
-              Takes approximately 45 seconds
+            <p className="text-base font-semibold mb-1">{uploadName || 'Drop resume here or click to upload'}</p>
+            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+              The parser extracts the text needed for real role-fit analysis.
             </p>
+          </div>
+
+          <div className="mt-5">
+            <Textarea
+              label="Or paste resume text"
+              value={resumeText}
+              onChange={(event) => setDraft({ resumeText: event.target.value })}
+              className="min-h-[240px]"
+              hint="Include work history, skills, and impact whenever possible."
+            />
           </div>
         </Card>
-      )}
 
-      {/* Wizard Content */}
-      {!isAnalyzing && (
-        <div className="grid grid-cols-12 gap-5 items-start">
-          {/* Left — Resume Upload */}
-          <div className="col-span-12 lg:col-span-5">
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base font-semibold" style={{ color: 'var(--color-on-surface)' }}>
-                  Identity Source
-                </h3>
-                <span className="material-symbols-outlined text-xl" style={{ color: 'var(--color-primary)' }}>
-                  description
-                </span>
-              </div>
-              <p className="text-sm mb-5" style={{ color: 'var(--color-on-surface-variant)' }}>
-                Upload your resume in PDF or DOCX format.
+        <Card className="xl:col-span-7 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="editorial-kicker mb-2">Target Role</p>
+              <h3 className="text-xl font-bold tracking-tight">Job information</h3>
+            </div>
+            <Badge variant={credits > 0 ? 'primary' : 'warning'}>{credits} credits</Badge>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            <Input
+              label="Target role"
+              value={targetRole}
+              onChange={(event) => setDraft({ targetRole: event.target.value })}
+              placeholder="Example: Senior Python Backend Engineer"
+            />
+            <Textarea
+              label="Job description"
+              value={jobDescription}
+              onChange={(event) => setDraft({ jobDescription: event.target.value })}
+              className="min-h-[320px]"
+              hint="The more complete the responsibilities and requirements are, the better the analysis will be."
+            />
+          </div>
+
+          <div className="mt-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+              Each analysis uses 1 credit and generates a match score, risk summary, skill gaps, and recommended next steps.
+            </div>
+            <div className="flex gap-3">
+              <Button variant="secondary" onClick={clearDraft}>
+                Clear Draft
+              </Button>
+              <Button loading={analyzeMutation.isPending} disabled={!canAnalyze || credits < 1} icon="auto_awesome" onClick={() => analyzeMutation.mutate()}>
+                Generate Report
+              </Button>
+            </div>
+          </div>
+        </Card>
+      </section>
+
+      <section className="mt-8 grid grid-cols-1 xl:grid-cols-12 gap-6">
+        <Card className="xl:col-span-8 p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-[var(--radius-xl)] flex items-center justify-center" style={{ background: 'var(--color-primary-fixed)' }}>
+              <span className="material-symbols-outlined" style={{ color: 'var(--color-primary)' }}>lightbulb</span>
+            </div>
+            <div>
+              <p className="font-semibold mb-1">How to get a stronger report</p>
+              <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                Use your latest resume and paste the full JD, including responsibilities, requirements, stack, and business context.
+                The result page will turn that into a strategic report instead of a wall of generic text.
               </p>
+            </div>
+          </div>
+        </Card>
 
-              {/* Dropzone */}
-              <div
-                role="button"
-                tabIndex={0}
-                onDrop={handleDrop}
-                onDragOver={e => e.preventDefault()}
-                onClick={() => fileInputRef.current?.click()}
-                onKeyDown={e => e.key === 'Enter' && fileInputRef.current?.click()}
-                className="rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer mb-5 transition-colors"
-                style={{
-                  border: '2px dashed var(--color-outline-variant)',
-                  background: 'var(--color-surface-container-low)',
-                }}
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf,.docx,.doc,.txt"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-                <div
-                  className="w-12 h-12 rounded-full flex items-center justify-center mb-3"
-                  style={{ background: 'var(--color-primary-fixed)' }}
+        <Card className="xl:col-span-4 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="editorial-kicker mb-2">Quota</p>
+              <h3 className="text-xl font-bold tracking-tight">Top up credits</h3>
+            </div>
+            {credits < 1 && <Badge variant="warning">Cannot analyze</Badge>}
+          </div>
+
+          <div className="space-y-3">
+            {pricing.slice(0, 3).map((item) => (
+              <div key={item.code} className="rounded-[var(--radius-xl)] p-4" style={{ background: 'var(--color-surface-container-low)' }}>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="font-semibold">{item.name}</p>
+                  <span className="text-sm font-bold">CNY {item.price_cny}</span>
+                </div>
+                <p className="text-sm mb-3" style={{ color: 'var(--color-text-secondary)' }}>
+                  {item.description}
+                </p>
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  loading={purchaseMutation.isPending}
+                  onClick={() => purchaseMutation.mutate(item.code)}
                 >
-                  <span
-                    className="material-symbols-outlined text-2xl"
-                    style={{ color: 'var(--color-primary)' }}
-                  >
-                    {uploadStatus === 'success' ? 'history' : 'cloud_upload'}
-                  </span>
-                </div>
-                {uploadStatus === 'uploading' && (
-                  <p className="text-sm font-medium" style={{ color: 'var(--color-primary)' }}>Parsing...</p>
-                )}
-                {uploadStatus === 'success' && (
-                  <p className="text-sm font-medium" style={{ color: 'var(--color-success)' }}>Parsed</p>
-                )}
-                {uploadStatus === 'idle' && (
-                  <>
-                    <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-on-surface)' }}>
-                      Drop resume here
-                    </p>
-                    <p className="text-xs" style={{ color: 'var(--color-on-surface-variant)' }}>
-                      or <span className="font-semibold" style={{ color: 'var(--color-primary)' }}>browse</span>
-                    </p>
-                  </>
-                )}
-              </div>
-
-              {/* Paste text fallback */}
-              <Textarea
-                label="Or paste resume text"
-                value={resumeText}
-                onChange={e => {
-                  setResumeText(e.target.value);
-                  if (e.target.value.length > 50) setUploadStatus('success');
-                }}
-                placeholder="Paste your resume here..."
-                className="mb-4 min-h-[100px]"
-              />
-
-              {/* File chip */}
-              {(fileName || uploadStatus === 'success') && (
-                <div
-                  className="flex items-center gap-3 p-3 rounded-lg"
-                  style={{ background: 'var(--color-surface-container-highest)' }}
-                >
-                  <span className="material-symbols-outlined text-base" style={{ color: 'var(--color-on-surface-variant)' }}>
-                    attach_file
-                  </span>
-                  <p className="text-xs font-medium flex-1 truncate" style={{ color: 'var(--color-on-surface)' }}>
-                    {fileName || 'Resume loaded'}
-                  </p>
-                  <Badge variant="success">Ready</Badge>
-                </div>
-              )}
-
-              <div className="mt-5 flex justify-end">
-                <Button variant="primary" size="md" onClick={goNext} disabled={!canProceedStep0}>
-                  Next
-                  <span className="material-symbols-outlined text-base">chevron_right</span>
+                  Buy {item.credits} credits
                 </Button>
               </div>
-            </Card>
+            ))}
           </div>
-
-          {/* Right — Job Description */}
-          <div className="col-span-12 lg:col-span-7">
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base font-semibold" style={{ color: 'var(--color-on-surface)' }}>
-                  Destination Meta
-                </h3>
-                <span className="material-symbols-outlined text-xl" style={{ color: 'var(--color-tertiary)' }}>
-                  gps_fixed
-                </span>
-              </div>
-
-              <div className="mb-4">
-                <Input
-                  label="Job Title / Role"
-                  value={jobTitle}
-                  onChange={e => setJobTitle(e.target.value)}
-                  placeholder="e.g. Senior Product Architect"
-                />
-              </div>
-
-              <div className="mb-3">
-                <Textarea
-                  label="Job Description"
-                  value={jobDescription}
-                  onChange={e => setJobDescription(e.target.value)}
-                  placeholder="Paste the full job listing here..."
-                  className="min-h-[180px]"
-                />
-                <div className="flex gap-2 mt-2 justify-end">
-                  <Button variant="ghost" size="sm" icon="content_paste" onClick={handlePasteFromJD}>
-                    Paste JD
-                  </Button>
-                </div>
-              </div>
-
-              <div className="mt-5 flex justify-between">
-                <Button variant="ghost" size="md" icon="arrow_back" onClick={goBack}>
-                  Back
-                </Button>
-                <Button variant="primary" size="md" onClick={goNext} disabled={!canProceedStep1}>
-                  Next
-                  <span className="material-symbols-outlined text-base">chevron_right</span>
-                </Button>
-              </div>
-            </Card>
-          </div>
-        </div>
-      )}
-
-      {/* Footer Action Bar */}
-      <div
-        className="mt-8 flex items-center justify-between pt-6"
-        style={{ borderTop: '1px solid var(--color-outline-variant)' }}
-      >
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="md" icon="arrow_back" onClick={() => navigate('/')}>
-            Cancel
-          </Button>
-          <div
-            className="w-px h-4"
-            style={{ background: 'var(--color-outline-variant)' }}
-          />
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-base" style={{ color: 'var(--color-on-surface-variant)' }}>
-              info
-            </span>
-            <p className="text-xs italic" style={{ color: 'var(--color-on-surface-variant)' }}>
-              Takes approximately 45 seconds
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button variant="secondary" size="md">
-            Save Draft
-          </Button>
-          <Button
-            variant="primary"
-            size="lg"
-            onClick={handleSubmit}
-            disabled={!canProceedStep0 || !canProceedStep1}
-            icon="auto_awesome"
-          >
-            Analyze My Fit
-          </Button>
-        </div>
-      </div>
-
-      {/* Pro Tip */}
-      <Card className="mt-5 p-5">
-        <div className="flex gap-4 items-start">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ background: 'var(--color-primary-fixed)' }}
-          >
-            <span className="material-symbols-outlined text-xl" style={{ color: 'var(--color-primary)' }}>
-              lightbulb
-            </span>
-          </div>
-          <div>
-            <p className="text-sm font-semibold mb-1" style={{ color: 'var(--color-on-surface)' }}>
-              Pro Tip
-            </p>
-            <p className="text-xs" style={{ color: 'var(--color-on-surface-variant)' }}>
-              Include the Responsibilities and Qualifications sections for higher precision. The AI performs best when comparing specific outcomes.
-            </p>
-          </div>
-        </div>
-      </Card>
+        </Card>
+      </section>
     </PageContainer>
   );
 }

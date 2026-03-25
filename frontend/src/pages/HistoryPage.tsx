@@ -1,184 +1,109 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { PageContainer } from '../components/layout/PageContainer';
-import { PageHeader } from '../components/layout/PageContainer';
-import { Button } from '../components/ui/Button';
+import { useQuery } from '@tanstack/react-query';
+import { getSessions } from '../services/analysis';
+import { PageContainer, PageHeader } from '../components/layout/PageContainer';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
-import { MatchScoreBadge } from '../components/ui/Badge';
-import { SkeletonCard } from '../components/ui/Skeleton';
+import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
-import { Modal, ModalFooter } from '../components/ui/Modal';
-import { useToastStore } from '../store';
-import { getSessions, deleteSession } from '../services/analysis';
-import type { SessionSummary } from '../types';
+import { MatchScoreBadge } from '../components/ui/Badge';
+import { formatDate, relativeTime } from '../utils/format';
 
 export default function HistoryPage() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { addToast } = useToastStore();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
-  const [deleteTarget, setDeleteTarget] = useState<SessionSummary | null>(null);
-  const limit = 20;
+  const limit = 12;
 
   const { data, isLoading } = useQuery({
-    queryKey: ['sessions', { offset: page * limit, limit, search }],
-    queryFn: () => getSessions({ offset: page * limit, limit, search: search || undefined }),
+    queryKey: ['sessions', { offset: page * limit, limit }],
+    queryFn: () => getSessions({ offset: page * limit, limit }),
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: number) => deleteSession(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sessions'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      addToast({ type: 'success', message: '删除成功' });
-      setDeleteTarget(null);
-    },
-    onError: () => addToast({ type: 'error', message: '删除失败' }),
-  });
-
-  const sessions = data?.sessions ?? [];
-  const total = data?.total ?? 0;
+  const sessions = useMemo(() => {
+    const items = data?.sessions ?? [];
+    if (!search.trim()) return items;
+    return items.filter((session) => session.target_role.toLowerCase().includes(search.trim().toLowerCase()));
+  }, [data?.sessions, search]);
 
   return (
     <PageContainer>
-      <PageHeader title="分析记录" description={`共 ${total} 条记录`} />
+      <PageHeader
+        title="Analysis history"
+        description="Review previous reports, reopen a session, and continue with exports, learning tasks, or interview preparation whenever you need it."
+        action={
+          <Button icon="add" onClick={() => navigate('/analyze')}>
+            New analysis
+          </Button>
+        }
+      />
 
-      {/* Search bar */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="flex-1 max-w-xs">
-          <Input
-            value={search}
-            onChange={e => { setSearch(e.target.value); setPage(0); }}
-            placeholder="搜索岗位..."
-          />
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="flex-1 max-w-md">
+          <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by role title" />
         </div>
-        <span className="text-sm" style={{ color: 'var(--color-on-surface-variant)' }}>
-          {total} 条记录
-        </span>
+        <div className="text-sm flex items-center" style={{ color: 'var(--color-text-secondary)' }}>
+          {data?.total ?? 0} records
+        </div>
       </div>
 
-      {/* Content */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[0, 1, 2, 3].map(i => <SkeletonCard key={i} />)}
-        </div>
+        <Card className="p-6 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+          Loading analysis history...
+        </Card>
       ) : sessions.length === 0 ? (
         <EmptyState
           icon="analytics"
-          title="暂无分析记录"
-          description="开始你的第一次求职差距分析"
-          action={{ label: '新建分析', icon: 'add', onClick: () => navigate('/analyze') }}
+          title="No analysis history yet"
+          description="Once you complete your first analysis, the reports will appear here for quick access."
+          action={{ label: 'Start analysis', icon: 'add', onClick: () => navigate('/analyze') }}
         />
       ) : (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {sessions.map(session => (
-              <Card key={session.id} hoverable={true} padding={false} className="p-5">
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className="font-semibold truncate"
-                      style={{ color: 'var(--color-on-surface)' }}
-                    >
-                      {session.target_role}
-                    </p>
-                    {session.company && (
-                      <p className="text-xs" style={{ color: 'var(--color-on-surface-variant)' }}>
-                        {session.company}
-                      </p>
-                    )}
-                  </div>
-                  <MatchScoreBadge score={session.match_score} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {sessions.map((session) => (
+            <Card key={session.id} hoverable className="p-5">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold tracking-tight">{session.target_role}</h3>
+                  <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                    {formatDate(session.created_at)} · {relativeTime(session.created_at)}
+                  </p>
                 </div>
+                <MatchScoreBadge score={session.match_score} />
+              </div>
 
-                <p
-                  className="text-sm line-clamp-2 mb-4"
-                  style={{ color: 'var(--color-on-surface-variant)' }}
-                >
-                  {session.summary}
-                </p>
+              <p className="text-sm line-clamp-3 mb-5" style={{ color: 'var(--color-text-secondary)' }}>
+                {session.summary}
+              </p>
 
-                <div className="flex items-center justify-between">
-                  <span className="text-xs" style={{ color: 'var(--color-on-surface-variant)' }}>
-                    {new Date(session.created_at).toLocaleDateString('zh-CN')}
-                  </span>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      icon="visibility"
-                      onClick={() => navigate(`/analyze/${session.id}`)}
-                    >
-                      查看
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      icon="delete"
-                      onClick={() => setDeleteTarget(session)}
-                    >
-                      删除
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-
-          {/* Pagination */}
-          {total > limit && (
-            <div className="flex justify-center gap-3 mt-8">
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={page === 0}
-                onClick={() => setPage(p => p - 1)}
-              >
-                上一页
-              </Button>
-              <span
-                className="flex items-center text-sm"
-                style={{ color: 'var(--color-on-surface-variant)' }}
-              >
-                第 {page + 1} / {Math.ceil(total / limit)} 页
-              </span>
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={(page + 1) * limit >= total}
-                onClick={() => setPage(p => p + 1)}
-              >
-                下一页
-              </Button>
-            </div>
-          )}
-        </>
+              <div className="flex items-center justify-between">
+                <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                  Used {session.credits_used} credit
+                </span>
+                <Button variant="secondary" icon="arrow_forward" iconPosition="right" onClick={() => navigate(`/analyze/${session.id}`)}>
+                  Open report
+                </Button>
+              </div>
+            </Card>
+          ))}
+        </div>
       )}
 
-      {/* Delete Confirm Modal */}
-      <Modal
-        isOpen={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        title="确认删除"
-        size="sm"
-      >
-        <p className="text-sm" style={{ color: 'var(--color-on-surface-variant)' }}>
-          确定要删除「{deleteTarget?.target_role}」的分析记录吗？此操作无法撤销。
-        </p>
-        <ModalFooter>
-          <Button variant="ghost" onClick={() => setDeleteTarget(null)}>取消</Button>
-          <Button
-            variant="danger"
-            loading={deleteMutation.isPending}
-            onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
-          >
-            删除
+      {(data?.total ?? 0) > limit && (
+        <div className="flex justify-center gap-3 mt-8">
+          <Button variant="secondary" disabled={page === 0} onClick={() => setPage((current) => current - 1)}>
+            Previous
           </Button>
-        </ModalFooter>
-      </Modal>
+          <Button
+            variant="secondary"
+            disabled={(page + 1) * limit >= (data?.total ?? 0)}
+            onClick={() => setPage((current) => current + 1)}
+          >
+            Next
+          </Button>
+        </div>
+      )}
     </PageContainer>
   );
 }

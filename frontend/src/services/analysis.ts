@@ -1,7 +1,16 @@
 import api from './api';
-import type { AnalysisSession, SessionSummary, ResumeUploadResponse, DashboardStats, PricingPlan, ModelProvider } from '../types';
-
-export type { AnalysisSession, SessionSummary, ResumeUploadResponse, DashboardStats, PricingPlan, ModelProvider };
+import { getToken } from './auth';
+import type {
+  AnalysisResponse,
+  AnalysisSession,
+  DashboardResponse,
+  PricingPackage,
+  ProviderCard,
+  ResumeUploadResponse,
+  SessionDetailApiResponse,
+  SessionSummary,
+} from '../types';
+import { adaptSessionDetail } from '../utils/analysis';
 
 export async function uploadResume(file: File): Promise<ResumeUploadResponse> {
   const formData = new FormData();
@@ -14,48 +23,70 @@ export async function uploadResume(file: File): Promise<ResumeUploadResponse> {
 
 export async function analyze(payload: {
   target_role: string;
-  company?: string;
   resume_text: string;
   job_description: string;
-}): Promise<{ session_id: number }> {
-  const { data } = await api.post<{ session_id: number }>('/analyze', payload);
+}): Promise<AnalysisResponse> {
+  const token = getToken();
+  const { data } = await api.post<AnalysisResponse>('/analyze', {
+    ...payload,
+    access_token: token,
+  });
   return data;
 }
 
-export async function getSessions(params?: { offset?: number; limit?: number; search?: string }): Promise<{
+export async function getSessions(params?: { offset?: number; limit?: number }): Promise<{
   sessions: SessionSummary[];
   total: number;
+  offset: number;
+  limit: number;
 }> {
-  const { data } = await api.get<{ sessions: SessionSummary[]; total: number }>('/sessions', { params });
-  return data;
+  const { data } = await api.get<{
+    items: SessionSummary[];
+    total: number;
+    offset: number;
+    limit: number;
+  }>('/sessions', { params });
+
+  return {
+    sessions: data.items,
+    total: data.total,
+    offset: data.offset,
+    limit: data.limit,
+  };
 }
 
 export async function getSession(id: number): Promise<AnalysisSession> {
-  const { data } = await api.get<AnalysisSession>(`/sessions/${id}`);
+  const { data } = await api.get<SessionDetailApiResponse>(`/sessions/${id}`);
+  return adaptSessionDetail(data);
+}
+
+export async function getDashboard(): Promise<DashboardResponse> {
+  const { data } = await api.get<DashboardResponse>('/dashboard');
   return data;
 }
 
-export async function deleteSession(id: number): Promise<void> {
-  await api.delete(`/sessions/${id}`);
+export async function getPricing(): Promise<PricingPackage[]> {
+  const { data } = await api.get<{ packages: PricingPackage[] }>('/pricing');
+  return data.packages;
 }
 
-export async function getDashboard(): Promise<DashboardStats> {
-  const { data } = await api.get<DashboardStats>('/dashboard');
-  return data;
+export async function getProviders(): Promise<ProviderCard[]> {
+  const { data } = await api.get<{ providers: ProviderCard[] }>('/providers');
+  return data.providers;
 }
 
-export async function getPricing(): Promise<PricingPlan[]> {
-  const { data } = await api.get<{ plans: PricingPlan[] }>('/pricing');
-  return data.plans;
-}
-
-export async function getProviders(): Promise<{ providers: ModelProvider[] }> {
-  const { data } = await api.get<{ providers: ModelProvider[] }>('/providers');
-  return data;
-}
-
-export async function generateQuestions(sessionId: number): Promise<{ questions: string[] }> {
-  const { data } = await api.post<{ questions: string[] }>('/generate-questions', { session_id: sessionId });
+export async function generateQuestions(payload: {
+  session_id: number;
+  target_role: string;
+  resume_text: string;
+  job_description: string;
+  gaps: unknown[];
+}): Promise<{ questions: string[] }> {
+  const token = getToken();
+  const { data } = await api.post<{ questions: string[] }>('/generate-questions', {
+    access_token: token,
+    ...payload,
+  });
   return data;
 }
 
@@ -67,12 +98,26 @@ export async function exportReport(sessionId: number, format: 'docx' | 'pdf'): P
   return data;
 }
 
-export async function createCheckout(priceId: string): Promise<{ checkout_url: string }> {
-  const { data } = await api.post<{ checkout_url: string }>('/payment/create-stripe', { price_id: priceId });
+export async function createCheckout(packageCode: string): Promise<{ checkout_url: string }> {
+  const token = getToken();
+  const { data } = await api.post<{ checkout_url: string }>('/payment/create-stripe', {
+    access_token: token,
+    package_code: packageCode,
+  });
   return data;
 }
 
-export async function mockPurchase(planId: string): Promise<{ order_id: number }> {
-  const { data } = await api.post<{ order_id: number }>('/payment/create', { plan_id: planId });
+export async function mockPurchase(packageCode: string): Promise<{
+  order_id: string;
+  status: string;
+  package_name: string;
+  credits_added: number;
+  credits_total: number;
+}> {
+  const token = getToken();
+  const { data } = await api.post('/payment/create', {
+    access_token: token,
+    package_code: packageCode,
+  });
   return data;
 }

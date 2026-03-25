@@ -1,11 +1,10 @@
-// User & Auth
 export interface User {
   id: number;
   email: string;
   name: string;
   credits: number;
-  created_at: string;
-  access_token?: string; // only present in API responses, not stored in localStorage
+  created_at?: string;
+  access_token?: string;
 }
 
 export interface AuthResponse {
@@ -16,121 +15,190 @@ export interface AuthResponse {
   credits: number;
 }
 
-// Analysis
-export interface GapItem {
-  id: string;
-  type: 'expression' | 'evidence_missing' | 'skill_gap' | 'project_gap' | 'unknown';
-  title: string;
-  description: string;
-  severity: 'high' | 'medium' | 'low';
-  suggestion: string;
-  priority: 'P0' | 'P1' | 'P2';
-  related_evidence?: string[];
+export interface ApiGapItem {
+  category: string;
+  severity: 'high' | 'medium' | 'low' | string;
+  requirement: string;
+  evidence: string;
+  recommendation: string;
+  gap_type?: 'expression' | 'evidence_missing' | 'skill_gap' | 'project_gap' | 'unknown' | string;
 }
 
-export interface AnalysisSession {
-  id: number;
-  target_role: string;
-  company?: string;
+export interface ResumeSuggestion {
+  original: string;
+  optimized: string;
+  reason: string;
+}
+
+export interface ValidationSummary {
+  confidence: number;
+  overclaim_warning: boolean;
+  critical_gaps: string[];
+  high_priority_actions: string[];
+  caution_notes: string[];
+}
+
+export interface RecommendedModelPlan {
+  orchestrator: string;
+  extractor: string;
+  writer: string;
+  reviewer: string;
+  rationale: string[];
+}
+
+export interface AnalysisReport {
   match_score: number;
   summary: string;
-  confidence?: number;
   strengths: string[];
   risks: string[];
-  gaps: GapItem[];
+  gaps: ApiGapItem[];
   learning_plan: string[];
   interview_focus: string[];
+  resume_suggestions: ResumeSuggestion[];
+  recommended_model_plan: RecommendedModelPlan;
   next_actions: string[];
-  resume_suggestions: string;
-  resume_draft: string;
+  validation: ValidationSummary;
+}
+
+export interface AnalysisResponse {
+  session_id: number;
   created_at: string;
-  routing_mode?: string;
+  target_role: string;
+  report: AnalysisReport;
+  resume_draft: string;
+  routing_mode: string;
+  credits_remaining: number;
 }
 
 export interface SessionSummary {
   id: number;
+  created_at: string;
   target_role: string;
-  company?: string;
   match_score: number;
   summary: string;
+  credits_used: number;
+}
+
+export interface SessionDetailApiResponse {
+  id: number;
   created_at: string;
+  target_role: string;
+  resume_text: string;
+  job_description: string;
+  report_json: string;
+  resume_draft: string;
+  credits_used: number;
+}
+
+export interface AnalysisSession {
+  id: number;
+  created_at: string;
+  target_role: string;
+  resume_text: string;
+  job_description: string;
+  report: AnalysisReport;
+  resume_draft: string;
+  credits_used: number;
 }
 
 export interface ResumeUploadResponse {
   extracted_text: string;
-  filename: string;
+  file_name: string;
+  char_count: number;
+  parser: string;
 }
 
-// Application Tracking
+export interface DashboardStats {
+  total_analyses: number;
+  analyses_this_week: number;
+  total_applications: number;
+  application_by_status: Record<string, number>;
+  total_tasks: number;
+  task_by_status: Record<string, number>;
+  total_spent_cny: number;
+  average_match_score: number;
+}
+
+export interface DashboardResponse {
+  user: User;
+  stats: DashboardStats;
+}
+
+export interface PricingPackage {
+  code: string;
+  name: string;
+  credits: number;
+  price_cny: number;
+  description: string;
+  includes: string[];
+}
+
+export interface ProviderCard {
+  name: string;
+  role: string;
+  best_for: string[];
+}
+
 export interface Application {
   id: number;
-  company: string;
-  role: string;
-  description?: string;
-  url?: string;
-  salary?: string;
-  notes?: string;
-  status: 'interested' | 'applied' | 'interviewing' | 'offer' | 'rejected' | 'pending';
-  match_score?: number;
+  company_name: string;
+  target_role: string;
+  job_description: string;
+  status: 'interested' | 'applied' | 'interviewing' | 'offer' | 'rejected' | 'withdrawn';
+  application_url: string;
+  salary_range: string;
+  notes: string;
   created_at: string;
-  updated_at: string;
+  updated_at: string | null;
 }
 
-// Learning Tasks
+export interface ApplicationCreatePayload {
+  company_name: string;
+  target_role: string;
+  job_description?: string;
+  application_url?: string;
+  salary_range?: string;
+  notes?: string;
+  status: Application['status'];
+}
+
 export interface LearningTask {
   id: number;
   title: string;
-  description?: string;
+  description: string;
   priority: 'high' | 'medium' | 'low';
   status: 'pending' | 'in_progress' | 'completed';
-  due_date?: string;
-  source_analysis_id?: number;
+  target_date: string | null;
   created_at: string;
-  updated_at: string;
+  updated_at: string | null;
 }
 
-// Interview Prep
+export interface LearningTaskCreatePayload {
+  title: string;
+  description?: string;
+  session_id?: number | null;
+  target_date?: string | null;
+  priority: LearningTask['priority'];
+}
+
 export interface InterviewPrep {
   id: number;
   question: string;
-  answer?: string;
-  notes?: string;
+  ideal_answer: string;
+  notes: string;
   status: 'pending' | 'prepared';
-  source_analysis_id?: number;
   created_at: string;
-  updated_at: string;
+  updated_at: string | null;
 }
 
-// Dashboard Stats
-export interface DashboardStats {
-  analyses_total: number;
-  analyses_week: number;
-  applications: number;
-  tasks: number;
-  spent: number;
-  avg_match: number;
+export interface InterviewPrepCreatePayload {
+  question: string;
+  ideal_answer?: string;
+  notes?: string;
+  session_id?: number | null;
+  application_id?: number | null;
 }
 
-// Pricing
-export interface PricingPlan {
-  id: string;
-  name: string;
-  credits: number;
-  price: number;
-  price_display: string;
-  features: string[];
-  popular?: boolean;
-}
-
-// Model Routing
-export interface ModelProvider {
-  name: string;
-  model: string;
-  task: string;
-  description: string;
-}
-
-// Toast
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
 export interface Toast {
@@ -139,10 +207,8 @@ export interface Toast {
   message: string;
 }
 
-// Analysis Form
 export interface AnalysisFormData {
   targetRole: string;
-  company?: string;
   resumeText: string;
   jobDescription: string;
   resumeFile?: File;

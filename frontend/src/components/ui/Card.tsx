@@ -9,12 +9,9 @@ export function Card({ padding = true, hoverable = false, className = '', childr
   return (
     <div
       className={`
-        bg-[var(--color-bg-surface)]
-        border border-[var(--color-border)]
-        rounded-[var(--radius-lg)]
-        shadow-[var(--shadow-xs)]
+        app-panel rounded-[var(--radius-xl)]
         ${padding ? 'p-5' : ''}
-        ${hoverable ? 'cursor-pointer card-hover ' : ''}
+        ${hoverable ? 'cursor-pointer card-hover' : ''}
         ${className}
       `}
       {...props}
@@ -30,7 +27,7 @@ export function CardHeader({ className = '', children }: { className?: string; c
 
 export function CardTitle({ className = '', children }: { className?: string; children: ReactNode }) {
   return (
-    <h3 className={`text-sm font-semibold text-[var(--color-text)] ${className}`}>
+    <h3 className={`text-sm font-semibold tracking-tight text-[var(--color-text)] ${className}`}>
       {children}
     </h3>
   );

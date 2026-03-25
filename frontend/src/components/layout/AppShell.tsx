@@ -1,13 +1,12 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
-import { SIDEBAR_WIDTH, TOPBAR_HEIGHT, CONTENT_PX, CONTENT_MAX } from './layoutConstants';
+import { SIDEBAR_WIDTH, TOPBAR_HEIGHT, CONTENT_MAX } from './layoutConstants';
 
 interface AppShellProps {
   children: ReactNode;
   showSidebar?: boolean;
   showTopbar?: boolean;
-  /** Extra className for the main content area */
   mainClassName?: string;
 }
 
@@ -17,36 +16,46 @@ export function AppShell({
   showTopbar = true,
   mainClassName = '',
 }: AppShellProps) {
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
   return (
     <div className="min-h-screen" style={{ background: 'var(--color-bg-base)' }}>
-      {/* Fixed sidebar — always full height, left-aligned */}
       {showSidebar && (
-        <Sidebar />
+        <Sidebar
+          mobileOpen={mobileSidebarOpen}
+          onCloseMobile={() => setMobileSidebarOpen(false)}
+        />
       )}
 
-      {/* Content shell — offset left by sidebar, top by topbar */}
       <div
         className={`flex flex-col ${mainClassName}`}
         style={{
-          marginLeft: SIDEBAR_WIDTH,
           minHeight: '100vh',
+          marginLeft: showSidebar ? SIDEBAR_WIDTH : 0,
         }}
       >
-        {/* Sticky topbar */}
-        {showTopbar && <Topbar />}
+        {showTopbar && <Topbar onOpenSidebar={() => setMobileSidebarOpen(true)} />}
 
-        {/* Main scrollable content */}
         <main
-          className={`flex-1 ${CONTENT_PX}`}
-          style={{
-            paddingTop: TOPBAR_HEIGHT,
-          }}
+          className="flex-1 px-4 md:px-6 xl:px-8"
+          style={{ paddingTop: TOPBAR_HEIGHT }}
         >
-          <div className={`${CONTENT_MAX} mx-auto py-8`}>
+          <div className={`${CONTENT_MAX} mx-auto py-6 md:py-8`}>
             {children}
           </div>
         </main>
       </div>
+
+      <style>{`
+        @media (max-width: 1023px) {
+          main {
+            margin-left: 0 !important;
+          }
+          div[style*="margin-left: ${SIDEBAR_WIDTH}px"] {
+            margin-left: 0 !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

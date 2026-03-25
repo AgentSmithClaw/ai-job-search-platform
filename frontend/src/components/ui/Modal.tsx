@@ -49,14 +49,14 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', showClose
       <div
         className={`
           relative w-full ${sizeClasses[size]}
-          bg-[var(--color-bg-surface)]
+          app-panel
           rounded-[var(--radius-xl)]
           shadow-[var(--shadow-lg)]
           animate-scale-in
         `}
       >
         {(title || showClose) && (
-          <div className="flex items-center justify-between p-5 border-b border-[var(--color-border)]">
+          <div className="flex items-center justify-between p-5 border-b border-[color-mix(in_srgb,var(--color-outline-variant)_30%,transparent)]">
             {title && (
               <h2 className="text-lg font-semibold text-[var(--color-text)]">{title}</h2>
             )}
