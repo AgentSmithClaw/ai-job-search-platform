@@ -44,8 +44,8 @@ function Dashboard() {
   return (
     <div className="dashboard-shell min-h-screen text-slate-100">
       <div className="mx-auto max-w-[1520px] px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
-        <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)] xl:gap-6">
-          <aside className="dashboard-panel glass-card rounded-[30px] p-5 lg:p-6">
+        <div className="grid gap-4 lg:grid-cols-[272px_minmax(0,1fr)] xl:gap-6">
+          <aside className="dashboard-panel glass-card rounded-[28px] p-5 lg:p-6">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500 text-lg font-bold text-white pill-glow">
                 G
@@ -56,7 +56,7 @@ function Dashboard() {
               </div>
             </div>
 
-            <div className="mt-8 rounded-[24px] bg-white/5 p-4">
+            <div className="dashboard-soft mt-8 rounded-[22px] p-4">
               <div className="text-sm font-semibold text-white">Alex Sterling</div>
               <div className="mt-1 text-xs text-indigo-200">专业版会员</div>
             </div>
@@ -73,8 +73,8 @@ function Dashboard() {
                 <a
                   key={String(label)}
                   href="#"
-                  className={`flex items-center justify-between rounded-2xl px-4 py-3 transition ${
-                    active ? 'bg-indigo-500 text-white shadow-[0_20px_40px_rgba(79,70,229,0.28)]' : 'text-slate-300 hover:bg-white/5'
+                  className={`flex items-center justify-between rounded-[20px] px-4 py-3 transition ${
+                    active ? 'bg-indigo-500 text-white shadow-[0_20px_40px_rgba(79,70,229,0.24)]' : 'text-slate-300 hover:bg-white/5'
                   }`}
                 >
                   <span>{label}</span>
@@ -83,12 +83,12 @@ function Dashboard() {
               ))}
             </nav>
 
-            <div className="mt-8 rounded-[26px] bg-gradient-to-br from-indigo-500/30 to-cyan-500/20 p-5">
+            <div className="mt-8 rounded-[24px] bg-gradient-to-br from-indigo-500/28 to-cyan-500/18 p-5">
               <div className="text-sm font-semibold text-white">GapPilot AI</div>
               <p className="mt-3 text-sm leading-7 text-slate-200">
                 根据你最近在 Google 的 94% 匹配度，建议在周五前生成一份“文化契合度”速查表。
               </p>
-              <button className="mt-5 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950">
+              <button className="mt-5 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-slate-950">
                 生成策略 <ArrowRight className="h-4 w-4" />
               </button>
             </div>
@@ -96,23 +96,23 @@ function Dashboard() {
 
           <main className="space-y-4 xl:space-y-6">
             <DashboardCard className="p-5 sm:p-6 lg:p-7">
-              <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+              <div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
                 <div>
                   <p className="text-sm text-slate-400">早安, Alex.</p>
-                  <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">控制台</h1>
+                  <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-white sm:text-[2.6rem]">控制台</h1>
                   <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
                     您的 AI 职业管家昨晚处理了 3 个新的职位匹配。您目前在高级产品职位中排名前 5%。
                   </p>
                 </div>
                 <div className="flex flex-col gap-3 sm:flex-row xl:min-w-[420px] xl:justify-end">
-                  <label className="dashboard-soft flex items-center gap-3 rounded-2xl px-4 py-3 text-sm text-slate-300">
+                  <label className="dashboard-soft flex items-center gap-3 rounded-[20px] px-4 py-3 text-sm text-slate-300">
                     <Search className="h-4 w-4 text-slate-500" />
                     <input
                       className="w-full border-none bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
                       placeholder="搜索申请、技能或见解..."
                     />
                   </label>
-                  <button className="rounded-2xl bg-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(79,70,229,0.28)]">
+                  <button className="rounded-[20px] bg-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(79,70,229,0.24)]">
                     更新您的 “React” 熟练度
                   </button>
                 </div>
@@ -123,7 +123,7 @@ function Dashboard() {
               {statCards.map((item) => (
                 <DashboardCard key={item.label} className="p-5 sm:p-6">
                   <div className="text-sm text-slate-400">{item.label}</div>
-                  <div className="mt-4 text-4xl font-semibold text-white">{item.value}</div>
+                  <div className="mt-4 text-4xl font-semibold tracking-[-0.05em] text-white">{item.value}</div>
                   <div className="mt-3 text-sm text-slate-500">{item.hint}</div>
                 </DashboardCard>
               ))}
@@ -134,15 +134,15 @@ function Dashboard() {
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-sm text-slate-400">最近分析</p>
-                    <h2 className="mt-2 text-2xl font-semibold text-white">匹配趋势</h2>
+                    <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">匹配趋势</h2>
                   </div>
                   <div className="rounded-2xl bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300">
                     较上周 +12%
                   </div>
                 </div>
 
-                <div className="mt-8 rounded-[28px] bg-white/[0.03] p-5">
-                  <div className="flex items-end justify-between gap-4 text-xs uppercase tracking-[0.26em] text-slate-500">
+                <div className="dashboard-soft mt-8 rounded-[24px] p-5">
+                  <div className="flex items-end justify-between gap-4 text-[11px] uppercase tracking-[0.24em] text-slate-500 sm:text-xs">
                     <span>周一</span>
                     <span>周日</span>
                   </div>
@@ -150,7 +150,7 @@ function Dashboard() {
                     {[42, 70, 55, 82, 64, 90, 74].map((height, index) => (
                       <div key={index} className="flex flex-1 flex-col items-center gap-3">
                         <div
-                          className="w-full rounded-t-[18px] bg-gradient-to-t from-indigo-500 via-violet-400 to-cyan-300"
+                          className="w-full rounded-t-[16px] bg-gradient-to-t from-indigo-500 via-violet-400 to-cyan-300"
                           style={{ height: `${height}%` }}
                         />
                       </div>
@@ -160,7 +160,7 @@ function Dashboard() {
 
                 <div className="mt-8 space-y-4">
                   {analysisItems.map((item) => (
-                    <div key={item.title} className="dashboard-soft rounded-[24px] p-4 sm:p-5">
+                    <div key={item.title} className="dashboard-soft rounded-[22px] p-4 sm:p-5">
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                           <div className="text-lg font-semibold text-white">{item.title}</div>
@@ -169,9 +169,9 @@ function Dashboard() {
                           </div>
                         </div>
                         <div className="flex items-center gap-4">
-                          <div className="rounded-2xl bg-emerald-500/10 px-4 py-3 text-right">
-                            <div className="text-xs uppercase tracking-[0.24em] text-emerald-300">匹配度</div>
-                            <div className="mt-1 text-2xl font-semibold text-emerald-300">{item.score}</div>
+                          <div className="rounded-[18px] bg-emerald-500/10 px-4 py-3 text-right">
+                            <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-300 sm:text-xs">匹配度</div>
+                            <div className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-emerald-300">{item.score}</div>
                           </div>
                           <button className="rounded-full border border-slate-700 px-4 py-2 text-sm text-slate-200">
                             查看详情
@@ -198,7 +198,7 @@ function Dashboard() {
                     {quickActions.map(({ icon: Icon, label }) => (
                       <button
                         key={label}
-                        className="dashboard-soft flex items-center justify-between rounded-2xl px-4 py-3 text-left text-sm text-slate-200 transition hover:bg-white/10"
+                        className="dashboard-soft flex items-center justify-between rounded-[20px] px-4 py-3 text-left text-sm text-slate-200 transition hover:bg-white/10"
                       >
                         <span className="flex items-center gap-3">
                           <Icon className="h-4 w-4 text-indigo-300" /> {label}
@@ -213,13 +213,13 @@ function Dashboard() {
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-sm text-slate-400">投递流程</div>
-                      <div className="mt-2 text-2xl font-semibold text-white">管理</div>
+                      <div className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">管理</div>
                     </div>
                     <BriefcaseBusiness className="h-5 w-5 text-indigo-300" />
                   </div>
                   <div className="mt-6 space-y-3">
                     {pipeline.map(([label, value]) => (
-                      <div key={label} className="dashboard-soft flex items-center justify-between rounded-2xl px-4 py-3">
+                      <div key={label} className="dashboard-soft flex items-center justify-between rounded-[20px] px-4 py-3">
                         <span className="text-sm text-slate-300">{label}</span>
                         <span className="text-lg font-semibold text-white">{value}</span>
                       </div>
@@ -231,7 +231,7 @@ function Dashboard() {
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-sm text-slate-400">AI 见解</div>
-                      <div className="mt-2 text-2xl font-semibold text-white">学习路径</div>
+                      <div className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">学习路径</div>
                     </div>
                     <BarChart3 className="h-5 w-5 text-cyan-300" />
                   </div>

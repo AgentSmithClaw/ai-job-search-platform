@@ -91,11 +91,17 @@ const faqs = [
   },
 ];
 
+const heroStats = [
+  ['89%', '高级岗位平均匹配提升'],
+  ['15,000+', '已服务专业人士'],
+  ['100%', '数据不参与模型训练'],
+];
+
 function HomePage() {
   return (
     <div className="overflow-hidden bg-transparent text-slate-900">
       <div className="home-grid relative">
-        <div className="absolute inset-x-0 top-0 h-[560px] bg-[radial-gradient(circle_at_top,rgba(99,102,241,0.18),transparent_42%)]" />
+        <div className="absolute inset-x-0 top-0 h-[620px] bg-[radial-gradient(circle_at_top,rgba(99,102,241,0.18),transparent_40%)]" />
         <header className="relative mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-6 sm:px-8 lg:px-10">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-lg font-bold text-white shadow-[0_12px_30px_rgba(15,23,42,0.24)]">
@@ -125,42 +131,38 @@ function HomePage() {
           </div>
         </header>
 
-        <HomeSection className="relative mx-auto max-w-7xl pt-8 sm:pt-14 lg:pt-20">
-          <div className="grid gap-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+        <HomeSection className="relative mx-auto max-w-7xl pt-8 sm:pt-14 lg:pt-18">
+          <div className="grid gap-14 lg:grid-cols-[1.04fr_0.96fr] lg:items-center lg:gap-10 xl:gap-16">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-white/75 px-4 py-2 text-xs font-semibold uppercase tracking-[0.26em] text-indigo-700 shadow-sm">
+              <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-white/80 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-indigo-700 shadow-sm sm:text-xs">
                 <Sparkles className="h-4 w-4" /> 隆重推出 GapPilot 2.0
               </div>
-              <h1 className="mt-8 max-w-4xl text-5xl font-semibold tracking-[-0.05em] text-slate-950 sm:text-6xl lg:text-7xl">
+              <h1 className="mt-8 max-w-4xl text-5xl font-semibold tracking-[-0.06em] text-slate-950 sm:text-6xl lg:text-[4.6rem] lg:leading-[1.02]">
                 AI 精准度加速
                 <br />
                 您的职业生涯。
               </h1>
-              <p className="mt-8 max-w-2xl text-lg leading-8 text-slate-600 sm:text-xl">
+              <p className="mt-7 max-w-2xl text-lg leading-8 text-slate-600 sm:text-xl">
                 GapPilot 是一款 AI 驱动的职业管家。它分析职位描述、优化简历并为面试做准备，让求职从混乱走向清晰、从感觉走向策略。
               </p>
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
                 <Link
                   to="/dashboard"
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-indigo-600 px-7 py-4 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(79,70,229,0.28)] transition hover:-translate-y-0.5"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-indigo-600 px-7 py-4 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(79,70,229,0.24)] transition hover:-translate-y-0.5"
                 >
                   开始免费分析 <ArrowRight className="h-4 w-4" />
                 </Link>
                 <a
                   href="#report"
-                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-4 text-sm font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-50"
+                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white/88 px-7 py-4 text-sm font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-white"
                 >
                   查看示例报告
                 </a>
               </div>
               <div className="mt-12 grid gap-4 sm:grid-cols-3">
-                {[
-                  ['89%', '高级岗位平均匹配提升'],
-                  ['15,000+', '已服务专业人士'],
-                  ['100%', '数据不参与模型训练'],
-                ].map(([value, label]) => (
-                  <div key={label} className="rounded-3xl border border-white/70 bg-white/70 p-5 shadow-[0_20px_50px_rgba(148,163,184,0.12)]">
-                    <div className="text-2xl font-semibold text-slate-950">{value}</div>
+                {heroStats.map(([value, label]) => (
+                  <div key={label} className="home-surface rounded-[28px] p-5 sm:p-6">
+                    <div className="text-[1.75rem] font-semibold tracking-[-0.04em] text-slate-950">{value}</div>
                     <div className="mt-2 text-sm leading-6 text-slate-500">{label}</div>
                   </div>
                 ))}
@@ -168,25 +170,25 @@ function HomePage() {
             </div>
 
             <div id="report" className="relative">
-              <div className="absolute -left-8 top-10 h-32 w-32 rounded-full bg-cyan-300/40 blur-3xl" />
-              <div className="absolute right-0 top-0 h-44 w-44 rounded-full bg-indigo-400/30 blur-3xl" />
-              <div className="relative rounded-[36px] border border-white/70 bg-white/80 p-4 shadow-[0_28px_90px_rgba(99,102,241,0.18)] backdrop-blur-xl sm:p-6">
-                <div className="rounded-[28px] bg-slate-950 p-6 text-white">
+              <div className="absolute -left-8 top-10 h-32 w-32 rounded-full bg-cyan-300/35 blur-3xl" />
+              <div className="absolute right-0 top-0 h-44 w-44 rounded-full bg-indigo-400/28 blur-3xl" />
+              <div className="home-surface relative rounded-[34px] p-4 shadow-[0_28px_90px_rgba(99,102,241,0.14)] sm:p-5">
+                <div className="rounded-[28px] bg-slate-950 p-6 text-white sm:p-7">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.24em] text-indigo-300">正在分析</p>
-                      <h3 className="mt-3 text-2xl font-semibold">高级产品设计师</h3>
+                      <p className="text-[11px] uppercase tracking-[0.24em] text-indigo-300 sm:text-xs">正在分析</p>
+                      <h3 className="mt-3 text-2xl font-semibold tracking-[-0.03em]">高级产品设计师</h3>
                       <p className="mt-2 text-sm text-slate-400">Stripe • 远程 • 全职</p>
                     </div>
                     <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-right">
                       <div className="text-xs text-slate-400">匹配分数</div>
-                      <div className="mt-1 text-3xl font-semibold text-emerald-300">89%</div>
+                      <div className="mt-1 text-3xl font-semibold tracking-[-0.04em] text-emerald-300">89%</div>
                     </div>
                   </div>
 
                   <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                    <div className="rounded-3xl bg-white/5 p-5">
-                      <div className="text-xs uppercase tracking-[0.24em] text-slate-400">关键指标</div>
+                    <div className="rounded-[24px] bg-white/5 p-5">
+                      <div className="text-[11px] uppercase tracking-[0.24em] text-slate-400 sm:text-xs">关键指标</div>
                       <div className="mt-4 space-y-4">
                         {[
                           ['识别到关键差距', '系统思维表达不足'],
@@ -200,8 +202,8 @@ function HomePage() {
                         ))}
                       </div>
                     </div>
-                    <div className="rounded-3xl bg-gradient-to-br from-indigo-500 to-violet-600 p-5">
-                      <div className="text-xs uppercase tracking-[0.24em] text-indigo-100">直接行动建议</div>
+                    <div className="rounded-[24px] bg-gradient-to-br from-indigo-500 to-violet-600 p-5">
+                      <div className="text-[11px] uppercase tracking-[0.24em] text-indigo-100 sm:text-xs">直接行动建议</div>
                       <p className="mt-4 text-sm leading-7 text-indigo-50/95">
                         “您的资料中缺乏对系统思维的明确描述。建议修改 Google 2022 项目描述，加入组件库架构与跨团队协作成果。”
                       </p>
@@ -225,18 +227,15 @@ function HomePage() {
         />
         <div className="mt-14 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {featureCards.map(({ icon: Icon, title, description, stat, statLabel }) => (
-            <article
-              key={title}
-              className="rounded-[30px] border border-slate-200 bg-white p-7 shadow-[0_24px_60px_rgba(148,163,184,0.12)]"
-            >
+            <article key={title} className="home-surface-strong rounded-[30px] p-7">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
                 <Icon className="h-6 w-6" />
               </div>
-              <h3 className="mt-7 text-2xl font-semibold text-slate-950">{title}</h3>
+              <h3 className="mt-7 text-[1.65rem] font-semibold tracking-[-0.035em] text-slate-950">{title}</h3>
               <p className="mt-4 text-sm leading-7 text-slate-600">{description}</p>
-              <div className="mt-8 rounded-2xl bg-slate-950 px-5 py-4 text-white">
-                <div className="text-2xl font-semibold">{stat}</div>
-                <div className="mt-1 text-xs uppercase tracking-[0.24em] text-slate-400">{statLabel}</div>
+              <div className="mt-8 rounded-[22px] bg-slate-950 px-5 py-4 text-white">
+                <div className="text-2xl font-semibold tracking-[-0.04em]">{stat}</div>
+                <div className="mt-1 text-[11px] uppercase tracking-[0.24em] text-slate-400 sm:text-xs">{statLabel}</div>
               </div>
             </article>
           ))}
@@ -244,7 +243,7 @@ function HomePage() {
       </HomeSection>
 
       <HomeSection id="workflow" className="mx-auto max-w-7xl">
-        <div className="rounded-[40px] bg-slate-950 px-6 py-12 text-white sm:px-10 lg:px-14 lg:py-16">
+        <div className="rounded-[36px] bg-slate-950 px-6 py-12 text-white shadow-[0_28px_80px_rgba(15,23,42,0.16)] sm:px-10 lg:px-14 lg:py-16">
           <SectionHeading
             eyebrow="工作流程"
             title="从混乱走向清晰的三个步骤。"
@@ -252,9 +251,9 @@ function HomePage() {
           />
           <div className="mt-14 grid gap-6 lg:grid-cols-3">
             {workflow.map((item) => (
-              <article key={item.step} className="rounded-[30px] border border-white/10 bg-white/5 p-7">
-                <div className="text-sm font-semibold tracking-[0.28em] text-indigo-300">{item.step}</div>
-                <h3 className="mt-5 text-2xl font-semibold">{item.title}</h3>
+              <article key={item.step} className="rounded-[28px] border border-white/10 bg-white/5 p-7">
+                <div className="text-sm font-semibold tracking-[0.24em] text-indigo-300">{item.step}</div>
+                <h3 className="mt-5 text-2xl font-semibold tracking-[-0.03em]">{item.title}</h3>
                 <p className="mt-4 text-sm leading-7 text-slate-300">{item.description}</p>
               </article>
             ))}
@@ -263,10 +262,10 @@ function HomePage() {
       </HomeSection>
 
       <HomeSection className="mx-auto max-w-7xl">
-        <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+        <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-indigo-600">报告示例</p>
-            <h2 className="mt-5 text-4xl font-semibold tracking-tight text-slate-950">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-indigo-600 sm:text-xs">报告示例</p>
+            <h2 className="mt-5 text-4xl font-semibold tracking-[-0.04em] text-slate-950">
               告别泛泛而谈，直接获得可执行的求职策略。
             </h2>
             <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
@@ -286,16 +285,16 @@ function HomePage() {
             </div>
           </div>
 
-          <div className="rounded-[36px] border border-indigo-100 bg-gradient-to-br from-white to-indigo-50 p-6 shadow-[0_24px_80px_rgba(99,102,241,0.14)]">
+          <div className="home-surface rounded-[34px] bg-gradient-to-br from-white to-indigo-50/80 p-5 shadow-[0_24px_80px_rgba(99,102,241,0.12)] sm:p-6">
             <div className="rounded-[28px] border border-slate-200 bg-white p-6">
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-sm text-slate-500">匹配分析摘要</p>
-                  <h3 className="mt-2 text-2xl font-semibold text-slate-950">高级产品设计师</h3>
+                  <h3 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950">高级产品设计师</h3>
                 </div>
                 <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-right">
-                  <div className="text-xs uppercase tracking-[0.24em] text-emerald-700">匹配度</div>
-                  <div className="mt-1 text-3xl font-semibold text-emerald-600">89%</div>
+                  <div className="text-[11px] uppercase tracking-[0.24em] text-emerald-700 sm:text-xs">匹配度</div>
+                  <div className="mt-1 text-3xl font-semibold tracking-[-0.04em] text-emerald-600">89%</div>
                 </div>
               </div>
               <div className="mt-6 grid gap-4 sm:grid-cols-3">
@@ -304,9 +303,9 @@ function HomePage() {
                   ['关键匹配词', '12'],
                   ['技术兼容性', 'A'],
                 ].map(([label, value]) => (
-                  <div key={label} className="rounded-2xl bg-slate-50 p-4">
-                    <div className="text-xs uppercase tracking-[0.22em] text-slate-500">{label}</div>
-                    <div className="mt-3 text-2xl font-semibold text-slate-950">{value}</div>
+                  <div key={label} className="home-muted-card rounded-[22px] p-4">
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-slate-500 sm:text-xs">{label}</div>
+                    <div className="mt-3 text-2xl font-semibold tracking-[-0.035em] text-slate-950">{value}</div>
                   </div>
                 ))}
               </div>
@@ -329,20 +328,20 @@ function HomePage() {
           {pricing.map((plan) => (
             <article
               key={plan.name}
-              className={`rounded-[32px] border p-8 shadow-[0_24px_60px_rgba(148,163,184,0.12)] ${
+              className={`rounded-[30px] border p-8 shadow-[0_24px_60px_rgba(148,163,184,0.12)] ${
                 plan.highlight
                   ? 'border-indigo-500 bg-slate-950 text-white'
-                  : 'border-slate-200 bg-white text-slate-950'
+                  : 'border-slate-200 bg-white/92 text-slate-950'
               }`}
             >
               {plan.highlight ? (
-                <div className="inline-flex rounded-full bg-indigo-500/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-indigo-200">
+                <div className="inline-flex rounded-full bg-indigo-500/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-indigo-200 sm:text-xs">
                   最受欢迎
                 </div>
               ) : null}
-              <h3 className="mt-5 text-2xl font-semibold">{plan.name}</h3>
+              <h3 className="mt-5 text-2xl font-semibold tracking-[-0.03em]">{plan.name}</h3>
               <div className="mt-6 flex items-end gap-2">
-                <span className="text-4xl font-semibold">{plan.price}</span>
+                <span className="text-4xl font-semibold tracking-[-0.045em]">{plan.price}</span>
                 <span className={`pb-1 text-sm ${plan.highlight ? 'text-slate-300' : 'text-slate-500'}`}>{plan.credits}</span>
               </div>
               <ul className="mt-8 space-y-4 text-sm leading-7">
@@ -365,27 +364,27 @@ function HomePage() {
         </div>
       </HomeSection>
 
-      <HomeSection id="faq" className="mx-auto max-w-7xl pb-24">
+      <HomeSection id="faq" className="mx-auto max-w-7xl pb-24 sm:pb-28">
         <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-indigo-600">常见问题</p>
-            <h2 className="mt-5 text-4xl font-semibold tracking-tight text-slate-950">准备好拿到录用通知了吗？</h2>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-indigo-600 sm:text-xs">常见问题</p>
+            <h2 className="mt-5 text-4xl font-semibold tracking-[-0.04em] text-slate-950">准备好拿到录用通知了吗？</h2>
             <p className="mt-6 max-w-lg text-lg leading-8 text-slate-600">
               加入 15,000+ 专业人士的行列，用 AI 更有把握地驾驭现代求职市场。
             </p>
             <div className="mt-8 flex flex-wrap gap-3 text-sm text-slate-600">
-              <div className="flex items-center gap-2 rounded-full bg-white px-4 py-3 shadow-sm">
+              <div className="home-surface-strong flex items-center gap-2 rounded-full px-4 py-3 shadow-sm">
                 <Lock className="h-4 w-4 text-indigo-600" /> 隐私优先
               </div>
-              <div className="flex items-center gap-2 rounded-full bg-white px-4 py-3 shadow-sm">
+              <div className="home-surface-strong flex items-center gap-2 rounded-full px-4 py-3 shadow-sm">
                 <Sparkles className="h-4 w-4 text-indigo-600" /> AI 精准分析
               </div>
             </div>
           </div>
           <div className="space-y-4">
             {faqs.map((item) => (
-              <article key={item.q} className="rounded-[28px] border border-slate-200 bg-white p-7 shadow-[0_18px_50px_rgba(148,163,184,0.1)]">
-                <h3 className="text-xl font-semibold text-slate-950">{item.q}</h3>
+              <article key={item.q} className="home-surface-strong rounded-[28px] p-7">
+                <h3 className="text-xl font-semibold tracking-[-0.025em] text-slate-950">{item.q}</h3>
                 <p className="mt-4 text-sm leading-7 text-slate-600">{item.a}</p>
               </article>
             ))}
@@ -393,7 +392,7 @@ function HomePage() {
         </div>
       </HomeSection>
 
-      <footer className="border-t border-slate-200 bg-white/80 px-6 py-8 backdrop-blur-sm sm:px-8 lg:px-10">
+      <footer className="border-t border-slate-200/80 bg-white/80 px-6 py-8 backdrop-blur-sm sm:px-8 lg:px-10">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <span className="font-semibold text-slate-900">GapPilot</span> © 2024 GapPilot AI. 智慧引领，职业精准。
