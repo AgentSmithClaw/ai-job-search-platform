@@ -9,7 +9,7 @@ import ApplicationsPage from './pages/ApplicationsPage';
 import TasksPage from './pages/TasksPage';
 import InterviewPage from './pages/InterviewPage';
 import SettingsPage from './pages/SettingsPage';
-import AuthPage from './pages/AuthPage';
+import HomePage from './pages/HomePage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuthStore();
@@ -25,16 +25,16 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isAuthenticated) return <Navigate to="/auth" replace />;
+  if (!isAuthenticated) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
 function App() {
   return (
     <Routes>
-      <Route path="/auth" element={<AuthPage />} />
+      <Route path="/" element={<HomePage />} />
       <Route
-        path="/"
+        path="/dashboard"
         element={
           <ProtectedRoute>
             <Dashboard />
@@ -97,6 +97,7 @@ function App() {
           </ProtectedRoute>
         }
       />
+      <Route path="/auth" element={<Navigate to="/" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

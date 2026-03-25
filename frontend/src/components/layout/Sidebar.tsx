@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store';
 
 const MAIN_NAV = [
-  { to: '/', label: 'Dashboard', icon: 'dashboard' },
+  { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
   { to: '/history', label: 'Analysis History', icon: 'analytics' },
   { to: '/applications', label: 'Applications', icon: 'assignment' },
   { to: '/tasks', label: 'Learning Tasks', icon: 'school' },

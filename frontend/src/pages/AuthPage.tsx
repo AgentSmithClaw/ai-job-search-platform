@@ -34,7 +34,7 @@ export default function AuthPage() {
       setToken(data.access_token);
       setUser(user);
       addToast({ type: 'success', message: 'Your account is ready.' });
-      navigate('/');
+      navigate('/dashboard');
     },
     onError: (error: Error) => addToast({ type: 'error', message: error.message || 'Could not create the account.' }),
   });
