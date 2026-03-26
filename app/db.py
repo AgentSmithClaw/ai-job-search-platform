@@ -4,14 +4,19 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Testing should always use a temp-writeable DB path.
+if os.environ.get('TESTING'):
+    DATA_DIR = Path('/tmp')
+    DB_PATH = DATA_DIR / 'test_ai_job_search.db'
 # Vercel serverless has read-only filesystem, use /tmp
-if os.environ.get('VERCEL'):
+elif os.environ.get('VERCEL'):
     DATA_DIR = Path('/tmp/data')
+    DB_PATH = DATA_DIR / 'ai_job_search.db'
 else:
     DATA_DIR = BASE_DIR / 'data'
+    DB_PATH = DATA_DIR / 'ai_job_search.db'
 
 DATA_DIR.mkdir(exist_ok=True)
-DB_PATH = DATA_DIR / 'ai_job_search.db'
 
 BASE_SCHEMA = '''
 CREATE TABLE IF NOT EXISTS users (
