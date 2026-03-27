@@ -1,7 +1,6 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException, Request
 
-logger = logging.getLogger(__name__)
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from app.dependencies import get_current_user
 from app.schemas import (
@@ -18,13 +17,14 @@ from app.services.payment import (
     complete_payment,
     create_payment_order,
     create_stripe_checkout_session,
-    get_order_by_id,
     get_user_orders,
     refund_order,
 )
 from app.services.pricing import get_package_by_code
 
-router = APIRouter(prefix="/api/payment", tags=["支付"])
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/api/payment", tags=["payment"])
 
 
 @router.post("/purchase", response_model=PurchaseResponse)
@@ -33,6 +33,7 @@ def purchase(
     user: UserProfile = Depends(get_current_user),
 ) -> PurchaseResponse:
     from app.services.auth import add_credits
+
     return add_credits(request.access_token or user.access_token, request.package_code)
 
 
@@ -114,8 +115,6 @@ def list_orders(user: UserProfile = Depends(get_current_user)) -> list[PaymentOr
 @router.post("/webhook")
 async def stripe_webhook(request: Request):
     from app.config import settings
-    import logging
-    logger = logging.getLogger(__name__)
 
     body = await request.body()
     sig_header = request.headers.get('stripe-signature', '')
@@ -125,6 +124,7 @@ async def stripe_webhook(request: Request):
     else:
         try:
             import stripe
+
             stripe.api_key = settings.STRIPE_SECRET_KEY
             event = stripe.Webhook.construct_event(body, sig_header, settings.STRIPE_WEBHOOK_SECRET)
             logger.info(f"Stripe webhook verified: event_type={event['type']}, event_id={event['id']}")
@@ -133,6 +133,7 @@ async def stripe_webhook(request: Request):
             raise HTTPException(status_code=400, detail=str(exc))
 
     import json
+
     try:
         event = json.loads(body)
     except json.JSONDecodeError:
@@ -150,10 +151,11 @@ async def stripe_webhook(request: Request):
             return {"received": True}
 
         from app.db import get_connection
+
         conn = get_connection()
         order = conn.execute(
             'SELECT user_id, status FROM payment_orders WHERE order_id = ?',
-            (order_id,)
+            (order_id,),
         ).fetchone()
         if not order:
             conn.close()
@@ -162,7 +164,7 @@ async def stripe_webhook(request: Request):
 
         conn.execute(
             "UPDATE payment_orders SET session_id = ? WHERE order_id = ?",
-            (session_id, order_id)
+            (session_id, order_id),
         )
         conn.commit()
         conn.close()
@@ -174,17 +176,18 @@ async def stripe_webhook(request: Request):
         try:
             complete_payment(order_id, PaymentMethod.STRIPE)
             logger.info(f"Payment completed via webhook: order_id={order_id}, user_id={order['user_id']}")
-        except ValueError as e:
-            logger.error(f"Webhook payment completion failed: order_id={order_id}, error={e}")
+        except ValueError as error:
+            logger.error(f"Webhook payment completion failed: order_id={order_id}, error={error}")
 
     elif event_type == 'checkout.session.expired':
         order_id = data.get('metadata', {}).get('order_id')
         if order_id:
             from app.db import get_connection
+
             conn = get_connection()
             conn.execute(
                 "UPDATE payment_orders SET status = ? WHERE order_id = ? AND status = ?",
-                ("failed", order_id, "pending")
+                ("failed", order_id, "pending"),
             )
             conn.commit()
             conn.close()
@@ -200,6 +203,6 @@ def refund(
 ) -> dict:
     success = refund_order(order_id, user.id)
     if not success:
-        raise HTTPException(status_code=404, detail='退款失败，订单不存在或状态不允许退款')
+        raise HTTPException(status_code=404, detail='Refund failed: order not found or not eligible.')
     logger.info(f"Refund processed: order_id={order_id}, user_id={user.id}")
     return {"status": "refunded", "order_id": order_id}

@@ -6,27 +6,27 @@ def get_pricing_catalog() -> PricingCatalogResponse:
         packages=[
             PricingPackage(
                 code='gap-report',
-                name='差距分析',
+                name='Gap Report',
                 price_cny=29,
                 credits=1,
-                description='输入简历和 JD，返回岗位差距分析、风险和下一步动作。',
-                includes=['匹配度评分', '缺口拆解', '学习建议', '面试重点'],
+                description='Submit your resume and a job description to receive a structured fit report, gap analysis, and next-step recommendations.',
+                includes=['Match score overview', 'Gap breakdown', 'Learning actions', 'Interview focus points'],
             ),
             PricingPackage(
                 code='resume-polish',
-                name='简历定制',
+                name='Resume Polish',
                 price_cny=49,
                 credits=2,
-                description='在差距分析基础上生成岗位定制版简历草稿与优化建议。',
-                includes=['定制简历草稿', '表达优化建议', '关键词覆盖建议'],
+                description='Build on the gap report with a tailored resume draft and concrete rewrite suggestions for the target role.',
+                includes=['Tailored resume draft', 'Rewrite suggestions', 'Keyword coverage guidance'],
             ),
             PricingPackage(
                 code='full-pack',
-                name='求职冲刺包',
+                name='Career Sprint Pack',
                 price_cny=79,
                 credits=4,
-                description='适合准备投递前的集中优化，包含分析、简历和面试准备建议。',
-                includes=['差距分析', '定制简历', '学习计划', '面试准备重点'],
+                description='A focused bundle for active applications, combining analysis, resume improvements, and interview preparation guidance.',
+                includes=['Gap analysis', 'Tailored resume support', 'Learning roadmap', 'Interview prep guidance'],
             ),
         ]
     )

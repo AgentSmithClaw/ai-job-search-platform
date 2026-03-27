@@ -1,15 +1,16 @@
 import pytest
+
+from app.schemas import RegisterRequest
+from app.services.auth import register_user
 from app.services.payment import (
-    create_payment_order,
-    complete_payment,
-    refund_order,
-    get_order_by_id,
-    get_user_orders,
     PaymentMethod,
     PaymentStatus,
+    complete_payment,
+    create_payment_order,
+    get_order_by_id,
+    get_user_orders,
+    refund_order,
 )
-from app.services.auth import register_user
-from app.schemas import RegisterRequest
 
 
 class TestPaymentOrder:
@@ -53,12 +54,12 @@ class TestPaymentOrder:
         complete_payment(order_id)
         with pytest.raises(ValueError) as exc:
             complete_payment(order_id)
-        assert "订单已完成" in str(exc.value)
+        assert "already completed" in str(exc.value)
 
     def test_complete_payment_not_found(self):
         with pytest.raises(ValueError) as exc:
             complete_payment("ORD_nonexistent")
-        assert "订单不存在" in str(exc.value)
+        assert "not found" in str(exc.value)
 
     def test_complete_payment_wrong_status(self, test_user):
         order_id = create_payment_order(
@@ -69,6 +70,7 @@ class TestPaymentOrder:
             price_cny=29,
         )
         from app.db import get_connection
+
         conn = get_connection()
         conn.execute(
             "UPDATE payment_orders SET status = ? WHERE order_id = ?",
@@ -78,7 +80,7 @@ class TestPaymentOrder:
         conn.close()
         with pytest.raises(ValueError) as exc:
             complete_payment(order_id)
-        assert "订单支付失败" in str(exc.value)
+        assert "payment failed" in str(exc.value)
 
 
 class TestRefund:

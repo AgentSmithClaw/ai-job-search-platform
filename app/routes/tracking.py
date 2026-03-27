@@ -30,7 +30,7 @@ from app.services.tracking import (
     update_learning_task_status,
 )
 
-router = APIRouter(tags=["追踪"])
+router = APIRouter(tags=["tracking"])
 
 
 @router.post("/api/applications", response_model=JobApplicationResponse)

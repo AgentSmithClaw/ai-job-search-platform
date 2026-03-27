@@ -1,28 +1,27 @@
 """
-Payment Service - AI Job Search Platform
+Payment service for the AI Job Search Platform.
 
-MOCK BOUNDARIES:
-- create_mock_payment_order(): Creates order with PENDING status (MOCK)
-- complete_mock_payment(): Immediately marks as COMPLETED (MOCK)
-- create_stripe_payment_session(): Stripe scaffold (NOT IMPLEMENTED)
+Current behavior:
+- Mock purchases create a pending order and complete immediately.
+- Stripe checkout creates a pending order and waits for webhook confirmation.
 
-REAL PAYMENT FLOW (TODO):
-1. POST /api/payment/create -> creates PENDING order
-2. Redirect to Stripe/Alipay checkout
-3. Webhook receives payment confirmation
-4. Credit update happens on webhook, not on create
+Production expectation:
+1. Create a pending order
+2. Redirect to the payment provider
+3. Receive webhook confirmation
+4. Add credits only after confirmed payment
 """
 from __future__ import annotations
 
 import logging
 import secrets
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Optional
-import httpx
+
+from app.config import settings
 from app.db import get_connection
 from app.schemas import PurchaseResponse
-from app.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -49,11 +48,6 @@ def create_payment_order(
     price_cny: int,
     payment_method: PaymentMethod = PaymentMethod.MOCK,
 ) -> str:
-    """
-    Create a payment order.
-    MOCK: Creates order with PENDING status immediately.
-    REAL: Should create order with PENDING and return order_id for payment redirect.
-    """
     order_id = f"ORD_{secrets.token_urlsafe(12)}"
     created_at = datetime.now(UTC).isoformat(timespec='seconds') + 'Z'
 
@@ -62,7 +56,7 @@ def create_payment_order(
         '''INSERT INTO payment_orders
            (order_id, created_at, user_id, package_code, package_name, credits, price_cny, status, payment_method)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-        (order_id, created_at, user_id, package_code, package_name, credits, price_cny, PaymentStatus.PENDING.value, payment_method.value)
+        (order_id, created_at, user_id, package_code, package_name, credits, price_cny, PaymentStatus.PENDING.value, payment_method.value),
     )
     conn.commit()
     conn.close()
@@ -73,44 +67,35 @@ def create_payment_order(
 
 def get_order_by_id(order_id: str) -> Optional[dict]:
     conn = get_connection()
-    order = conn.execute(
-        'SELECT * FROM payment_orders WHERE order_id = ?', (order_id,)
-    ).fetchone()
+    order = conn.execute('SELECT * FROM payment_orders WHERE order_id = ?', (order_id,)).fetchone()
     conn.close()
     return dict(order) if order else None
 
 
 def complete_payment(order_id: str, payment_method: PaymentMethod = PaymentMethod.MOCK) -> PurchaseResponse:
-    """
-    Complete a payment order and add credits to user.
-    MOCK: Immediately marks order as COMPLETED.
-    REAL: Should only be called from webhook after payment confirmation.
-    """
     conn = get_connection()
-    order = conn.execute(
-        'SELECT * FROM payment_orders WHERE order_id = ?', (order_id,)
-    ).fetchone()
+    order = conn.execute('SELECT * FROM payment_orders WHERE order_id = ?', (order_id,)).fetchone()
 
     if not order:
         conn.close()
         logger.error(f"Payment completion failed: order not found, order_id={order_id}")
-        raise ValueError("订单不存在")
+        raise ValueError("Order not found")
 
     if order['status'] == PaymentStatus.COMPLETED.value:
         conn.close()
         logger.warning(f"Payment completion failed: order already completed, order_id={order_id}")
-        raise ValueError("订单已完成支付")
+        raise ValueError("Order is already completed")
 
     if order['status'] == PaymentStatus.FAILED.value:
         conn.close()
         logger.error(f"Payment completion failed: order failed, order_id={order_id}")
-        raise ValueError("订单支付失败")
+        raise ValueError("Order payment failed")
 
     user = conn.execute('SELECT id, credits FROM users WHERE id = ?', (order['user_id'],)).fetchone()
     if not user:
         conn.close()
         logger.error(f"Payment completion failed: user not found, user_id={order['user_id']}")
-        raise ValueError("用户不存在")
+        raise ValueError("User not found")
 
     new_credits = user['credits'] + order['credits']
     completed_at = datetime.now(UTC).isoformat(timespec='seconds') + 'Z'
@@ -118,11 +103,11 @@ def complete_payment(order_id: str, payment_method: PaymentMethod = PaymentMetho
     conn.execute('UPDATE users SET credits = ? WHERE id = ?', (new_credits, user['id']))
     conn.execute(
         'UPDATE payment_orders SET status = ?, completed_at = ? WHERE order_id = ?',
-        (PaymentStatus.COMPLETED.value, completed_at, order_id)
+        (PaymentStatus.COMPLETED.value, completed_at, order_id),
     )
     conn.execute(
         'INSERT INTO purchases (created_at, user_id, package_code, package_name, credits_added, price_cny) VALUES (?, ?, ?, ?, ?, ?)',
-        (completed_at, user['id'], order['package_code'], order['package_name'], order['credits'], order['price_cny'])
+        (completed_at, user['id'], order['package_code'], order['package_name'], order['credits'], order['price_cny']),
     )
     conn.commit()
     conn.close()
@@ -143,20 +128,17 @@ def get_user_orders(user_id: int, limit: int = 20) -> list[dict]:
     orders = conn.execute(
         '''SELECT order_id, created_at, package_name, credits, price_cny, status, payment_method
            FROM payment_orders WHERE user_id = ? ORDER BY created_at DESC LIMIT ?''',
-        (user_id, limit)
+        (user_id, limit),
     ).fetchall()
     conn.close()
     return [dict(row) for row in orders]
 
 
 def refund_order(order_id: str, user_id: int) -> bool:
-    """
-    Refund a payment order and deduct credits from user.
-    """
     conn = get_connection()
     order = conn.execute(
         'SELECT * FROM payment_orders WHERE order_id = ? AND user_id = ?',
-        (order_id, user_id)
+        (order_id, user_id),
     ).fetchone()
 
     if not order or order['status'] != PaymentStatus.COMPLETED.value:
@@ -176,7 +158,7 @@ def refund_order(order_id: str, user_id: int) -> bool:
     conn.execute('UPDATE users SET credits = ? WHERE id = ?', (new_credits, user_id))
     conn.execute(
         'UPDATE payment_orders SET status = ?, refunded_at = ? WHERE order_id = ?',
-        (PaymentStatus.REFUNDED.value, refunded_at, order_id)
+        (PaymentStatus.REFUNDED.value, refunded_at, order_id),
     )
     conn.commit()
     conn.close()
@@ -193,10 +175,6 @@ async def create_stripe_checkout_session(
     price_cny: int,
     order_id: str,
 ) -> str:
-    """
-    Create Stripe checkout session and return URL.
-    Creates a pending order first, embeds order_id in Stripe metadata.
-    """
     if not settings.STRIPE_SECRET_KEY:
         logger.warning("Stripe not configured, returning mock checkout URL")
         return f"https://checkout.stripe.com/mock/{secrets.token_urlsafe(16)}"
@@ -211,7 +189,7 @@ async def create_stripe_checkout_session(
             conn = get_connection()
             pending = conn.execute(
                 "SELECT checkout_url FROM payment_orders WHERE order_id = ? AND status = 'pending' AND payment_method = 'stripe'",
-                (order_id,)
+                (order_id,),
             ).fetchone()
             conn.close()
             if pending and pending['checkout_url']:
@@ -246,7 +224,7 @@ async def create_stripe_checkout_session(
     conn = get_connection()
     conn.execute(
         "UPDATE payment_orders SET checkout_url = ? WHERE order_id = ?",
-        (checkout_url, order_id)
+        (checkout_url, order_id),
     )
     conn.commit()
     conn.close()
@@ -269,13 +247,13 @@ def _get_or_create_stripe_price(stripe, package_code: str, package_name: str, pr
 
     product = stripe.Product.create(
         name=f"AI Job Search - {package_name}",
-        metadata={'package_code': package_code}
+        metadata={'package_code': package_code},
     )
     price = stripe.Price.create(
         product=product.id,
         unit_amount=price_cny * 100,
         currency='cny',
-        metadata={'package_code': package_code}
+        metadata={'package_code': package_code},
     )
     logger.info(f"Created Stripe price: package={package_code}, price_id={price.id}")
     return price.id
@@ -286,6 +264,3 @@ def _get_user_email(user_id: int) -> Optional[str]:
     row = conn.execute('SELECT email FROM users WHERE id = ?', (user_id,)).fetchone()
     conn.close()
     return row['email'] if row else None
-
-
-
