@@ -1,6 +1,6 @@
 # Uhura Rollup
 
-更新时间：2026-03-26 20:00 CST
+更新时间：2026-03-27 16:00 CST
 项目：GapPilot Platform
 汇总人：Uhura（自动巡检）
 
@@ -23,7 +23,7 @@
 
 ## 文件时间戳（自动检查）
 
-- **Uhura**：任务单 `docs/handoff/uhura-task.md`；主产物预期 `docs/handoff/uhura-rollup.md`；主产物最后更新时间：2026-03-26 19:30 CST
+- **Uhura**：任务单 `docs/handoff/uhura-task.md`；主产物预期 `docs/handoff/uhura-rollup.md`；主产物最后更新时间：2026-03-27 15:30 CST
 - **Spock**：任务单 `docs/handoff/spock-task.md`；主产物预期 `docs/handoff/spock-p1-spec.md`；主产物最后更新时间：2026-03-26 16:49 CST
 - **Sulu**：任务单 `docs/handoff/sulu-task.md`；主产物预期 `docs/handoff/sulu-front-end-consolidation.md`；主产物最后更新时间：2026-03-26 00:37 CST
 - **La Forge**：任务单 `docs/handoff/laforge-task.md`；主产物预期 `docs/handoff/laforge-p0-backend-risk.md`；主产物最后更新时间：2026-03-26 16:49 CST
