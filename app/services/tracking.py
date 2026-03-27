@@ -233,3 +233,20 @@ def update_interview_prep(prep_id: int, user_id: int, ideal_answer: str = "", no
     conn.commit()
     conn.close()
     return True
+
+
+def delete_interview_prep(prep_id: int, user_id: int) -> bool:
+    conn = get_connection()
+    prep = conn.execute(
+        'SELECT id FROM interview_prep WHERE id = ? AND user_id = ?',
+        (prep_id, user_id)
+    ).fetchone()
+
+    if not prep:
+        conn.close()
+        return False
+
+    conn.execute('DELETE FROM interview_prep WHERE id = ?', (prep_id,))
+    conn.commit()
+    conn.close()
+    return True

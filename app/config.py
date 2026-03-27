@@ -14,6 +14,7 @@ class Settings:
     OPENAI_BASE_URL: str = os.getenv('OPENAI_BASE_URL', 'https://api.openai.com/v1')
     APP_DEBUG: bool = os.getenv('APP_DEBUG', 'false').lower() == 'true'
     APP_URL: str = os.getenv('APP_URL', 'http://127.0.0.1:8080')
+    DATABASE_URL: str = os.getenv('DATABASE_URL', '')
     CORS_ORIGINS: list = [o.strip() for o in os.getenv('CORS_ORIGINS', 'http://127.0.0.1:8080,http://localhost:3000,http://localhost:8080').split(',') if o.strip()]
     STRIPE_SECRET_KEY: str = os.getenv('STRIPE_SECRET_KEY', '')
     STRIPE_WEBHOOK_SECRET: str = os.getenv('STRIPE_WEBHOOK_SECRET', '')

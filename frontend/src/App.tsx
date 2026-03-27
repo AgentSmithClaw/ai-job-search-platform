@@ -1,20 +1,130 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
-import HomePage from './pages/HomePage';
+import type { ReactNode } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuthStore } from './store';
+
 import Dashboard from './pages/Dashboard';
-import AnalysisCreatePage from './pages/AnalysisCreatePage';
-import AnalysisReportPage from './pages/AnalysisReportPage';
+import AnalyzePage from './pages/AnalyzePage';
+import AnalysisResultPage from './pages/AnalysisResultPage';
+import HistoryPage from './pages/HistoryPage';
 import ApplicationsPage from './pages/ApplicationsPage';
 import BillingPage from './pages/BillingPage';
+import TasksPage from './pages/TasksPage';
+import InterviewPage from './pages/InterviewPage';
+import SettingsPage from './pages/SettingsPage';
+import HomePage from './pages/HomePage';
+import AuthPage from './pages/AuthPage';
+
+function ProtectedRoute({ children }: { children: ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuthStore();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg-base)]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-[var(--color-text-secondary)]">Loading workspace...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) return <Navigate to="/auth" replace />;
+  return <>{children}</>;
+}
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/analysis/new" element={<AnalysisCreatePage />} />
-      <Route path="/analysis/:id" element={<AnalysisReportPage />} />
-      <Route path="/applications" element={<ApplicationsPage />} />
-      <Route path="/billing" element={<BillingPage />} />
+      <Route path="/auth" element={<AuthPage />} />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/analyze"
+        element={
+          <ProtectedRoute>
+            <AnalyzePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/analysis/new"
+        element={
+          <ProtectedRoute>
+            <AnalyzePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/analyze/:id"
+        element={
+          <ProtectedRoute>
+            <AnalysisResultPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/analysis/:id"
+        element={
+          <ProtectedRoute>
+            <AnalysisResultPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/history"
+        element={
+          <ProtectedRoute>
+            <HistoryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/applications"
+        element={
+          <ProtectedRoute>
+            <ApplicationsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tasks"
+        element={
+          <ProtectedRoute>
+            <TasksPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/interview"
+        element={
+          <ProtectedRoute>
+            <InterviewPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/billing"
+        element={
+          <ProtectedRoute>
+            <BillingPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <SettingsPage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

@@ -111,8 +111,9 @@ def get_session(
 
 
 @router.post("/api/analyze", response_model=AnalysisResponse)
-def analyze(request: AnalysisRequest) -> AnalysisResponse:
-    user = consume_credit(request.access_token, amount=1)
+def analyze(request: AnalysisRequest, current_user: UserProfile = Depends(get_current_user)) -> AnalysisResponse:
+    access_token = request.access_token or current_user.access_token
+    user = consume_credit(access_token, amount=1)
 
     try:
         llm = get_llm_service()
@@ -167,9 +168,11 @@ def analyze(request: AnalysisRequest) -> AnalysisResponse:
 
 
 @router.post("/api/generate-questions", response_model=GenerateQuestionsResponse)
-def generate_questions(request: GenerateQuestionsRequest) -> GenerateQuestionsResponse:
-    from app.services.auth import get_user_by_token
-    get_user_by_token(request.access_token)
+def generate_questions(
+    request: GenerateQuestionsRequest,
+    user: UserProfile = Depends(get_current_user),
+) -> GenerateQuestionsResponse:
+    _ = request.access_token or user.access_token
 
     try:
         llm = get_llm_service()

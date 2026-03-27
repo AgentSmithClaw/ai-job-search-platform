@@ -20,6 +20,7 @@ from app.services.tracking import (
     create_job_application,
     create_learning_task,
     delete_application,
+    delete_interview_prep,
     delete_learning_task,
     get_user_applications,
     get_user_interview_prep,
@@ -256,3 +257,14 @@ def update_prep(
     if not success:
         raise HTTPException(status_code=404, detail='Interview prep not found')
     return {"status": "updated"}
+
+
+@router.delete("/api/interview-prep/{prep_id}")
+def delete_prep(
+    prep_id: int,
+    user: UserProfile = Depends(get_current_user),
+) -> dict:
+    success = delete_interview_prep(prep_id, user.id)
+    if not success:
+        raise HTTPException(status_code=404, detail='Interview prep not found')
+    return {"status": "deleted"}

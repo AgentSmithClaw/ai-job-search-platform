@@ -1,6 +1,8 @@
 FROM python:3.13-slim
 
 WORKDIR /app
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 # Install dependencies
 COPY requirements.txt .
@@ -9,7 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application
 COPY . .
 
-# Create data directory for SQLite
+# Create data directory for local SQLite fallback
 RUN mkdir -p /app/data
 
 # Expose port

@@ -28,15 +28,19 @@ router = APIRouter(prefix="/api/payment", tags=["支付"])
 
 
 @router.post("/purchase", response_model=PurchaseResponse)
-def purchase(request: PurchaseRequest) -> PurchaseResponse:
+def purchase(
+    request: PurchaseRequest,
+    user: UserProfile = Depends(get_current_user),
+) -> PurchaseResponse:
     from app.services.auth import add_credits
-    return add_credits(request.access_token, request.package_code)
+    return add_credits(request.access_token or user.access_token, request.package_code)
 
 
 @router.post("/create", response_model=dict)
-async def create_payment(request: PaymentCreateRequest) -> dict:
-    from app.services.auth import get_user_by_token
-    user = get_user_by_token(request.access_token)
+async def create_payment(
+    request: PaymentCreateRequest,
+    user: UserProfile = Depends(get_current_user),
+) -> dict:
     package = get_package_by_code(request.package_code)
     if not package:
         raise HTTPException(status_code=404, detail='Package not found')
@@ -61,9 +65,10 @@ async def create_payment(request: PaymentCreateRequest) -> dict:
 
 
 @router.post("/create-stripe", response_model=StripeCheckoutResponse)
-async def create_stripe_payment(request: PaymentCreateRequest) -> StripeCheckoutResponse:
-    from app.services.auth import get_user_by_token
-    user = get_user_by_token(request.access_token)
+async def create_stripe_payment(
+    request: PaymentCreateRequest,
+    user: UserProfile = Depends(get_current_user),
+) -> StripeCheckoutResponse:
     package = get_package_by_code(request.package_code)
     if not package:
         raise HTTPException(status_code=404, detail='Package not found')

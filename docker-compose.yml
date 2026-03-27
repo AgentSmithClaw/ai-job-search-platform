@@ -3,16 +3,35 @@ version: '3.8'
 services:
   gappilot:
     build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
     ports:
       - "8080:8080"
-    volumes:
-      - gappilot-data:/app/data
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
       - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.openai.com/v1}
       - APP_URL=${APP_URL:-http://127.0.0.1:8080}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://gappilot:gappilot@postgres:5432/gappilot}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://127.0.0.1:8080,http://localhost:3000,http://localhost:8080}
     restart: unless-stopped
 
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-gappilot}
+      - POSTGRES_USER=${POSTGRES_USER:-gappilot}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-gappilot}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-gappilot} -d ${POSTGRES_DB:-gappilot}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
-  gappilot-data:
+  postgres-data:

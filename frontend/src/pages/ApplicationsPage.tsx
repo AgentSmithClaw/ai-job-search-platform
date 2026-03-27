@@ -1,154 +1,240 @@
-import { ArrowUpRight, BrainCircuit, FilePlus2, Filter, MessageSquareQuote, SlidersHorizontal } from 'lucide-react';
-import { DashboardCard, DashboardLayout, MetricCard } from '../components/ui';
+import { useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { PageContainer, PageHeader } from '../components/layout/PageContainer';
+import { Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { Badge } from '../components/ui/Badge';
+import { EmptyState } from '../components/ui/EmptyState';
+import { Input, Textarea } from '../components/ui/Input';
+import { Modal } from '../components/ui/Modal';
+import { useToastStore } from '../store';
+import { createApplication, deleteApplication, getApplications, updateApplicationStatus } from '../services/tracking';
+import type { Application, ApplicationCreatePayload } from '../types';
+import { formatDate } from '../utils/format';
 
-const jobs = [
-  ['Linear', '产品设计师', '进行中', '2024年10月12日', '$16.5w - $19w'],
-  ['Stripe', '主任工程师', '已投递', '2024年10月14日', '$22w - $25w'],
-  ['Notion', '增长负责人', 'Offer', '2024年10月08日', '$18w + 期权'],
-  ['Meta', '产品经理', '未通过', '2024年10月02日', '$21w - $24w'],
-];
+const STATUS_META: Record<Application['status'], { label: string; badge: 'primary' | 'success' | 'warning' | 'error' | 'secondary' }> = {
+  interested: { label: 'Interested', badge: 'secondary' },
+  applied: { label: 'Applied', badge: 'primary' },
+  interviewing: { label: 'Interviewing', badge: 'warning' },
+  offer: { label: 'Offer', badge: 'success' },
+  rejected: { label: 'Rejected', badge: 'error' },
+  withdrawn: { label: 'Withdrawn', badge: 'secondary' },
+};
 
-const interviewQuestions = [
-  '请描述一次你根据数据调整产品策略的经历。',
-  '描述一次你与利益相关者发生冲突的情况。',
-  '你会如何为 Stripe 设计一个可扩展的通知系统？',
-];
+function ApplicationForm({ onSubmit, submitting }: { onSubmit: (payload: ApplicationCreatePayload) => void; submitting: boolean }) {
+  const [form, setForm] = useState<ApplicationCreatePayload>({
+    company_name: '',
+    target_role: '',
+    job_description: '',
+    application_url: '',
+    salary_range: '',
+    notes: '',
+    status: 'interested',
+  });
 
-function ApplicationsPage() {
   return (
-    <DashboardLayout
-      title="投递追踪与面试准备"
-      subtitle="管理您的活跃投递，并利用 AI 策划的准备资料打磨职业故事。页面融合了投递表格、岗位详情和行为/技术面试问题卡片。"
-      activePath="/applications"
-      action={
-        <button className="rounded-[20px] bg-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(79,70,229,0.24)]">
-          新建申请
-        </button>
-      }
-    >
-      <section className="grid gap-4 md:grid-cols-4 xl:gap-6">
-        <MetricCard label="活跃投递总计" value="24" hint="环比上月增长 2%" />
-        <MetricCard label="初筛" value="08" hint="持续推进中" />
-        <MetricCard label="正在面试" value="12%" hint="需要强化故事表达" />
-        <MetricCard label="AI 驱动准备" value="14/20" hint="已掌握核心问题" />
-      </section>
-
-      <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr] xl:gap-6">
-        <DashboardCard className="p-5 sm:p-6 lg:p-7">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-slate-400">职位申请</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">岗位流水线</h2>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <button className="dashboard-soft rounded-full px-4 py-2 text-sm text-slate-200">
-                <Filter className="mr-2 inline h-4 w-4" /> 筛选
-              </button>
-              <button className="dashboard-soft rounded-full px-4 py-2 text-sm text-slate-200">
-                <SlidersHorizontal className="mr-2 inline h-4 w-4" /> 排序
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-6 overflow-hidden rounded-[24px] border border-slate-800">
-            <table className="w-full border-collapse text-left text-sm">
-              <thead className="bg-slate-950/40 text-slate-400">
-                <tr>
-                  <th className="px-4 py-4 font-medium">职位</th>
-                  <th className="px-4 py-4 font-medium">状态</th>
-                  <th className="px-4 py-4 font-medium">投递日期</th>
-                  <th className="px-4 py-4 font-medium">薪资</th>
-                </tr>
-              </thead>
-              <tbody>
-                {jobs.map(([company, role, status, date, salary]) => (
-                  <tr key={company + role} className="border-t border-slate-800 bg-slate-950/20 text-slate-200">
-                    <td className="px-4 py-4">
-                      <div className="font-semibold text-white">{company}</div>
-                      <div className="mt-1 text-slate-400">{role}</div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className="rounded-full bg-indigo-500/10 px-3 py-1 text-xs font-semibold text-indigo-300">{status}</span>
-                    </td>
-                    <td className="px-4 py-4 text-slate-300">{date}</td>
-                    <td className="px-4 py-4 text-slate-300">{salary}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </DashboardCard>
-
-        <div className="space-y-4 xl:space-y-6">
-          <DashboardCard className="p-5 sm:p-6 lg:p-7">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm text-slate-400">岗位详情</p>
-                <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">面试准备</h2>
-              </div>
-              <BrainCircuit className="h-5 w-5 text-cyan-300" />
-            </div>
-
-            <div className="mt-6 rounded-[24px] bg-gradient-to-br from-indigo-500/12 to-cyan-500/10 p-5">
-              <div className="text-sm text-slate-300">已提交申请 • 2024年10月14日 • 上午 10:42</div>
-              <div className="mt-4 text-lg font-semibold text-white">行为面试</div>
-              <p className="mt-2 text-sm leading-7 text-slate-200">
-                重点关注第三季度的增长实验。提到转化率下降 12% 的情况，以及我们如何切换到分层引导流程的。
-              </p>
-            </div>
-
-            <div className="mt-6 space-y-3">
-              {interviewQuestions.map((question) => (
-                <div key={question} className="dashboard-soft rounded-[20px] p-4 text-sm leading-7 text-slate-200">
-                  {question}
-                </div>
-              ))}
-            </div>
-          </DashboardCard>
-
-          <DashboardCard className="p-5 sm:p-6 lg:p-7">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm text-slate-400">操作</div>
-                <div className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">状态更新</div>
-              </div>
-              <ArrowUpRight className="h-5 w-5 text-indigo-300" />
-            </div>
-            <div className="mt-6 grid gap-3">
-              {[
-                '添加笔记',
-                '归档职位',
-                '重新生成 AI 问题',
-                '新建申请',
-              ].map((item) => (
-                <button key={item} className="dashboard-soft rounded-[20px] px-4 py-3 text-left text-sm text-slate-200">
-                  {item}
-                </button>
-              ))}
-            </div>
-          </DashboardCard>
-
-          <DashboardCard className="p-5 sm:p-6 lg:p-7">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-500/15 text-indigo-300">
-                <MessageSquareQuote className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-sm text-slate-400">AI 备注</div>
-                <div className="text-lg font-semibold text-white">职业故事建议</div>
-              </div>
-            </div>
-            <p className="mt-5 text-sm leading-7 text-slate-300">
-              把“结果”讲得更具体：每个案例优先突出业务影响、协作范围和你主导的关键决策，再补充数据和复盘。
-            </p>
-            <button className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white">
-              <FilePlus2 className="h-4 w-4" /> 添加到准备清单
-            </button>
-          </DashboardCard>
-        </div>
-      </section>
-    </DashboardLayout>
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Input label="Company" value={form.company_name} onChange={(event) => setForm({ ...form, company_name: event.target.value })} />
+        <Input label="Role" value={form.target_role} onChange={(event) => setForm({ ...form, target_role: event.target.value })} />
+      </div>
+      <Textarea label="Job description" value={form.job_description} onChange={(event) => setForm({ ...form, job_description: event.target.value })} className="min-h-[140px]" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Input label="Application URL" value={form.application_url} onChange={(event) => setForm({ ...form, application_url: event.target.value })} />
+        <Input label="Salary range" value={form.salary_range} onChange={(event) => setForm({ ...form, salary_range: event.target.value })} />
+      </div>
+      <Textarea label="Notes" value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} className="min-h-[120px]" />
+      <Button className="w-full" loading={submitting} disabled={!form.company_name || !form.target_role} onClick={() => onSubmit(form)}>
+        Save application
+      </Button>
+    </div>
   );
 }
 
-export default ApplicationsPage;
+export default function ApplicationsPage() {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | Application['status']>('all');
+  const queryClient = useQueryClient();
+  const { addToast } = useToastStore();
+
+  const { data: applications = [], isLoading } = useQuery({
+    queryKey: ['applications'],
+    queryFn: getApplications,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: createApplication,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['applications'] });
+      setOpen(false);
+      addToast({ type: 'success', message: 'Application added.' });
+    },
+    onError: (error: Error) => addToast({ type: 'error', message: error.message || 'Could not add the application.' }),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: Application['status'] }) => updateApplicationStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['applications'] });
+      addToast({ type: 'success', message: 'Application status updated.' });
+    },
+    onError: (error: Error) => addToast({ type: 'error', message: error.message || 'Could not update the status.' }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteApplication,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['applications'] });
+      addToast({ type: 'success', message: 'Application removed.' });
+    },
+    onError: (error: Error) => addToast({ type: 'error', message: error.message || 'Could not remove the application.' }),
+  });
+
+  const filteredApplications = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+
+    return applications.filter((application) => {
+      const matchesStatus = statusFilter === 'all' || application.status === statusFilter;
+      const matchesSearch =
+        !normalizedSearch ||
+        [application.company_name, application.target_role, application.notes, application.job_description]
+          .filter(Boolean)
+          .some((field) => field.toLowerCase().includes(normalizedSearch));
+
+      return matchesStatus && matchesSearch;
+    });
+  }, [applications, search, statusFilter]);
+
+  return (
+    <PageContainer>
+      <PageHeader
+        title="Applications"
+        description="Keep your target roles, status changes, and notes in one clean place so analysis work turns into a managed job pipeline."
+        action={
+          <Button icon="add" onClick={() => setOpen(true)}>
+            Add application
+          </Button>
+        }
+      />
+
+      <section className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_240px] gap-4 mb-6">
+        <Input
+          label="Search applications"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Company, role, notes, or job description"
+        />
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-semibold">Status filter</label>
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value as 'all' | Application['status'])}
+            className="h-11 px-3 rounded-[var(--radius-xl)] text-sm"
+            style={{ background: 'var(--color-surface-container-low)', border: '1px solid var(--color-border)' }}
+          >
+            <option value="all">All statuses</option>
+            {Object.entries(STATUS_META).map(([value, meta]) => (
+              <option key={value} value={value}>
+                {meta.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </section>
+
+      {isLoading ? (
+        <Card className="p-6 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+          Loading applications...
+        </Card>
+      ) : applications.length === 0 ? (
+        <EmptyState
+          icon="assignment"
+          title="No applications yet"
+          description="Once you find target roles worth pursuing, add them here so you can track progress and keep notes in one place."
+          action={{ label: 'Add your first application', icon: 'add', onClick: () => setOpen(true) }}
+        />
+      ) : filteredApplications.length === 0 ? (
+        <EmptyState
+          icon="search"
+          title="No applications match the current filter"
+          description="Try another search term or switch the status filter back to all."
+        />
+      ) : (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          {filteredApplications.map((application) => {
+            const isUpdating = updateMutation.isPending && updateMutation.variables?.id === application.id;
+            const isDeleting = deleteMutation.isPending && deleteMutation.variables === application.id;
+
+            return (
+              <Card key={application.id} className="p-5">
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold tracking-tight">{application.target_role}</h3>
+                    <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{application.company_name}</p>
+                  </div>
+                  <Badge variant={STATUS_META[application.status].badge}>{STATUS_META[application.status].label}</Badge>
+                </div>
+
+                {application.job_description && (
+                  <p className="text-sm line-clamp-3 mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+                    {application.job_description}
+                  </p>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                  <div className="rounded-[var(--radius-xl)] p-3" style={{ background: 'var(--color-surface-container-low)' }}>
+                    <p className="editorial-kicker mb-1">Created</p>
+                    <p className="text-sm">{formatDate(application.created_at)}</p>
+                  </div>
+                  <div className="rounded-[var(--radius-xl)] p-3" style={{ background: 'var(--color-surface-container-low)' }}>
+                    <p className="editorial-kicker mb-1">Salary</p>
+                    <p className="text-sm">{application.salary_range || 'Not provided'}</p>
+                  </div>
+                </div>
+
+                {application.notes && (
+                  <div className="rounded-[var(--radius-xl)] p-3 mb-4" style={{ background: 'var(--color-surface-container-low)' }}>
+                    <p className="editorial-kicker mb-1">Notes</p>
+                    <p className="text-sm">{application.notes}</p>
+                  </div>
+                )}
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <select
+                    value={application.status}
+                    disabled={isUpdating}
+                    onChange={(event) => updateMutation.mutate({ id: application.id, status: event.target.value as Application['status'] })}
+                    className="h-10 px-3 rounded-[var(--radius-xl)] text-sm"
+                    style={{
+                      background: 'var(--color-surface-container-low)',
+                      border: '1px solid var(--color-border)',
+                    }}
+                  >
+                    {Object.entries(STATUS_META).map(([value, meta]) => (
+                      <option key={value} value={value}>
+                        {meta.label}
+                      </option>
+                    ))}
+                  </select>
+                  {application.application_url && (
+                    <Button variant="secondary" icon="open_in_new" onClick={() => window.open(application.application_url, '_blank', 'noopener,noreferrer')}>
+                      Open link
+                    </Button>
+                  )}
+                  <Button variant="ghost" icon="delete" loading={isDeleting} onClick={() => deleteMutation.mutate(application.id)}>
+                    Remove
+                  </Button>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      <Modal isOpen={open} onClose={() => setOpen(false)} title="Add application">
+        <ApplicationForm onSubmit={(payload) => createMutation.mutate(payload)} submitting={createMutation.isPending} />
+      </Modal>
+    </PageContainer>
+  );
+}

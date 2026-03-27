@@ -7,7 +7,7 @@ class AnalysisRequest(BaseModel):
     target_role: str = Field(min_length=2, max_length=120)
     resume_text: str = Field(min_length=20)
     job_description: str = Field(min_length=20)
-    access_token: str = Field(min_length=8)
+    access_token: str | None = Field(default=None, min_length=8)
 
 
 class GapItem(BaseModel):
@@ -117,7 +117,7 @@ class RegisterRequest(BaseModel):
 
 
 class UpdateUserRequest(BaseModel):
-    access_token: str = Field(min_length=8)
+    access_token: str | None = Field(default=None, min_length=8)
     name: str = Field(min_length=2, max_length=80)
 
 
@@ -130,7 +130,7 @@ class UserProfile(BaseModel):
 
 
 class PurchaseRequest(BaseModel):
-    access_token: str = Field(min_length=8)
+    access_token: str | None = Field(default=None, min_length=8)
     package_code: str = Field(min_length=2)
 
 
@@ -153,7 +153,7 @@ class PaymentOrderResponse(BaseModel):
 
 
 class PaymentCreateRequest(BaseModel):
-    access_token: str = Field(min_length=8)
+    access_token: str | None = Field(default=None, min_length=8)
     package_code: str = Field(min_length=2)
 
 
@@ -178,7 +178,7 @@ class JobApplicationCreate(BaseModel):
 
 
 class JobApplicationUpdate(BaseModel):
-    access_token: str = Field(min_length=8)
+    access_token: str | None = Field(default=None, min_length=8)
     status: str
 
 
@@ -204,7 +204,7 @@ class LearningTaskCreate(BaseModel):
 
 
 class LearningTaskUpdate(BaseModel):
-    access_token: str = Field(min_length=8)
+    access_token: str | None = Field(default=None, min_length=8)
     status: str
 
 
@@ -228,7 +228,7 @@ class InterviewPrepCreate(BaseModel):
 
 
 class InterviewPrepUpdate(BaseModel):
-    access_token: str = Field(min_length=8)
+    access_token: str | None = Field(default=None, min_length=8)
     ideal_answer: str = ""
     notes: str = ""
     status: str = "prepared"
@@ -245,7 +245,7 @@ class InterviewPrepResponse(BaseModel):
 
 
 class ExportRequest(BaseModel):
-    access_token: str = Field(min_length=8)
+    access_token: str | None = Field(default=None, min_length=8)
     session_id: int
     format: str = Field(pattern="^(docx|pdf)$")
 
@@ -262,7 +262,7 @@ class SessionDetail(BaseModel):
 
 
 class GenerateQuestionsRequest(BaseModel):
-    access_token: str = Field(min_length=8)
+    access_token: str | None = Field(default=None, min_length=8)
     session_id: int | None = None
     target_role: str = Field(min_length=2, max_length=120)
     resume_text: str = Field(min_length=20)
