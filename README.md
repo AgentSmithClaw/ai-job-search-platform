@@ -86,12 +86,17 @@ ai-job-search-platform/
 │  │  └─ utils/
 │  └─ package.json
 ├─ public/                 # Built static assets served by FastAPI
-├─ docs/api.md             # API reference
+├─ docs/                   # product-facing documentation
 ├─ tests/                  # pytest and smoke tests
 └─ scripts/                # build and publishing scripts
 ```
 
 The repository is intentionally kept focused on the active product only. Backup snapshots, design exports, agent workspace files, screenshots, and private planning material are excluded from the main project structure.
+
+Main docs:
+
+- [docs/api.md](/E:/codex/ai-job-search-platform/docs/api.md)
+- [docs/DEPLOYMENT.md](/E:/codex/ai-job-search-platform/docs/DEPLOYMENT.md)
 
 ## Local Development
 
@@ -189,7 +194,7 @@ The repository already contains Vercel configuration:
 - `buildCommand`: `npm run build`
 - `outputDirectory`: `public`
 
-See [vercel.json](/E:/codex/ai-job-search-platform/vercel.json).
+See [vercel.json](/E:/codex/ai-job-search-platform/vercel.json) and [docs/DEPLOYMENT.md](/E:/codex/ai-job-search-platform/docs/DEPLOYMENT.md).
 
 If your Vercel project is correctly connected to this GitHub repository and the `main` branch, pushes to GitHub should trigger automatic deployments.
 

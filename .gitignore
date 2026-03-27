@@ -24,6 +24,8 @@ stitch-export/
 frontend-backup-*/
 frontend-legacy/
 docs/handoff/
+Procfile
+runtime.txt
 
 # Logs
 server.log
