@@ -1,6 +1,13 @@
 {
   "private": true,
   "scripts": {
-    "build": "cd frontend && npm ci && npm run build && node ../scripts/publish-frontend.js"
+    "build": "npm --prefix frontend ci && npm --prefix frontend run build && node scripts/publish-frontend.js",
+    "build:local": "npm --prefix frontend run build && node scripts/publish-frontend.js",
+    "dev:backend": "uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "lint:frontend": "npm --prefix frontend run lint",
+    "test": "python -m pytest tests -q",
+    "test:smoke": "python tests/smoke_test.py",
+    "test:all": "npm run test && npm run test:smoke"
   }
 }

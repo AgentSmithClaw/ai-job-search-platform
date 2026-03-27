@@ -24,7 +24,7 @@ jobs:
           pip install pytest httpx
 
       - name: Run backend tests
-        run: pytest tests -q
+        run: npm run test
 
       - name: Check syntax
         run: python -m py_compile app/main.py app/config.py app/db.py app/schemas.py

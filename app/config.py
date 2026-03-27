@@ -21,6 +21,11 @@ class Settings:
     STRIPE_PRICE_GAP_REPORT: str = os.getenv('STRIPE_PRICE_GAP_REPORT', '')
     STRIPE_PRICE_RESUME_POLISH: str = os.getenv('STRIPE_PRICE_RESUME_POLISH', '')
     STRIPE_PRICE_FULL_PACK: str = os.getenv('STRIPE_PRICE_FULL_PACK', '')
+    SMTP_HOST: str = os.getenv('SMTP_HOST', '')
+    SMTP_PORT: int = int(os.getenv('SMTP_PORT', '587'))
+    SMTP_USER: str = os.getenv('SMTP_USER', '')
+    SMTP_PASSWORD: str = os.getenv('SMTP_PASSWORD', '')
+    FROM_EMAIL: str = os.getenv('FROM_EMAIL', os.getenv('SMTP_USER', ''))
 
 
 settings = Settings()
