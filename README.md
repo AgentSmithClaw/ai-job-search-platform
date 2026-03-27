@@ -1,94 +1,99 @@
 # GapPilot Platform
 
-一个面向真实求职流程的 AI SaaS 平台，覆盖：
+GapPilot is a production-oriented AI SaaS platform for job search execution. It combines resume-to-JD analysis, application tracking, learning tasks, interview preparation, exports, and credit-based billing in one product workflow.
 
-- AI 求职分析
-- 简历与岗位 JD 匹配评估
-- 分析报告导出
-- 投递追踪
-- 学习任务管理
-- 面试准备
-- 额度计费与订单管理
+This repository is not a static demo. It contains a real FastAPI backend, a React frontend, persistent analysis history, export generation, payment order flows, and operational deployment configuration.
 
-这不是静态演示站。当前仓库包含可运行的前后端、真实 API、订单流、历史记录和导出能力。
+## Product Scope
 
-## 当前架构
+GapPilot currently covers:
 
-- 前端：React + TypeScript + Vite + React Query + Zustand
-- 后端：FastAPI + Pydantic
-- 数据库：SQLite 默认，支持通过 `DATABASE_URL` 切换到 PostgreSQL
-- 导出：DOCX / PDF
-- 支付：Mock 支付可直接联调，Stripe Checkout 已接入
+- AI resume and job description gap analysis
+- Structured report viewing and export
+- Application tracking
+- Learning task management
+- Interview preparation
+- Credit billing and order management
 
-## 核心能力
+## Current Stack
 
-### 1. AI 求职分析
+- Frontend: React, TypeScript, Vite, React Query, Zustand
+- Backend: FastAPI, Pydantic
+- Database: SQLite by default, PostgreSQL via `DATABASE_URL`
+- Export: DOCX and PDF
+- Payments: Mock purchase flow plus Stripe Checkout integration
+- Auth: `Authorization: Bearer <token>` preferred, legacy `access_token` still supported
 
-- 上传 PDF / DOCX / TXT / Markdown 简历
-- 粘贴目标岗位 JD
-- 生成匹配分、优势、风险、差距、学习建议、面试重点和简历优化建议
-- 产出结构化报告页，而不是一段难以使用的大段文本
+## Core Features
 
-### 2. 分析结果沉淀
+### 1. AI Job Match Analysis
 
-- 保存分析历史
-- 查看单次分析详情
-- 导出 DOCX / PDF
-- 从结果页一键创建学习任务
-- 从结果页一键生成面试题
+- Upload PDF, DOCX, TXT, or Markdown resumes
+- Paste a target job description
+- Generate match score, strengths, risks, gaps, learning actions, interview focus, and resume rewrite suggestions
+- Show results in a structured report screen instead of dumping raw text
 
-### 3. 求职执行管理
+### 2. Analysis History and Reuse
 
-- 管理投递记录
-- 跟踪状态：`interested / applied / interviewing / offer / rejected / withdrawn`
-- 管理学习任务优先级和完成状态
-- 管理面试问题、理想回答和备注
+- Save completed analysis sessions
+- Re-open report details
+- Export DOCX and PDF
+- Create learning tasks from a report
+- Generate interview questions from a report
 
-### 4. 商业化能力
+### 3. Job Search Execution
 
-- 套餐列表
-- Mock 购买加额度
-- Stripe Checkout 下单
-- 订单列表
-- 退款接口
+- Track applications
+- Update status: `interested`, `applied`, `interviewing`, `offer`, `rejected`, `withdrawn`
+- Manage learning tasks and priorities
+- Manage interview questions, ideal answers, and notes
 
-## 认证方式
+### 4. Billing
 
-当前推荐使用：
+- Package catalog
+- Mock credit purchases
+- Stripe Checkout session creation
+- Order history
+- Refund endpoint
+
+## Authentication
+
+Preferred authentication:
 
 ```text
 Authorization: Bearer <token>
 ```
 
-为了兼容旧调用，后端仍保留部分 `access_token` query/body 字段支持，但新接入统一建议使用 Bearer Token。
+For backward compatibility, some endpoints still accept `access_token` in query parameters or request bodies. New integrations should use Bearer tokens only.
 
-## 目录结构
+## Repository Structure
 
 ```text
 ai-job-search-platform/
-├─ app/                    # FastAPI 后端
-│  ├─ main.py              # 应用入口、中间件、静态资源托管
-│  ├─ routes/              # API 路由
-│  ├─ services/            # 业务逻辑
-│  ├─ db.py                # SQLite / PostgreSQL 连接与建表
-│  └─ schemas.py           # Pydantic 模型
-├─ frontend/               # React 前端工程
+├─ app/                    # FastAPI backend
+│  ├─ main.py              # App entry, middleware, static hosting
+│  ├─ routes/              # API routes
+│  ├─ services/            # Business logic
+│  ├─ db.py                # SQLite / PostgreSQL connection and schema setup
+│  └─ schemas.py           # Pydantic models
+├─ frontend/               # React frontend
 │  ├─ src/
+│  │  ├─ components/
 │  │  ├─ pages/
 │  │  ├─ services/
 │  │  ├─ store/
-│  │  ├─ components/
+│  │  ├─ types/
 │  │  └─ utils/
 │  └─ package.json
-├─ public/                 # 构建后的静态资源，由 FastAPI 直接托管
-├─ docs/api.md             # API 文档
-├─ tests/                  # pytest + smoke test
-└─ scripts/                # 构建与发布脚本
+├─ public/                 # Built static assets served by FastAPI
+├─ docs/api.md             # API reference
+├─ tests/                  # pytest and smoke tests
+└─ scripts/                # build and publishing scripts
 ```
 
-## 本地启动
+## Local Development
 
-### 1. 安装后端依赖
+### 1. Install backend dependencies
 
 ```bash
 python -m venv .venv
@@ -96,33 +101,40 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-### 2. 配置环境变量
+### 2. Configure environment variables
 
-复制 `.env.example` 为 `.env`，按需填写：
+Copy `.env.example` to `.env` and fill in what you need:
 
 ```env
-OPENAI_API_KEY=your_api_key
+OPENAI_API_KEY=your_openai_api_key_here
 OPENAI_MODEL=gpt-4o-mini
 OPENAI_BASE_URL=https://api.openai.com/v1
 
-STRIPE_SECRET_KEY=sk_test_xxx
-STRIPE_WEBHOOK_SECRET=whsec_xxx
+APP_DEBUG=false
 APP_URL=http://127.0.0.1:8080
-CORS_ORIGINS=http://127.0.0.1:8080,http://localhost:3000,http://localhost:8080
 DATABASE_URL=
+CORS_ORIGINS=http://127.0.0.1:8080,http://localhost:3000,http://localhost:8080
+
+STRIPE_SECRET_KEY=your_stripe_secret_key_here
+STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret_here
+STRIPE_PRICE_GAP_REPORT=price_gap_report_xxx
+STRIPE_PRICE_RESUME_POLISH=price_resume_polish_xxx
+STRIPE_PRICE_FULL_PACK=price_full_pack_xxx
 ```
 
-- 不填写 `DATABASE_URL` 时，默认使用 SQLite
-- 填写 `postgresql://...` 后，自动切换到 PostgreSQL
-- 不配置 LLM 或 Stripe 时，仍可通过 mock 分析和 mock 购买完成主流程联调
+Notes:
 
-### 3. 启动后端
+- Leave `DATABASE_URL` empty to use SQLite
+- Set `DATABASE_URL=postgresql://...` to use PostgreSQL
+- You can still run the main workflow with mock analysis and mock purchases if LLM or Stripe credentials are missing
+
+### 3. Start the backend
 
 ```bash
 uvicorn app.main:app --host 0.0.0.0 --port 8080
 ```
 
-### 4. 前端开发模式
+### 4. Start the frontend in dev mode
 
 ```bash
 cd frontend
@@ -130,71 +142,93 @@ npm install
 npm run dev
 ```
 
-### 5. 生产构建并发布到 FastAPI 静态目录
+### 5. Build production assets and publish them to FastAPI
 
-在仓库根目录执行：
+Run this from the repository root:
 
 ```bash
 npm run build
 ```
 
-这个命令会：
+That command will:
 
-1. 安装前端依赖
-2. 构建 `frontend/dist`
-3. 将产物发布到 `public/`
+1. install frontend dependencies
+2. build `frontend/dist`
+3. publish the final assets into `public/`
 
-然后可直接通过后端访问：
+After that, access:
 
-- 首页：[http://127.0.0.1:8080/](http://127.0.0.1:8080/)
-- 健康检查：[http://127.0.0.1:8080/health](http://127.0.0.1:8080/health)
+- App: [http://127.0.0.1:8080/](http://127.0.0.1:8080/)
+- Health check: [http://127.0.0.1:8080/health](http://127.0.0.1:8080/health)
 
 ## Docker Compose
 
-仓库已内置 PostgreSQL：
+The repository includes PostgreSQL in Docker Compose:
 
 ```bash
 docker compose up --build
 ```
 
-默认会启动：
+Services:
 
-- `postgres`：PostgreSQL 16
-- `gappilot`：FastAPI 应用
+- `postgres`: PostgreSQL 16
+- `gappilot`: FastAPI application
 
-应用容器默认使用：
+Default application database URL:
 
 ```text
 postgresql://gappilot:gappilot@postgres:5432/gappilot
 ```
 
-## 测试
+## Vercel Deployment
 
-### Smoke Test
+The repository already contains Vercel configuration:
+
+- `buildCommand`: `npm run build`
+- `outputDirectory`: `public`
+
+See [vercel.json](/E:/codex/ai-job-search-platform/vercel.json).
+
+If your Vercel project is correctly connected to this GitHub repository and the `main` branch, pushes to GitHub should trigger automatic deployments.
+
+Recommended production environment variables:
+
+- `APP_URL`
+- `CORS_ORIGINS`
+- `DATABASE_URL`
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_PRICE_GAP_REPORT`
+- `STRIPE_PRICE_RESUME_POLISH`
+- `STRIPE_PRICE_FULL_PACK`
+
+## Tests
+
+### Smoke test
 
 ```bash
 python tests\smoke_test.py
 ```
 
-当前 smoke test 覆盖：
+Covered flows:
 
-- 健康检查
-- 注册
-- 获取用户信息
-- 更新资料
-- 套餐获取
-- Provider 获取
-- 简历上传
-- Mock 支付
-- 订单列表
-- Dashboard
-- 分析生成
-- 历史记录
-- DOCX / PDF 导出
-- 投递 CRUD
-- 学习任务 CRUD
-- 面试准备 CRUD
-- 退款
+- health check
+- register
+- auth me
+- profile update
+- pricing
+- providers
+- resume upload
+- mock purchase
+- order history
+- dashboard
+- analysis creation
+- history
+- DOCX and PDF export
+- applications CRUD
+- learning tasks CRUD
+- interview prep CRUD
+- refund
 
 ### Pytest
 
@@ -202,31 +236,30 @@ python tests\smoke_test.py
 python -m pytest tests -q
 ```
 
-## 当前验证结果
+## Verified Status
 
-截至当前仓库状态，已验证：
+At the current repository state:
 
-- `python tests\smoke_test.py`：`31/31 passed`
-- `python -m pytest tests -q`：`51 passed`
-- `npm run build`：通过
+- `python tests\smoke_test.py`: `31/31 passed`
+- `python -m pytest tests -q`: `51 passed`
+- `npm run build`: passed
 
-## 生产化说明
+## Productionization Work Already Completed
 
-已完成：
+- Bearer token auth flow added, legacy token compatibility preserved
+- SQLite / PostgreSQL dual-stack support
+- Docker Compose PostgreSQL integration
+- Frontend result page, settings, billing, history, and mobile shell polish
+- FastAPI static hosting for frontend build artifacts
 
-- Bearer Token 鉴权接入，保留旧 token 兼容
-- SQLite / PostgreSQL 双栈支持
-- Docker Compose 接入 PostgreSQL
-- 前端结果页、设置页、账单页、历史页与移动端壳层继续收口
-- FastAPI 直接托管前端构建产物
+## Recommended Next Production Steps
 
-上线前仍建议补充：
+- configure real Stripe keys, webhook, and callback domain
+- harden account lifecycle and security flows
+- add centralized logs, monitoring, and alerts
+- add browser-level end-to-end regression tests
+- run a real PostgreSQL environment validation before production launch
 
-- 正式 Stripe 密钥、Webhook 与回调域名
-- 更严格的账户体系
-- 统一日志、监控、告警
-- 浏览器级 E2E 回归测试
-
-## 许可证
+## License
 
 MIT

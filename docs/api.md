@@ -6,57 +6,57 @@ Base URL:
 http://localhost:8080
 ```
 
-除公开接口外，其余接口推荐使用 Bearer Token：
+For authenticated endpoints, use:
 
 ```text
 Authorization: Bearer YOUR_TOKEN
 ```
 
-兼容旧调用的接口仍接受 `access_token` query/body 字段，但新接入统一建议使用 Bearer Token。
+Some endpoints still accept legacy `access_token` query or body fields for backward compatibility, but all new integrations should use Bearer tokens.
 
 ## 1. Authentication
 
-### 注册 / 登录
+### Register / Sign in
 
 ```http
 POST /api/auth/register
 Content-Type: application/json
 ```
 
-请求体：
+Request body:
 
 ```json
 {
   "email": "user@example.com",
-  "name": "张三"
+  "name": "Jane Doe"
 }
 ```
 
-返回：
+Response:
 
 ```json
 {
   "id": 1,
   "email": "user@example.com",
-  "name": "张三",
+  "name": "Jane Doe",
   "credits": 1,
   "access_token": "token_value"
 }
 ```
 
-说明：
+Notes:
 
-- 如果邮箱已存在，会返回已有用户与现有 token
-- 新用户默认获得 1 个分析额度
+- If the email already exists, the existing user and token are returned
+- A new user starts with 1 credit
 
-### 获取当前用户
+### Get current user
 
 ```http
 GET /api/auth/me
 Authorization: Bearer YOUR_TOKEN
 ```
 
-### 更新资料
+### Update profile
 
 ```http
 PATCH /api/auth/profile
@@ -64,42 +64,42 @@ Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 ```
 
-请求体：
+Request body:
 
 ```json
 {
-  "name": "新的名字"
+  "name": "Updated Name"
 }
 ```
 
 ## 2. Analysis
 
-### 上传简历
+### Upload resume
 
 ```http
 POST /api/resume/upload
 Content-Type: multipart/form-data
 ```
 
-支持：
+Supported file types:
 
 - `.pdf`
 - `.docx`
 - `.txt`
 - `.md`
 
-返回：
+Response:
 
 ```json
 {
   "file_name": "resume.pdf",
-  "extracted_text": "简历文本内容...",
+  "extracted_text": "resume text ...",
   "char_count": 1200,
   "parser": "pdf-multi"
 }
 ```
 
-### 创建分析
+### Create analysis
 
 ```http
 POST /api/analyze
@@ -107,17 +107,17 @@ Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 ```
 
-请求体：
+Request body:
 
 ```json
 {
   "target_role": "Senior Backend Engineer",
-  "resume_text": "你的简历文本",
-  "job_description": "岗位 JD 文本"
+  "resume_text": "resume content",
+  "job_description": "job description content"
 }
 ```
 
-返回：
+Response:
 
 ```json
 {
@@ -128,9 +128,9 @@ Content-Type: application/json
   "credits_remaining": 2,
   "report": {
     "match_score": 78,
-    "summary": "整体匹配度较高，但仍有关键能力缺口。",
-    "strengths": ["FastAPI", "PostgreSQL", "系统拆分经验"],
-    "risks": ["缺少 Kubernetes 落地证据"],
+    "summary": "Overall fit is solid, but there are still important skill gaps to close.",
+    "strengths": ["FastAPI", "PostgreSQL", "system design experience"],
+    "risks": ["Missing Kubernetes delivery evidence"],
     "gaps": [],
     "learning_plan": [],
     "interview_focus": [],
@@ -151,25 +151,25 @@ Content-Type: application/json
       "caution_notes": []
     }
   },
-  "resume_draft": "优化后的简历草稿"
+  "resume_draft": "optimized resume draft"
 }
 ```
 
-### 获取历史记录
+### Get session history
 
 ```http
 GET /api/sessions?offset=0&limit=20
 Authorization: Bearer YOUR_TOKEN
 ```
 
-### 获取单个分析详情
+### Get session detail
 
 ```http
 GET /api/sessions/{session_id}
 Authorization: Bearer YOUR_TOKEN
 ```
 
-### 生成面试题
+### Generate interview questions
 
 ```http
 POST /api/generate-questions
@@ -177,54 +177,54 @@ Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 ```
 
-请求体：
+Request body:
 
 ```json
 {
   "session_id": 12,
   "target_role": "Senior Backend Engineer",
-  "resume_text": "简历内容",
-  "job_description": "JD 内容",
+  "resume_text": "resume content",
+  "job_description": "job description content",
   "gaps": []
 }
 ```
 
-返回：
+Response:
 
 ```json
 {
   "questions": [
-    "请介绍一个你优化后端系统稳定性的案例",
-    "你如何处理接口性能瓶颈？"
+    "Describe a time when you improved backend system reliability.",
+    "How do you diagnose and resolve performance bottlenecks?"
   ]
 }
 ```
 
 ## 3. Export
 
-### 导出 DOCX
+### Export DOCX
 
 ```http
 GET /api/export/{session_id}?format=docx
 Authorization: Bearer YOUR_TOKEN
 ```
 
-### 导出 PDF
+### Export PDF
 
 ```http
 GET /api/export/{session_id}?format=pdf
 Authorization: Bearer YOUR_TOKEN
 ```
 
-## 4. Pricing & Payment
+## 4. Pricing and Payment
 
-### 获取套餐
+### Get pricing catalog
 
 ```http
 GET /api/pricing
 ```
 
-### Mock 购买
+### Mock purchase
 
 ```http
 POST /api/payment/create
@@ -232,7 +232,7 @@ Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 ```
 
-请求体：
+Request body:
 
 ```json
 {
@@ -248,14 +248,14 @@ Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 ```
 
-### 订单列表
+### Order history
 
 ```http
 GET /api/payment/orders
 Authorization: Bearer YOUR_TOKEN
 ```
 
-### 退款
+### Refund
 
 ```http
 POST /api/payment/refund/{order_id}
@@ -264,7 +264,7 @@ Authorization: Bearer YOUR_TOKEN
 
 ## 5. Dashboard
 
-### 获取工作台数据
+### Get dashboard data
 
 ```http
 GET /api/dashboard
@@ -273,14 +273,14 @@ Authorization: Bearer YOUR_TOKEN
 
 ## 6. Applications
 
-### 列表
+### List
 
 ```http
 GET /api/applications
 Authorization: Bearer YOUR_TOKEN
 ```
 
-### 创建
+### Create
 
 ```http
 POST /api/applications
@@ -288,7 +288,7 @@ Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 ```
 
-### 更新
+### Update
 
 ```http
 PATCH /api/applications/{id}
@@ -296,7 +296,7 @@ Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 ```
 
-### 删除
+### Delete
 
 ```http
 DELETE /api/applications/{id}
@@ -305,14 +305,14 @@ Authorization: Bearer YOUR_TOKEN
 
 ## 7. Learning Tasks
 
-### 列表
+### List
 
 ```http
 GET /api/learning-tasks
 Authorization: Bearer YOUR_TOKEN
 ```
 
-### 创建
+### Create
 
 ```http
 POST /api/learning-tasks
@@ -320,7 +320,7 @@ Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 ```
 
-### 更新
+### Update
 
 ```http
 PATCH /api/learning-tasks/{id}
@@ -328,7 +328,7 @@ Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 ```
 
-### 删除
+### Delete
 
 ```http
 DELETE /api/learning-tasks/{id}
@@ -337,14 +337,14 @@ Authorization: Bearer YOUR_TOKEN
 
 ## 8. Interview Prep
 
-### 列表
+### List
 
 ```http
 GET /api/interview-prep
 Authorization: Bearer YOUR_TOKEN
 ```
 
-### 创建
+### Create
 
 ```http
 POST /api/interview-prep
@@ -352,7 +352,7 @@ Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 ```
 
-### 更新
+### Update
 
 ```http
 PATCH /api/interview-prep/{id}
@@ -360,7 +360,7 @@ Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 ```
 
-### 删除
+### Delete
 
 ```http
 DELETE /api/interview-prep/{id}
@@ -369,7 +369,7 @@ Authorization: Bearer YOUR_TOKEN
 
 ## 9. Providers
 
-### 获取模型提供方说明
+### Get provider catalog
 
 ```http
 GET /api/providers
@@ -377,24 +377,24 @@ GET /api/providers
 
 ## 10. Health Check
 
-### 健康检查
+### Health endpoint
 
 ```http
 GET /health
 ```
 
-## 错误码
+## Status Codes
 
-- `200` 成功
-- `400` 请求参数错误
-- `401` 未授权 / token 无效
-- `402` 额度不足
-- `404` 资源不存在
-- `429` 触发限流
-- `500` 服务端异常
+- `200` success
+- `400` bad request
+- `401` unauthorized or invalid token
+- `402` insufficient credits
+- `404` not found
+- `429` rate limited
+- `500` internal server error
 
-## 当前约束
+## Operational Notes
 
-- Bearer Token 已接入，旧 `access_token` 仍保留兼容
-- Mock 支付适合测试环境，正式上线请启用 Stripe 并配置 webhook
-- 数据库默认 SQLite，生产环境建议使用 PostgreSQL
+- Bearer token auth is active, legacy `access_token` compatibility remains
+- Mock payment is suitable for local testing; production should use Stripe with webhook validation
+- SQLite is fine for local development; production should use PostgreSQL
