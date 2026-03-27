@@ -16,6 +16,15 @@ env/
 data/
 *.db
 
+# Workspace-only or unrelated artifacts
+.openclaw/
+memory/
+screenshots/
+stitch-export/
+frontend-backup-*/
+frontend-legacy/
+docs/handoff/
+
 # Logs
 server.log
 *.log

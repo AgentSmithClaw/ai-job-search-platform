@@ -91,6 +91,8 @@ ai-job-search-platform/
 └─ scripts/                # build and publishing scripts
 ```
 
+The repository is intentionally kept focused on the active product only. Backup snapshots, design exports, agent workspace files, screenshots, and private planning material are excluded from the main project structure.
+
 ## Local Development
 
 ### 1. Install backend dependencies
