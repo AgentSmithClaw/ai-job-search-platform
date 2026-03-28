@@ -5,7 +5,7 @@
   "outputDirectory": "public",
   "headers": [
     {
-      "source": "/index-:hash(.*).css",
+      "source": "/index-:hash.css",
       "headers": [
         {
           "key": "Cache-Control",
@@ -14,7 +14,7 @@
       ]
     },
     {
-      "source": "/index-:hash(.*).js",
+      "source": "/index-:hash.js",
       "headers": [
         {
           "key": "Cache-Control",
@@ -23,18 +23,20 @@
       ]
     },
     {
-      "source": "/((?!api/).*)",
+      "source": "/index.html",
       "headers": [
         {
           "key": "Cache-Control",
           "value": "public, max-age=0, must-revalidate"
         }
-      ],
-      "has": [
+      ]
+    },
+    {
+      "source": "/",
+      "headers": [
         {
-          "type": "header",
-          "key": "accept",
-          "value": "(?i)\\btext/html\\b"
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
         }
       ]
     }
