@@ -28,7 +28,7 @@ export function Topbar({ onOpenSidebar }: TopbarProps) {
             search
           </span>
           <input
-            placeholder="Search reports, roles, or skills..."
+            placeholder="搜索报告、岗位或技能"
             className="flex-1 min-w-0 bg-transparent text-sm border-none outline-none"
             style={{ color: 'var(--color-on-surface)' }}
           />
@@ -39,7 +39,7 @@ export function Topbar({ onOpenSidebar }: TopbarProps) {
         <button
           className="relative w-10 h-10 hidden sm:flex items-center justify-center rounded-xl transition-colors hover:bg-[var(--color-surface-container-low)]"
           style={{ color: 'var(--color-on-surface-variant)' }}
-          aria-label="Notifications"
+          aria-label="通知"
         >
           <span className="material-symbols-outlined text-xl">notifications</span>
           <span className="absolute top-2 right-2 w-2 h-2 rounded-full" style={{ background: 'var(--color-error)' }} />
@@ -49,7 +49,7 @@ export function Topbar({ onOpenSidebar }: TopbarProps) {
           className="w-10 h-10 hidden sm:flex items-center justify-center rounded-xl transition-colors hover:bg-[var(--color-surface-container-low)]"
           style={{ color: 'var(--color-on-surface-variant)' }}
           onClick={() => navigate('/settings')}
-          aria-label="Settings"
+          aria-label="设置"
         >
           <span className="material-symbols-outlined text-xl">settings</span>
         </button>
@@ -58,7 +58,7 @@ export function Topbar({ onOpenSidebar }: TopbarProps) {
           <span className="material-symbols-outlined text-base" style={{ color: 'var(--color-primary)' }}>bolt</span>
           <div className="leading-none">
             <p className="text-[10px] uppercase font-semibold tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
-              Credits
+              点数
             </p>
             <p className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
               {user?.credits ?? 0}
@@ -72,14 +72,14 @@ export function Topbar({ onOpenSidebar }: TopbarProps) {
           onClick={() => navigate('/analyze')}
         >
           <span className="material-symbols-outlined text-base">add</span>
-          New analysis
+          新建分析
         </button>
 
         <div
           className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold cursor-pointer"
           style={{ background: 'var(--color-primary-fixed)', color: 'var(--color-on-primary-fixed-variant)' }}
           onClick={() => navigate('/settings')}
-          aria-label="User menu"
+          aria-label="用户菜单"
         >
           {(user?.name || 'U').charAt(0).toUpperCase()}
         </div>

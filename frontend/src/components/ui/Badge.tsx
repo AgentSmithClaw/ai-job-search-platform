@@ -34,6 +34,6 @@ export function Badge({ variant = 'neutral', className = '', children, ...props 
 
 export function MatchScoreBadge({ score }: { score: number }) {
   const variant: BadgeVariant = score >= 80 ? 'success' : score >= 60 ? 'info' : score >= 40 ? 'warning' : 'error';
-  const label = score >= 80 ? 'Strong Match' : score >= 60 ? 'Promising' : score >= 40 ? 'Needs Work' : 'High Risk';
+  const label = score >= 80 ? '高度匹配' : score >= 60 ? '值得推进' : score >= 40 ? '仍需补强' : '风险较高';
   return <Badge variant={variant}>{label} · {score}%</Badge>;
 }

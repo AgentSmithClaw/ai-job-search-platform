@@ -10,6 +10,27 @@ import { Card } from '../components/ui/Card';
 import { EmptyState } from '../components/ui/EmptyState';
 import { formatDate, relativeTime } from '../utils/format';
 
+/** 与后端 `ApplicationStatus` 枚举值对应 */
+const APPLICATION_STATUS_ZH: Record<string, string> = {
+  interested: '意向',
+  applied: '已投递',
+  interviewing: '面试中',
+  offer: '录用',
+  rejected: '已拒绝',
+  withdrawn: '已撤回',
+};
+
+/** 与后端 `LearningTaskStatus` 枚举值对应 */
+const TASK_STATUS_ZH: Record<string, string> = {
+  pending: '待开始',
+  in_progress: '进行中',
+  completed: '已完成',
+};
+
+function statusZh(key: string, map: Record<string, string>): string {
+  return map[key] ?? key;
+}
+
 function HeroMetric({ label, value, note }: { label: string; value: string | number; note: string }) {
   return (
     <div
@@ -92,8 +113,8 @@ export default function Dashboard() {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 3);
 
-    if (top.length === 0) return 'No tracked applications yet';
-    return top.map(([key, count]) => `${count} ${key}`).join(' · ');
+    if (top.length === 0) return '暂无已跟踪的投递';
+    return top.map(([key, count]) => `${count} ${statusZh(key, APPLICATION_STATUS_ZH)}`).join(' · ');
   }, [stats?.application_by_status]);
 
   const taskSummary = useMemo(() => {
@@ -102,8 +123,8 @@ export default function Dashboard() {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 3);
 
-    if (top.length === 0) return 'No active task breakdown yet';
-    return top.map(([key, count]) => `${count} ${key}`).join(' · ');
+    if (top.length === 0) return '暂无任务状态分布';
+    return top.map(([key, count]) => `${count} ${statusZh(key, TASK_STATUS_ZH)}`).join(' · ');
   }, [stats?.task_by_status]);
 
   const needsCredits = (user?.credits ?? 0) < 1;
@@ -128,31 +149,31 @@ export default function Dashboard() {
           <div className="relative">
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <div>
-                <Badge variant="primary" className="px-3 py-1.5 text-[10px] tracking-[0.16em] uppercase">
-                  Console overview
+                <Badge variant="primary" className="px-3 py-1.5 text-[10px] tracking-[0.12em]">
+                  控制台总览
                 </Badge>
                 <h1 className="mt-4 text-[34px] md:text-[48px] xl:text-[60px] leading-[0.98] font-black tracking-[-0.05em] text-[var(--color-text-on-surface)]">
-                  {user?.name || 'Your'} career command center
+                  {user?.name ? `${user.name} 的求职指挥台` : '你的求职指挥台'}
                 </h1>
                 <p className="mt-4 max-w-[760px] text-sm md:text-base leading-7" style={{ color: 'var(--color-text-secondary)' }}>
-                  Review recent analyses, choose your next move, and keep applications, tasks, and interview prep in one place.
+                  查看近期分析、规划下一步，把投递记录、学习任务与面试准备集中在一处完成。
                 </p>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3 shrink-0">
                 <Button size="lg" icon="add" onClick={() => navigate('/analyze')}>
-                  Start new analysis
+                  新建分析
                 </Button>
                 <Button size="lg" variant="secondary" icon="history" onClick={() => navigate('/history')}>
-                  Open history
+                  分析记录
                 </Button>
               </div>
             </div>
 
             <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-              <HeroMetric label="Credits" value={user?.credits ?? 0} note="Available runs in your current workspace" />
-              <HeroMetric label="This week" value={stats?.analyses_this_week ?? 0} note="Analyses completed in the last 7 days" />
-              <HeroMetric label="Average match" value={`${stats?.average_match_score ?? 0}%`} note="Mean fit score across recent reports" />
+              <HeroMetric label="积分余额" value={user?.credits ?? 0} note="当前工作区可用于分析的次数" />
+              <HeroMetric label="本周分析" value={stats?.analyses_this_week ?? 0} note="近 7 天完成的分析次数" />
+              <HeroMetric label="平均匹配度" value={`${stats?.average_match_score ?? 0}%`} note="近期报告的平均匹配得分" />
             </div>
           </div>
         </div>
@@ -166,27 +187,27 @@ export default function Dashboard() {
         >
           <div className="flex items-start justify-between gap-4 mb-6">
             <div>
-              <p className="editorial-kicker text-white/60 mb-2">Next move</p>
-              <h2 className="text-[28px] leading-tight font-black tracking-tight text-white">Focus on the work that changes the outcome</h2>
+              <p className="editorial-kicker text-white/60 mb-2">下一步</p>
+              <h2 className="text-[28px] leading-tight font-black tracking-tight text-white">先做能改变结果的关键几步</h2>
             </div>
-            {needsCredits && <Badge variant="warning">Low credits</Badge>}
+            {needsCredits && <Badge variant="warning">积分不足</Badge>}
           </div>
 
           <div className="space-y-3">
             {[
               {
-                title: 'Upload a fresh resume snapshot',
-                desc: 'Use the latest version of your resume before comparing it with a new role.',
+                title: '上传最新版简历',
+                desc: '与新岗位对比前，先确保简历内容是最新、最完整的一版。',
                 icon: 'upload_file',
               },
               {
-                title: 'Push gaps into learning tasks',
-                desc: 'Convert weak areas into tasks with owners, priorities, and target dates.',
+                title: '把差距落成学习任务',
+                desc: '将薄弱项拆成任务，设好优先级与目标完成时间。',
                 icon: 'checklist_rtl',
               },
               {
-                title: 'Prepare interview proof points',
-                desc: 'Turn report insights into stronger stories, examples, and likely questions.',
+                title: '准备面试论据与故事',
+                desc: '把报告里的洞察变成可讲的故事、案例与高频问题预案。',
                 icon: 'record_voice_over',
               },
             ].map((item) => (
@@ -208,25 +229,25 @@ export default function Dashboard() {
 
       <section className="grid grid-cols-1 xl:grid-cols-12 gap-6 mb-8 md:mb-10">
         <SurfaceCard
-          title="Recent reports"
-          kicker="Analysis stream"
+          title="近期报告"
+          kicker="分析动态"
           className="xl:col-span-7"
           action={
             <Button variant="ghost" icon="arrow_forward" iconPosition="right" onClick={() => navigate('/history')}>
-              View all
+              查看全部
             </Button>
           }
         >
           {loading ? (
             <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-              Loading live data...
+              正在加载数据…
             </div>
           ) : sessions.length === 0 ? (
             <EmptyState
               icon="analytics"
-              title="No analysis yet"
-              description="Run your first comparison to start building a report history."
-              action={{ label: 'Start analysis', icon: 'add', onClick: () => navigate('/analyze') }}
+              title="暂无分析记录"
+              description="先完成一次简历与岗位对比，建立你的报告历史。"
+              action={{ label: '新建分析', icon: 'add', onClick: () => navigate('/analyze') }}
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -256,25 +277,25 @@ export default function Dashboard() {
           )}
         </SurfaceCard>
 
-        <SurfaceCard title="Workspace health" kicker="Operations" className="xl:col-span-5">
+        <SurfaceCard title="工作区健康度" kicker="运营概况" className="xl:col-span-5">
           <div className="space-y-4">
             {[
               {
-                label: 'Applications tracked',
+                label: '已跟踪投递',
                 value: stats?.total_applications ?? 0,
                 detail: applicationSummary,
                 tone: 'primary',
               },
               {
-                label: 'Learning tasks',
+                label: '学习任务',
                 value: stats?.total_tasks ?? 0,
                 detail: taskSummary,
                 tone: 'warning',
               },
               {
-                label: 'Spend to date',
-                value: `CNY ${stats?.total_spent_cny ?? 0}`,
-                detail: `${stats?.total_analyses ?? 0} analyses recorded in this workspace`,
+                label: '累计消费',
+                value: `¥${stats?.total_spent_cny ?? 0}`,
+                detail: `本工作区已记录 ${stats?.total_analyses ?? 0} 次分析`,
                 tone: 'neutral',
               },
             ].map((item) => {
@@ -296,7 +317,7 @@ export default function Dashboard() {
       </section>
 
       <section className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-        <SurfaceCard title="Account capacity" kicker="Credits & pricing" className="xl:col-span-5" action={needsCredits ? <Badge variant="warning">Top up soon</Badge> : undefined}>
+        <SurfaceCard title="账户容量" kicker="积分与套餐" className="xl:col-span-5" action={needsCredits ? <Badge variant="warning">建议充值</Badge> : undefined}>
           <div className="space-y-3">
             {pricing.slice(0, 3).map((pkg) => (
               <div key={pkg.code} className="rounded-[24px] p-4 md:p-5" style={{ background: 'rgba(255,255,255,0.66)' }}>
@@ -307,12 +328,12 @@ export default function Dashboard() {
                       {pkg.description}
                     </p>
                   </div>
-                  <Badge variant="secondary">{pkg.credits} credits</Badge>
+                  <Badge variant="secondary">{pkg.credits} 积分</Badge>
                 </div>
                 <div className="flex items-end justify-between gap-3">
-                  <p className="text-[24px] leading-none font-black tracking-tight">CNY {pkg.price_cny}</p>
+                  <p className="text-[24px] leading-none font-black tracking-tight">¥{pkg.price_cny}</p>
                   <Button variant="secondary" onClick={() => navigate('/billing')}>
-                    Go to billing
+                    前往账单
                   </Button>
                 </div>
               </div>
@@ -320,24 +341,24 @@ export default function Dashboard() {
           </div>
         </SurfaceCard>
 
-        <SurfaceCard title="Execution shortcuts" kicker="Quick actions" className="xl:col-span-7">
+        <SurfaceCard title="快捷执行" kicker="常用操作" className="xl:col-span-7">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
               {
-                title: 'Run an analysis',
-                desc: 'Compare your resume with a new JD and refresh the signal.',
+                title: '运行分析',
+                desc: '将简历与新岗位 JD 对比，刷新匹配信号。',
                 icon: 'auto_awesome',
                 action: () => navigate('/analyze'),
               },
               {
-                title: 'Review tasks',
-                desc: 'Focus on the learning backlog created from previous reports.',
+                title: '查看任务',
+                desc: '处理历史报告生成的学习待办与补强项。',
                 icon: 'task_alt',
                 action: () => navigate('/tasks'),
               },
               {
-                title: 'Prep interviews',
-                desc: 'Turn analysis gaps into likely questions and stronger stories.',
+                title: '面试准备',
+                desc: '把分析中的差距转化为高频问题与表达素材。',
                 icon: 'forum',
                 action: () => navigate('/interview'),
               },

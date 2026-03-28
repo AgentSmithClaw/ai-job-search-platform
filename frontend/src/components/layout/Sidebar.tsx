@@ -2,15 +2,15 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store';
 
 const MAIN_NAV = [
-  { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
-  { to: '/history', label: 'Analysis History', icon: 'analytics' },
-  { to: '/applications', label: 'Applications', icon: 'assignment' },
-  { to: '/tasks', label: 'Learning Tasks', icon: 'school' },
-  { to: '/interview', label: 'Interview Prep', icon: 'interpreter_mode' },
-  { to: '/billing', label: 'Billing', icon: 'credit_card' },
+  { to: '/dashboard', label: '控制台', icon: 'dashboard' },
+  { to: '/history', label: '分析记录', icon: 'analytics' },
+  { to: '/applications', label: '投递管理', icon: 'assignment' },
+  { to: '/tasks', label: '学习任务', icon: 'school' },
+  { to: '/interview', label: '面试准备', icon: 'interpreter_mode' },
+  { to: '/billing', label: '账单中心', icon: 'credit_card' },
 ];
 
-const BOTTOM_NAV = [{ to: '/settings', label: 'Settings', icon: 'settings' }];
+const BOTTOM_NAV = [{ to: '/settings', label: '设置', icon: 'settings' }];
 
 interface SidebarProps {
   mobileOpen?: boolean;
@@ -47,7 +47,7 @@ export function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarProps) {
                   GapPilot
                 </p>
                 <p className="text-[10px] font-medium mt-0.5" style={{ color: 'var(--color-on-surface-variant)' }}>
-                  Career Intelligence
+                  求职作战台
                 </p>
               </div>
             </div>
@@ -61,7 +61,7 @@ export function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarProps) {
 
         <nav className="flex-1 px-3 pt-4 pb-2 overflow-y-auto">
           <p className="text-[10px] font-semibold uppercase tracking-widest px-3 mb-3" style={{ color: 'var(--color-on-surface-variant)' }}>
-            Workspace
+            工作区
           </p>
           <ul className="space-y-1">
             {MAIN_NAV.map(({ to, label, icon }) => {
@@ -91,7 +91,7 @@ export function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarProps) {
 
           <div className="mt-6">
             <p className="text-[10px] font-semibold uppercase tracking-widest px-3 mb-3" style={{ color: 'var(--color-on-surface-variant)' }}>
-              Account
+              账户
             </p>
             <ul className="space-y-1">
               {BOTTOM_NAV.map(({ to, label, icon }) => {

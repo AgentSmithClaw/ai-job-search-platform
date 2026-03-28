@@ -1,45 +1,32 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
+import { CheckCircle2, FileSearch, GraduationCap, MessagesSquare, Target } from 'lucide-react';
 import { Badge } from '../components/ui/Badge';
-import { register, saveToken } from '../services/auth';
-import { useAuthStore, useToastStore } from '../store';
-import type { User } from '../types';
+import { Button } from '../components/ui/Button';
+import { WorkspaceSignupCard } from '../components/marketing/WorkspaceSignupCard';
+import { useAuthStore } from '../store';
 
-const FEATURES = [
-  { icon: 'analytics', title: 'Targeted role analysis', desc: 'Compare your real resume against a real job description and get a structured gap report.' },
-  { icon: 'school', title: 'Learning plan', desc: 'Turn the biggest gaps into concrete tasks you can actually finish.' },
-  { icon: 'record_voice_over', title: 'Interview prep', desc: 'Generate question sets based on the exact role, gaps, and evidence in your report.' },
+const FEATURE_BLOCKS = [
+  {
+    icon: FileSearch,
+    title: '岗位匹配分析',
+    description: '上传简历并粘贴岗位描述，快速得到结构化的匹配结果与关键缺口。',
+  },
+  {
+    icon: GraduationCap,
+    title: '学习与补强计划',
+    description: '把短板转成明确的学习任务，而不是模糊建议。',
+  },
+  {
+    icon: MessagesSquare,
+    title: '面试准备与执行',
+    description: '围绕报告里的证据和风险点，提前准备更具体的面试表达。',
+  },
 ];
 
 export default function AuthPage() {
   const navigate = useNavigate();
-  const { isAuthenticated, setUser, setToken } = useAuthStore();
-  const { addToast } = useToastStore();
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-
-  const mutation = useMutation({
-    mutationFn: () => register(email, name),
-    onSuccess: (data) => {
-      const user: User = {
-        id: data.id,
-        email: data.email,
-        name: data.name,
-        credits: data.credits,
-      };
-      saveToken(data.access_token);
-      setToken(data.access_token);
-      setUser(user);
-      addToast({ type: 'success', message: 'Your account is ready.' });
-      navigate('/dashboard');
-    },
-    onError: (error: Error) => addToast({ type: 'error', message: error.message || 'Could not create the account.' }),
-  });
-
-  const valid = email.includes('@') && name.trim().length >= 2;
+  const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -48,73 +35,121 @@ export default function AuthPage() {
   }, [isAuthenticated, navigate]);
 
   return (
-    <div className="min-h-screen grid grid-cols-1 xl:grid-cols-2">
-      <section
-        className="hidden xl:flex flex-col justify-between p-12"
-        style={{
-          background:
-            'radial-gradient(circle at top right, rgba(195,192,255,0.35), transparent 28%), linear-gradient(180deg, rgba(255,255,255,0.86) 0%, rgba(240,236,249,0.96) 100%)',
-        }}
-      >
-        <div>
-          <Badge variant="primary">GapPilot</Badge>
-          <h1 className="text-5xl font-black tracking-tight mt-6 mb-4" style={{ color: 'var(--color-text-on-surface)' }}>
-            Build a clearer job search strategy from every analysis.
-          </h1>
-          <p className="text-lg max-w-xl" style={{ color: 'var(--color-text-secondary)' }}>
-            Upload a resume, compare it with a target role, and turn the findings into follow-up actions for learning, applications, interviews, and exports.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4">
-          {FEATURES.map((feature) => (
-            <div key={feature.title} className="rounded-[var(--radius-xl)] p-5 app-panel">
-              <div className="flex items-start gap-4">
-                <div className="w-11 h-11 rounded-[var(--radius-xl)] flex items-center justify-center" style={{ background: 'var(--color-primary-fixed)' }}>
-                  <span className="material-symbols-outlined" style={{ color: 'var(--color-primary)' }}>{feature.icon}</span>
-                </div>
-                <div>
-                  <p className="font-semibold mb-1">{feature.title}</p>
-                  <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{feature.desc}</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="flex items-center justify-center p-6">
-        <div className="w-full max-w-md">
-          <div className="rounded-[24px] p-8 app-panel">
-            <p className="editorial-kicker mb-2">Authentication</p>
-            <h2 className="text-3xl font-black tracking-tight mb-2">Create your account</h2>
-            <p className="text-sm mb-6" style={{ color: 'var(--color-text-secondary)' }}>
-              Start with your email and name. New accounts receive trial credits so you can run your first analysis right away.
-            </p>
-
-            <form
-              className="space-y-4"
-              onSubmit={(event) => {
-                event.preventDefault();
-                if (valid) mutation.mutate();
+    <div className="min-h-screen" style={{ background: 'var(--color-bg-base)' }}>
+      <div className="mx-auto max-w-[1380px] px-4 md:px-8 xl:px-10 py-6 md:py-8">
+        <header className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-11 h-11 rounded-[16px] flex items-center justify-center"
+              style={{
+                background: 'linear-gradient(135deg, #5b4eff 0%, #3525cd 100%)',
+                boxShadow: '0 14px 30px rgba(53,37,205,0.24)',
               }}
             >
-              <Input label="Email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" />
-              <Input label="Name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Your full name" />
-              <Button type="submit" className="w-full" size="lg" loading={mutation.isPending} disabled={!valid}>
-                Enter workspace
-              </Button>
-            </form>
-
-            <div className="mt-6 rounded-[var(--radius-xl)] p-4" style={{ background: 'var(--color-surface-container-low)' }}>
-              <p className="text-sm font-semibold mb-1">What you can do next</p>
-              <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                Upload your resume, run an analysis, review past reports, and turn gaps into learning tasks and interview questions.
+              <Target size={20} style={{ color: 'white' }} />
+            </div>
+            <div>
+              <p className="text-lg font-black tracking-tight">GapPilot</p>
+              <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                AI 求职分析工作台
               </p>
             </div>
           </div>
+
+          <Button variant="ghost" onClick={() => navigate('/')}>
+            返回首页
+          </Button>
+        </header>
+
+        <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_430px] gap-6 xl:gap-8 items-start pt-8 md:pt-10">
+          <section
+            className="relative overflow-hidden rounded-[36px] md:rounded-[44px] px-6 py-7 md:px-10 md:py-10 xl:px-12 xl:py-12"
+            style={{
+              background:
+                'radial-gradient(circle at 14% 18%, rgba(255,255,255,0.95), transparent 24%), radial-gradient(circle at 86% 12%, rgba(195,192,255,0.62), transparent 20%), linear-gradient(135deg, #f5f2ff 0%, #f8f6ff 48%, #eeebff 100%)',
+              border: '1px solid color-mix(in srgb, var(--color-outline-variant) 38%, transparent)',
+              boxShadow: '0 30px 80px rgba(53, 37, 205, 0.1)',
+            }}
+          >
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute right-[-70px] top-[-40px] w-[240px] h-[240px] rounded-full bg-[rgba(91,78,255,0.10)] blur-3xl" />
+              <div className="absolute left-[12%] bottom-[-80px] w-[280px] h-[180px] rounded-full bg-[rgba(255,182,149,0.18)] blur-3xl" />
+            </div>
+
+            <div className="relative">
+              <Badge variant="primary" className="px-3 py-1.5 text-[10px] tracking-[0.16em] uppercase">
+                创建工作区
+              </Badge>
+
+              <h1 className="mt-5 max-w-[780px] text-[40px] leading-[1.02] md:text-[60px] xl:text-[72px] font-black tracking-[-0.05em] text-[var(--color-text-on-surface)]">
+                先完成注册，
+                <br />
+                再把你的求职过程
+                <br />
+                管理成一套系统。
+              </h1>
+
+              <p className="mt-5 max-w-[620px] text-base md:text-lg leading-7" style={{ color: 'var(--color-text-secondary)' }}>
+                这里不是一次性的简历打分工具。GapPilot 会把分析报告、投递记录、学习任务和面试准备连成同一个工作台，方便你持续推进。
+              </p>
+
+              <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+                {FEATURE_BLOCKS.map((feature) => {
+                  const Icon = feature.icon;
+                  return (
+                    <div
+                      key={feature.title}
+                      className="rounded-[24px] p-5"
+                      style={{
+                        background: 'rgba(255,255,255,0.76)',
+                        border: '1px solid rgba(255,255,255,0.7)',
+                        boxShadow: '0 10px 30px rgba(53,37,205,0.06)',
+                      }}
+                    >
+                      <div
+                        className="w-11 h-11 rounded-[16px] flex items-center justify-center mb-4"
+                        style={{ background: 'var(--color-primary-fixed)', color: 'var(--color-primary)' }}
+                      >
+                        <Icon size={18} />
+                      </div>
+                      <p className="text-lg font-bold tracking-tight">{feature.title}</p>
+                      <p className="mt-2 text-sm leading-6" style={{ color: 'var(--color-text-secondary)' }}>
+                        {feature.description}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div
+                className="mt-6 rounded-[28px] p-5 md:p-6"
+                style={{
+                  background: 'rgba(18,18,31,0.92)',
+                  boxShadow: '0 24px 60px rgba(17, 24, 39, 0.22)',
+                }}
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="editorial-kicker text-white/60 mb-2">开始之后你会看到</p>
+                    <h2 className="text-[24px] md:text-[28px] leading-tight font-black tracking-tight text-white">
+                      报告、任务、投递和面试准备全部汇总在一个面板里。
+                    </h2>
+                  </div>
+                  <CheckCircle2 size={20} className="shrink-0 text-white/80" />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <WorkspaceSignupCard
+            eyebrow="注册"
+            title="立即创建账号"
+            description="填写邮箱和姓名即可开始。注册后会获得体验点数，可以直接运行首份岗位分析。"
+            submitLabel="注册并进入工作台"
+            compact
+          />
         </div>
-      </section>
+      </div>
     </div>
   );
 }
