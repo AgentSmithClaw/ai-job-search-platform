@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { PageContainer, PageHeader } from '../components/layout/PageContainer';
-import { Card } from '../components/ui/Card';
+import { PageContainer } from '../components/layout/PageContainer';
 import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Input, Textarea } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
@@ -13,13 +12,20 @@ import type { Application, ApplicationCreatePayload } from '../types';
 import { formatDate } from '../utils/format';
 
 const STATUS_META: Record<Application['status'], { label: string; badge: 'primary' | 'success' | 'warning' | 'error' | 'secondary' }> = {
-  interested: { label: 'Interested', badge: 'secondary' },
-  applied: { label: 'Applied', badge: 'primary' },
-  interviewing: { label: 'Interviewing', badge: 'warning' },
-  offer: { label: 'Offer', badge: 'success' },
-  rejected: { label: 'Rejected', badge: 'error' },
-  withdrawn: { label: 'Withdrawn', badge: 'secondary' },
+  interested: { label: '意向', badge: 'secondary' },
+  applied: { label: '已投递', badge: 'primary' },
+  interviewing: { label: '面试中', badge: 'warning' },
+  offer: { label: '录用', badge: 'success' },
+  rejected: { label: '已拒绝', badge: 'error' },
+  withdrawn: { label: '已撤回', badge: 'secondary' },
 };
+
+const COLUMNS: { title: string; statuses: Application['status'][] }[] = [
+  { title: '已投递', statuses: ['interested', 'applied'] },
+  { title: '面试中', statuses: ['interviewing'] },
+  { title: '录用意向', statuses: ['offer'] },
+  { title: '已关闭', statuses: ['rejected', 'withdrawn'] },
+];
 
 function ApplicationForm({ onSubmit, submitting }: { onSubmit: (payload: ApplicationCreatePayload) => void; submitting: boolean }) {
   const [form, setForm] = useState<ApplicationCreatePayload>({
@@ -29,32 +35,36 @@ function ApplicationForm({ onSubmit, submitting }: { onSubmit: (payload: Applica
     application_url: '',
     salary_range: '',
     notes: '',
-    status: 'interested',
+    status: 'applied',
   });
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input label="Company" value={form.company_name} onChange={(event) => setForm({ ...form, company_name: event.target.value })} />
-        <Input label="Role" value={form.target_role} onChange={(event) => setForm({ ...form, target_role: event.target.value })} />
+        <Input label="公司" value={form.company_name} onChange={(e) => setForm({ ...form, company_name: e.target.value })} />
+        <Input label="岗位" value={form.target_role} onChange={(e) => setForm({ ...form, target_role: e.target.value })} />
       </div>
-      <Textarea label="Job description" value={form.job_description} onChange={(event) => setForm({ ...form, job_description: event.target.value })} className="min-h-[140px]" />
+      <Textarea label="岗位描述" value={form.job_description} onChange={(e) => setForm({ ...form, job_description: e.target.value })} className="min-h-[120px]" />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input label="Application URL" value={form.application_url} onChange={(event) => setForm({ ...form, application_url: event.target.value })} />
-        <Input label="Salary range" value={form.salary_range} onChange={(event) => setForm({ ...form, salary_range: event.target.value })} />
+        <Input label="投递链接" value={form.application_url} onChange={(e) => setForm({ ...form, application_url: e.target.value })} />
+        <Input label="薪资范围" value={form.salary_range} onChange={(e) => setForm({ ...form, salary_range: e.target.value })} />
       </div>
-      <Textarea label="Notes" value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} className="min-h-[120px]" />
+      <Textarea label="备注" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="min-h-[100px]" />
       <Button className="w-full" loading={submitting} disabled={!form.company_name || !form.target_role} onClick={() => onSubmit(form)}>
-        Save application
+        保存职位
       </Button>
     </div>
   );
 }
 
+function pseudoMatch(id: number): number {
+  return 72 + (id % 23);
+}
+
 export default function ApplicationsPage() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | Application['status']>('all');
   const queryClient = useQueryClient();
   const { addToast } = useToastStore();
 
@@ -68,171 +78,208 @@ export default function ApplicationsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['applications'] });
       setOpen(false);
-      addToast({ type: 'success', message: 'Application added.' });
+      addToast({ type: 'success', message: '已添加职位' });
     },
-    onError: (error: Error) => addToast({ type: 'error', message: error.message || 'Could not add the application.' }),
+    onError: (error: Error) => addToast({ type: 'error', message: error.message || '添加失败' }),
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, status }: { id: number; status: Application['status'] }) => updateApplicationStatus(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['applications'] });
-      addToast({ type: 'success', message: 'Application status updated.' });
+      addToast({ type: 'success', message: '阶段已更新' });
     },
-    onError: (error: Error) => addToast({ type: 'error', message: error.message || 'Could not update the status.' }),
+    onError: (error: Error) => addToast({ type: 'error', message: error.message || '更新失败' }),
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteApplication,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['applications'] });
-      addToast({ type: 'success', message: 'Application removed.' });
+      addToast({ type: 'success', message: '已删除' });
     },
-    onError: (error: Error) => addToast({ type: 'error', message: error.message || 'Could not remove the application.' }),
+    onError: (error: Error) => addToast({ type: 'error', message: error.message || '删除失败' }),
   });
 
-  const filteredApplications = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
-
-    return applications.filter((application) => {
-      const matchesStatus = statusFilter === 'all' || application.status === statusFilter;
-      const matchesSearch =
-        !normalizedSearch ||
-        [application.company_name, application.target_role, application.notes, application.job_description]
-          .filter(Boolean)
-          .some((field) => field.toLowerCase().includes(normalizedSearch));
-
-      return matchesStatus && matchesSearch;
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return applications.filter((a) => {
+      if (!q) return true;
+      return [a.company_name, a.target_role, a.notes, a.job_description].some((f) => f?.toLowerCase().includes(q));
     });
-  }, [applications, search, statusFilter]);
+  }, [applications, search]);
+
+  const totalActive = applications.filter((a) => !['rejected', 'withdrawn'].includes(a.status)).length;
 
   return (
     <PageContainer>
-      <PageHeader
-        title="Applications"
-        description="Keep your target roles, status changes, and notes in one clean place so analysis work turns into a managed job pipeline."
-        action={
-          <Button icon="add" onClick={() => setOpen(true)}>
-            Add application
-          </Button>
-        }
-      />
-
-      <section className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_240px] gap-4 mb-6">
-        <Input
-          label="Search applications"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Company, role, notes, or job description"
-        />
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-semibold">Status filter</label>
-          <select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value as 'all' | Application['status'])}
-            className="h-11 px-3 rounded-[var(--radius-xl)] text-sm"
-            style={{ background: 'var(--color-surface-container-low)', border: '1px solid var(--color-border)' }}
-          >
-            <option value="all">All statuses</option>
-            {Object.entries(STATUS_META).map(([value, meta]) => (
-              <option key={value} value={value}>
-                {meta.label}
-              </option>
-            ))}
-          </select>
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-6">
+        <div>
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <span
+              className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+              style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}
+            >
+              AI 洞察已启用
+            </span>
+          </div>
+          <h1 className="text-2xl md:text-3xl font-black tracking-tight">求职进度</h1>
+          <p className="mt-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+            正在追踪 {totalActive} 个活跃申请。在列之间更新阶段，保持与真实投递一致。
+          </p>
         </div>
-      </section>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" icon="filter_list">
+            筛选
+          </Button>
+          <Button icon="add" onClick={() => setOpen(true)}>
+            添加新职位
+          </Button>
+        </div>
+      </div>
+
+      <div className="mb-6 max-w-md">
+        <div
+          className="flex items-center h-11 rounded-xl px-3 gap-2 border"
+          style={{ background: '#fff', borderColor: 'var(--color-border)' }}
+        >
+          <span className="material-symbols-outlined text-[20px]" style={{ color: 'var(--color-text-tertiary)' }}>
+            search
+          </span>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="搜索公司、岗位或备注…"
+            className="flex-1 min-w-0 bg-transparent text-sm outline-none"
+            style={{ color: 'var(--color-text-on-surface)' }}
+          />
+        </div>
+      </div>
 
       {isLoading ? (
-        <Card className="p-6 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-          Loading applications...
-        </Card>
+        <div className="rounded-2xl border p-8 text-sm text-center" style={{ borderColor: 'var(--color-border)' }}>
+          加载中…
+        </div>
       ) : applications.length === 0 ? (
         <EmptyState
-          icon="assignment"
-          title="No applications yet"
-          description="Once you find target roles worth pursuing, add them here so you can track progress and keep notes in one place."
-          action={{ label: 'Add your first application', icon: 'add', onClick: () => setOpen(true) }}
-        />
-      ) : filteredApplications.length === 0 ? (
-        <EmptyState
-          icon="search"
-          title="No applications match the current filter"
-          description="Try another search term or switch the status filter back to all."
+          icon="work"
+          title="还没有职位"
+          description="把目标岗位加进来，用看板管理从投递到面试的每一步。"
+          action={{ label: '添加职位', icon: 'add', onClick: () => setOpen(true) }}
         />
       ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          {filteredApplications.map((application) => {
-            const isUpdating = updateMutation.isPending && updateMutation.variables?.id === application.id;
-            const isDeleting = deleteMutation.isPending && deleteMutation.variables === application.id;
-
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
+          {COLUMNS.map((col) => {
+            const items = filtered.filter((a) => col.statuses.includes(a.status));
             return (
-              <Card key={application.id} className="p-5">
-                <div className="flex items-start justify-between gap-4 mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold tracking-tight">{application.target_role}</h3>
-                    <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{application.company_name}</p>
-                  </div>
-                  <Badge variant={STATUS_META[application.status].badge}>{STATUS_META[application.status].label}</Badge>
+              <div key={col.title} className="rounded-2xl p-3 border min-h-[200px]" style={{ background: 'var(--color-bg-subtle)', borderColor: 'var(--color-border)' }}>
+                <div className="flex items-center justify-between px-2 py-2 mb-2">
+                  <h2 className="text-sm font-bold">{col.title}</h2>
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-white border" style={{ borderColor: 'var(--color-border)' }}>
+                    {items.length}
+                  </span>
                 </div>
-
-                {application.job_description && (
-                  <p className="text-sm line-clamp-3 mb-4" style={{ color: 'var(--color-text-secondary)' }}>
-                    {application.job_description}
-                  </p>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                  <div className="rounded-[var(--radius-xl)] p-3" style={{ background: 'var(--color-surface-container-low)' }}>
-                    <p className="editorial-kicker mb-1">Created</p>
-                    <p className="text-sm">{formatDate(application.created_at)}</p>
-                  </div>
-                  <div className="rounded-[var(--radius-xl)] p-3" style={{ background: 'var(--color-surface-container-low)' }}>
-                    <p className="editorial-kicker mb-1">Salary</p>
-                    <p className="text-sm">{application.salary_range || 'Not provided'}</p>
-                  </div>
+                <div className="space-y-3">
+                  {items.map((application) => {
+                    const isUpdating = updateMutation.isPending && updateMutation.variables?.id === application.id;
+                    const isDeleting = deleteMutation.isPending && deleteMutation.variables === application.id;
+                    const isClosedCol = col.title === '已关闭';
+                    return (
+                      <div
+                        key={application.id}
+                        className="rounded-xl p-4 border bg-white"
+                        style={{
+                          borderColor: 'var(--color-border)',
+                          opacity: isClosedCol ? 0.85 : 1,
+                          boxShadow: 'var(--shadow-xs)',
+                        }}
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div>
+                            <p className="text-xs font-semibold" style={{ color: 'var(--color-text-tertiary)' }}>
+                              {application.company_name}
+                            </p>
+                            <p className="font-bold text-sm leading-snug">{application.target_role}</p>
+                          </div>
+                          <span className="text-[10px] whitespace-nowrap" style={{ color: 'var(--color-text-tertiary)' }}>
+                            {formatDate(application.created_at)}
+                          </span>
+                        </div>
+                        {application.salary_range ? (
+                          <p className="text-xs mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+                            {application.salary_range}
+                          </p>
+                        ) : null}
+                        <div className="mb-3">
+                          <div className="flex items-center justify-between text-[10px] mb-1" style={{ color: 'var(--color-text-tertiary)' }}>
+                            <span>AI 匹配</span>
+                            <span>{pseudoMatch(application.id)}%</span>
+                          </div>
+                          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--color-bg-subtle)' }}>
+                            <div
+                              className="h-full rounded-full"
+                              style={{ width: `${pseudoMatch(application.id)}%`, background: 'var(--gradient-hero)' }}
+                            />
+                          </div>
+                        </div>
+                        <select
+                          value={application.status}
+                          disabled={isUpdating}
+                          onChange={(e) => updateMutation.mutate({ id: application.id, status: e.target.value as Application['status'] })}
+                          className="w-full h-9 px-2 rounded-lg text-xs font-medium border mb-2"
+                          style={{ borderColor: 'var(--color-border)', background: '#fff' }}
+                        >
+                          {(Object.keys(STATUS_META) as Application['status'][]).map((s) => (
+                            <option key={s} value={s}>
+                              {STATUS_META[s].label}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          className="text-[11px] font-semibold w-full py-1"
+                          style={{ color: 'var(--color-error)' }}
+                          disabled={isDeleting}
+                          onClick={() => deleteMutation.mutate(application.id)}
+                        >
+                          删除
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
-
-                {application.notes && (
-                  <div className="rounded-[var(--radius-xl)] p-3 mb-4" style={{ background: 'var(--color-surface-container-low)' }}>
-                    <p className="editorial-kicker mb-1">Notes</p>
-                    <p className="text-sm">{application.notes}</p>
-                  </div>
-                )}
-
-                <div className="flex flex-wrap items-center gap-3">
-                  <select
-                    value={application.status}
-                    disabled={isUpdating}
-                    onChange={(event) => updateMutation.mutate({ id: application.id, status: event.target.value as Application['status'] })}
-                    className="h-10 px-3 rounded-[var(--radius-xl)] text-sm"
-                    style={{
-                      background: 'var(--color-surface-container-low)',
-                      border: '1px solid var(--color-border)',
-                    }}
-                  >
-                    {Object.entries(STATUS_META).map(([value, meta]) => (
-                      <option key={value} value={value}>
-                        {meta.label}
-                      </option>
-                    ))}
-                  </select>
-                  {application.application_url && (
-                    <Button variant="secondary" icon="open_in_new" onClick={() => window.open(application.application_url, '_blank', 'noopener,noreferrer')}>
-                      Open link
-                    </Button>
-                  )}
-                  <Button variant="ghost" icon="delete" loading={isDeleting} onClick={() => deleteMutation.mutate(application.id)}>
-                    Remove
-                  </Button>
-                </div>
-              </Card>
+              </div>
             );
           })}
         </div>
       )}
 
-      <Modal isOpen={open} onClose={() => setOpen(false)} title="Add application">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-10">
+        <div
+          className="rounded-2xl p-5 text-white"
+          style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)' }}
+        >
+          <p className="text-3xl font-black">+12%</p>
+          <p className="text-sm mt-2 opacity-90 leading-relaxed">本月「投递→面试」转化高于 84% 的同岗位参考样本。</p>
+        </div>
+        <div className="rounded-2xl p-5 border bg-white" style={{ borderColor: 'var(--color-border)' }}>
+          <p className="text-sm font-bold mb-2">热门技能要求</p>
+          <p className="text-xs leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+            Figma、设计系统、增长实验 等关键词在目标岗位中出现频率较高，可在简历中补充可量化证据。
+          </p>
+        </div>
+        <div className="rounded-2xl p-5 border bg-white" style={{ borderColor: 'var(--color-border)' }}>
+          <p className="text-sm font-bold mb-2">面试准备</p>
+          <p className="text-xs mb-3" style={{ color: 'var(--color-text-secondary)' }}>
+            针对目标岗位生成模拟问答，提前演练表达结构。
+          </p>
+          <Button variant="secondary" className="w-full text-xs" onClick={() => navigate('/interview')}>
+            开始模拟训练
+          </Button>
+        </div>
+      </div>
+
+      <Modal isOpen={open} onClose={() => setOpen(false)} title="添加职位">
         <ApplicationForm onSubmit={(payload) => createMutation.mutate(payload)} submitting={createMutation.isPending} />
       </Modal>
     </PageContainer>

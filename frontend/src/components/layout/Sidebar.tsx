@@ -1,16 +1,13 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store';
 
 const MAIN_NAV = [
   { to: '/dashboard', label: '控制台', icon: 'dashboard' },
-  { to: '/history', label: '分析记录', icon: 'analytics' },
-  { to: '/applications', label: '投递管理', icon: 'assignment' },
-  { to: '/tasks', label: '学习任务', icon: 'school' },
+  { to: '/resume', label: '简历中心', icon: 'description' },
+  { to: '/applications', label: '职位追踪', icon: 'work' },
   { to: '/interview', label: '面试准备', icon: 'interpreter_mode' },
-  { to: '/billing', label: '账单中心', icon: 'credit_card' },
+  { to: '/billing', label: '账单管理', icon: 'credit_card' },
 ];
-
-const BOTTOM_NAV = [{ to: '/settings', label: '设置', icon: 'settings' }];
 
 interface SidebarProps {
   mobileOpen?: boolean;
@@ -18,68 +15,79 @@ interface SidebarProps {
 }
 
 export function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarProps) {
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
   const location = useLocation();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/auth', { replace: true });
+    onCloseMobile?.();
+  };
 
   return (
     <>
       <div
-        className={`fixed inset-0 z-40 bg-black/30 backdrop-blur-sm transition-opacity lg:hidden ${mobileOpen ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
+        className={`fixed inset-0 z-40 bg-black/25 backdrop-blur-sm transition-opacity lg:hidden ${mobileOpen ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
         onClick={onCloseMobile}
       />
       <aside
-        className={`fixed left-0 top-0 bottom-0 w-[260px] flex flex-col z-50 transition-transform duration-200 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
+        className={`fixed left-0 top-0 bottom-0 w-[280px] flex flex-col z-50 transition-transform duration-200 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
         style={{
-          background: 'var(--color-surface-container-highest)',
-          borderRight: '1px solid color-mix(in srgb, var(--color-outline-variant) 30%, transparent)',
+          background: '#ffffff',
+          borderRight: '1px solid var(--color-border)',
+          boxShadow: '4px 0 24px rgba(15, 23, 42, 0.04)',
         }}
       >
-        <div className="px-6 pt-7 pb-5">
-          <div className="flex items-center justify-between gap-3 lg:justify-start">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-primary)' }}>
-                <span className="material-symbols-outlined text-base" style={{ color: 'var(--color-on-primary)' }}>
-                  trending_up
+        <div className="px-5 pt-6 pb-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: 'var(--gradient-hero)' }}
+              >
+                <span className="material-symbols-outlined text-xl" style={{ color: '#fff' }}>
+                  rocket_launch
                 </span>
               </div>
-              <div>
-                <p className="text-base font-bold leading-none" style={{ color: 'var(--color-on-surface)' }}>
-                  GapPilot
+              <div className="min-w-0">
+                <p className="text-[15px] font-bold leading-tight truncate" style={{ color: 'var(--color-text-on-surface)' }}>
+                  GapPilot AI
                 </p>
-                <p className="text-[10px] font-medium mt-0.5" style={{ color: 'var(--color-on-surface-variant)' }}>
-                  求职作战台
+                <p className="text-[11px] font-medium mt-0.5 truncate" style={{ color: 'var(--color-text-secondary)' }}>
+                  职业导航
                 </p>
               </div>
             </div>
-            <button className="lg:hidden" onClick={onCloseMobile}>
-              <span className="material-symbols-outlined">close</span>
+            <button type="button" className="lg:hidden p-2 rounded-lg hover:bg-[var(--color-bg-subtle)]" onClick={onCloseMobile}>
+              <span className="material-symbols-outlined text-[20px]">close</span>
             </button>
           </div>
         </div>
 
-        <div className="mx-6" style={{ height: 1, background: 'var(--color-outline-variant)' }} />
-
-        <nav className="flex-1 px-3 pt-4 pb-2 overflow-y-auto">
-          <p className="text-[10px] font-semibold uppercase tracking-widest px-3 mb-3" style={{ color: 'var(--color-on-surface-variant)' }}>
-            工作区
+        <nav className="flex-1 px-3 pt-2 pb-4 overflow-y-auto">
+          <p className="text-[10px] font-semibold uppercase tracking-widest px-3 mb-2" style={{ color: 'var(--color-text-tertiary)' }}>
+            菜单
           </p>
-          <ul className="space-y-1">
+          <ul className="space-y-0.5">
             {MAIN_NAV.map(({ to, label, icon }) => {
-              const isActive = to === '/' ? location.pathname === '/' : location.pathname.startsWith(to);
+              const isActive = location.pathname === to || location.pathname.startsWith(`${to}/`);
               return (
                 <li key={to}>
                   <NavLink
                     to={to}
                     onClick={onCloseMobile}
                     className={[
-                      'flex items-center gap-3 h-11 px-3 rounded-xl text-sm font-medium transition-all duration-150',
+                      'flex items-center gap-3 h-11 px-3 rounded-xl text-sm font-semibold transition-colors',
                       isActive
-                        ? 'text-[var(--color-primary)] bg-[var(--color-surface-container-low)] relative'
-                        : 'text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-low)]',
+                        ? 'text-[var(--color-primary)] bg-[var(--color-primary-subtle)]'
+                        : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-subtle)] hover:text-[var(--color-text-on-surface)]',
                     ].join(' ')}
-                    style={isActive ? { borderLeft: '3px solid var(--color-primary)' } : {}}
                   >
-                    <span className="material-symbols-outlined text-xl flex-shrink-0" style={isActive ? { color: 'var(--color-primary)' } : {}}>
+                    <span
+                      className="material-symbols-outlined text-[22px] flex-shrink-0"
+                      style={isActive ? { fontVariationSettings: '"FILL" 1' } : undefined}
+                    >
                       {icon}
                     </span>
                     {label}
@@ -88,58 +96,69 @@ export function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarProps) {
               );
             })}
           </ul>
-
-          <div className="mt-6">
-            <p className="text-[10px] font-semibold uppercase tracking-widest px-3 mb-3" style={{ color: 'var(--color-on-surface-variant)' }}>
-              账户
-            </p>
-            <ul className="space-y-1">
-              {BOTTOM_NAV.map(({ to, label, icon }) => {
-                const isActive = location.pathname.startsWith(to);
-                return (
-                  <li key={to}>
-                    <NavLink
-                      to={to}
-                      onClick={onCloseMobile}
-                      className={[
-                        'flex items-center gap-3 h-11 px-3 rounded-xl text-sm font-medium transition-all duration-150',
-                        isActive
-                          ? 'text-[var(--color-primary)] bg-[var(--color-surface-container-low)]'
-                          : 'text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-low)]',
-                      ].join(' ')}
-                    >
-                      <span className="material-symbols-outlined text-xl flex-shrink-0">{icon}</span>
-                      {label}
-                    </NavLink>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
         </nav>
 
-        <div className="px-3 pb-4 pt-2" style={{ borderTop: '1px solid var(--color-outline-variant)' }}>
-          <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'var(--color-surface-container-low)' }}>
+        <div className="px-3 pb-3">
+          <div
+            className="rounded-2xl p-4 mb-3"
+            style={{
+              background: 'linear-gradient(145deg, #e8f1ff 0%, #f0f6ff 100%)',
+              border: '1px solid color-mix(in srgb, var(--color-primary) 12%, transparent)',
+            }}
+          >
+            <p className="text-xs font-bold" style={{ color: 'var(--color-primary)' }}>
+              专业版
+            </p>
+            <p className="text-[11px] mt-1 leading-snug" style={{ color: 'var(--color-text-secondary)' }}>
+              解锁更多 AI 额度与高级报告导出
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                navigate('/billing');
+                onCloseMobile?.();
+              }}
+              className="mt-3 w-full h-9 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              style={{ background: 'var(--gradient-hero)' }}
+            >
+              升级至专业版
+            </button>
+          </div>
+
+          <div className="flex flex-col gap-0.5 border-t border-[var(--color-border)] pt-3">
+            <NavLink
+              to="/settings"
+              onClick={onCloseMobile}
+              className="flex items-center gap-3 h-10 px-3 rounded-xl text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-subtle)]"
+            >
+              <span className="material-symbols-outlined text-[20px]">settings</span>
+              设置
+            </NavLink>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex items-center gap-3 h-10 px-3 rounded-xl text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-subtle)] w-full text-left"
+            >
+              <span className="material-symbols-outlined text-[20px]">logout</span>
+              退出登录
+            </button>
+          </div>
+        </div>
+
+        <div className="px-4 pb-4 pt-0 border-t border-[var(--color-border)]">
+          <div className="flex items-center gap-3 p-2 rounded-xl">
             <div
-              className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-              style={{ background: 'var(--color-primary-fixed)', color: 'var(--color-on-primary-fixed-variant)' }}
+              className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
+              style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}
             >
               {(user?.name || 'U').charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold truncate" style={{ color: 'var(--color-on-surface)' }}>
-                {user?.name || 'User'}
+              <p className="text-sm font-semibold truncate" style={{ color: 'var(--color-text-on-surface)' }}>
+                {user?.name || '用户'}
               </p>
-              <p className="text-xs truncate" style={{ color: 'var(--color-on-surface-variant)' }}>
-                {user?.email || 'Free Plan'}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--color-on-surface-variant)' }}>
-                Credits
-              </p>
-              <p className="text-sm font-semibold" style={{ color: 'var(--color-primary)' }}>
-                {user?.credits ?? 0}
+              <p className="text-xs truncate" style={{ color: 'var(--color-text-secondary)' }}>
+                积分 {user?.credits ?? 0}
               </p>
             </div>
           </div>

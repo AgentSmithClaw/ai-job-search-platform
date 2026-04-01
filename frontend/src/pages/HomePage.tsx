@@ -132,7 +132,7 @@ export default function HomePage() {
             <div
               className="w-11 h-11 rounded-[16px] flex items-center justify-center"
               style={{
-                background: 'linear-gradient(135deg, #5b4eff 0%, #3525cd 100%)',
+                background: 'var(--gradient-hero)',
                 boxShadow: '0 14px 30px rgba(53,37,205,0.24)',
               }}
             >

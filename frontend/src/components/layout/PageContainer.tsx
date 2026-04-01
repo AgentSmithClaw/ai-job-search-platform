@@ -21,13 +21,14 @@ interface PageHeaderProps {
   description?: string;
   action?: ReactNode;
   titleSize?: string;
+  kicker?: string;
 }
 
-export function PageHeader({ title, description, action, titleSize = 'text-2xl' }: PageHeaderProps) {
+export function PageHeader({ title, description, action, titleSize = 'text-2xl', kicker }: PageHeaderProps) {
   return (
     <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-8 gap-4 md:gap-6">
       <div className="flex-1 min-w-0">
-        <p className="editorial-kicker mb-2">GapPilot 工作区</p>
+        {kicker ? <p className="editorial-kicker mb-2">{kicker}</p> : null}
         <h1 className={`font-bold tracking-tight text-[var(--color-on-surface)] ${titleSize}`}>
           {title}
         </h1>

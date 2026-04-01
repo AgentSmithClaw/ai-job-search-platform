@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { PageContainer, PageHeader } from '../components/layout/PageContainer';
+import { PageContainer } from '../components/layout/PageContainer';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -28,47 +29,21 @@ function PrepCard({
   const [notes, setNotes] = useState(item.notes);
 
   return (
-    <Card className="p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <div>
-          <p className="editorial-kicker mb-1">Interview card</p>
-          <h3 className="text-lg font-semibold tracking-tight">{item.question}</h3>
-        </div>
-        <Badge variant={item.status === 'prepared' ? 'success' : 'warning'}>
-          {item.status === 'prepared' ? 'Prepared' : 'Pending'}
-        </Badge>
+    <Card className="p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+        <h3 className="text-base font-bold">{item.question}</h3>
+        <Badge variant={item.status === 'prepared' ? 'success' : 'warning'}>{item.status === 'prepared' ? '已准备' : '待完善'}</Badge>
       </div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <div className="rounded-[var(--radius-xl)] p-4" style={{ background: 'var(--color-surface-container-low)' }}>
-          <p className="font-semibold mb-2">Suggested answer</p>
-          <Textarea value={answer} onChange={(event) => setAnswer(event.target.value)} className="min-h-[150px]" />
-        </div>
-        <div className="rounded-[var(--radius-xl)] p-4" style={{ background: 'var(--color-surface-container-low)' }}>
-          <p className="font-semibold mb-2">Notes</p>
-          <Textarea value={notes} onChange={(event) => setNotes(event.target.value)} className="min-h-[150px]" />
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <Textarea value={answer} onChange={(e) => setAnswer(e.target.value)} className="min-h-[120px]" />
+        <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="min-h-[120px]" placeholder="备注" />
       </div>
-
-      <div className="mt-4 flex flex-wrap gap-3">
-        <Button loading={saving} onClick={() => onSave({ ideal_answer: answer, notes, status: item.status })}>
-          Save
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button size="sm" loading={saving} onClick={() => onSave({ ideal_answer: answer, notes, status: item.status })}>
+          保存
         </Button>
-        <Button
-          variant={item.status === 'prepared' ? 'secondary' : 'primary'}
-          loading={saving}
-          onClick={() =>
-            onSave({
-              ideal_answer: answer,
-              notes,
-              status: item.status === 'prepared' ? 'pending' : 'prepared',
-            })
-          }
-        >
-          {item.status === 'prepared' ? 'Mark pending' : 'Mark prepared'}
-        </Button>
-        <Button variant="ghost" icon="delete" loading={deleting} onClick={onDelete}>
-          Remove
+        <Button size="sm" variant="ghost" loading={deleting} onClick={onDelete}>
+          删除
         </Button>
       </div>
     </Card>
@@ -76,6 +51,7 @@ function PrepCard({
 }
 
 export default function InterviewPage() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { addToast } = useToastStore();
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -111,27 +87,27 @@ export default function InterviewPage() {
       setManualQuestion('');
       setManualAnswer('');
       setManualNotes('');
-      addToast({ type: 'success', message: 'Interview card added.' });
+      addToast({ type: 'success', message: '已添加面试卡' });
     },
-    onError: (error: Error) => addToast({ type: 'error', message: error.message || 'Create failed.' }),
+    onError: (error: Error) => addToast({ type: 'error', message: error.message || '创建失败' }),
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, item }: { id: number; item: Pick<InterviewPrep, 'ideal_answer' | 'notes' | 'status'> }) => updateInterviewPrep(id, item),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['interview-prep'] });
-      addToast({ type: 'success', message: 'Interview card updated.' });
+      addToast({ type: 'success', message: '已更新' });
     },
-    onError: (error: Error) => addToast({ type: 'error', message: error.message || 'Update failed.' }),
+    onError: (error: Error) => addToast({ type: 'error', message: error.message || '更新失败' }),
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteInterviewPrep,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['interview-prep'] });
-      addToast({ type: 'success', message: 'Interview card removed.' });
+      addToast({ type: 'success', message: '已删除' });
     },
-    onError: (error: Error) => addToast({ type: 'error', message: error.message || 'Delete failed.' }),
+    onError: (error: Error) => addToast({ type: 'error', message: error.message || '删除失败' }),
   });
 
   const generateMutation = useMutation({
@@ -156,14 +132,13 @@ export default function InterviewPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['interview-prep'] });
-      addToast({ type: 'success', message: 'Questions generated from analysis.' });
+      addToast({ type: 'success', message: '已从分析生成面试题' });
     },
-    onError: (error: Error) => addToast({ type: 'error', message: error.message || 'Generation failed.' }),
+    onError: (error: Error) => addToast({ type: 'error', message: error.message || '生成失败' }),
   });
 
   const filteredPrep = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
-
     return prepItems
       .slice()
       .reverse()
@@ -174,118 +149,198 @@ export default function InterviewPage() {
           [item.question, item.ideal_answer, item.notes]
             .filter(Boolean)
             .some((field) => field.toLowerCase().includes(normalizedSearch));
-
         return matchesStatus && matchesSearch;
       });
   }, [prepItems, search, statusFilter]);
 
+  const roleTitle = sessionDetail?.target_role ?? '目标岗位';
+
   return (
     <PageContainer>
-      <PageHeader
-        title="Interview prep"
-        description="Turn analysis gaps and risk signals into reusable interview cards that can be refined over time."
-        action={
-          <Button icon="auto_awesome" disabled={!sessionDetail} loading={generateMutation.isPending} onClick={() => generateMutation.mutate()}>
-            Generate from analysis
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-8">
+        <div>
+          <span
+            className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider"
+            style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}
+          >
+            AI 驱动的学习
+          </span>
+          <h1 className="mt-3 text-2xl md:text-3xl font-black tracking-tight">掌控您的下一次职业晋升</h1>
+          <p className="mt-2 text-sm max-w-2xl leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+            结合岗位描述与差距报告，生成可演练的面试问答，并持续记录你的表达与答案版本。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" onClick={() => navigate('/history')}>
+            查看历史
           </Button>
-        }
-      />
+          <Button icon="forum" onClick={() => document.getElementById('interview-prep-list')?.scrollIntoView({ behavior: 'smooth' })}>
+            开始新会话
+          </Button>
+        </div>
+      </div>
 
-      <section className="grid grid-cols-1 xl:grid-cols-12 gap-6 mb-8">
-        <Card className="xl:col-span-4 p-6">
-          <p className="editorial-kicker mb-2">Source session</p>
-          <h3 className="text-xl font-bold tracking-tight mb-4">Choose an analysis</h3>
-          <div className="space-y-3">
-            {sessions.length === 0 ? (
-              <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                No analysis history yet. Run a role-fit analysis first.
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-6 mb-8">
+        <div className="rounded-2xl border overflow-hidden bg-white" style={{ borderColor: 'var(--color-border)', boxShadow: 'var(--shadow-md)' }}>
+          <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b" style={{ borderColor: 'var(--color-border)' }}>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>
+                正在模拟面试
+              </p>
+              <p className="font-bold text-lg mt-0.5">{roleTitle}</p>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full" style={{ background: 'var(--color-bg-subtle)' }}>
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              正在倾听…
+            </div>
+          </div>
+          <div className="p-5 space-y-4 min-h-[220px]">
+            <div className="flex gap-3">
+              <div className="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold" style={{ background: 'var(--color-bg-subtle)' }}>
+                AI
               </div>
-            ) : (
-              sessions.map((session) => (
-                <button
-                  key={session.id}
-                  className="w-full text-left rounded-[var(--radius-xl)] p-4 transition-colors"
-                  style={{ background: activeSessionId === session.id ? 'var(--color-primary-subtle)' : 'var(--color-surface-container-low)' }}
-                  onClick={() => setSelectedId(session.id)}
-                >
-                  <div className="flex items-center justify-between gap-3 mb-1">
-                    <p className="font-semibold">{session.target_role}</p>
-                    <Badge variant="secondary">{session.match_score}%</Badge>
-                  </div>
-                  <p className="text-sm line-clamp-2" style={{ color: 'var(--color-text-secondary)' }}>
-                    {session.summary}
-                  </p>
-                </button>
-              ))
-            )}
+              <div className="rounded-2xl rounded-tl-sm px-4 py-3 max-w-[90%] text-sm leading-relaxed" style={{ background: 'var(--color-bg-subtle)' }}>
+                请描述一次你与多方干系人意见不一致时，如何推动决策并交付结果？
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <div
+                className="rounded-2xl rounded-tr-sm px-4 py-3 max-w-[90%] text-sm leading-relaxed text-white"
+                style={{ background: 'var(--gradient-hero)' }}
+              >
+                我在上一家公司负责增长看板项目，通过每周对齐会议与数据复盘，把争议焦点收敛到可验证的实验指标上…
+              </div>
+            </div>
           </div>
-        </Card>
-
-        <Card className="xl:col-span-8 p-6">
-          <p className="editorial-kicker mb-2">Manual card</p>
-          <h3 className="text-xl font-bold tracking-tight mb-4">Create a manual interview card</h3>
-          <div className="space-y-4">
-            <Input label="Question" value={manualQuestion} onChange={(event) => setManualQuestion(event.target.value)} placeholder="Example: Tell me about a time you closed a critical skill gap quickly." />
-            <Textarea label="Suggested answer" value={manualAnswer} onChange={(event) => setManualAnswer(event.target.value)} className="min-h-[140px]" />
-            <Textarea label="Notes" value={manualNotes} onChange={(event) => setManualNotes(event.target.value)} className="min-h-[120px]" />
-            <Button
-              loading={createMutation.isPending}
-              disabled={!manualQuestion.trim()}
-              onClick={() =>
-                createMutation.mutate({
-                  question: manualQuestion,
-                  ideal_answer: manualAnswer,
-                  notes: manualNotes,
-                  session_id: activeSessionId,
-                })
-              }
+          <div className="flex items-center justify-center gap-4 py-4 border-t" style={{ borderColor: 'var(--color-border)' }}>
+            <button type="button" className="w-12 h-12 rounded-full flex items-center justify-center border bg-white" style={{ borderColor: 'var(--color-border)' }}>
+              <span className="material-symbols-outlined">call_end</span>
+            </button>
+            <button
+              type="button"
+              className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg"
+              style={{ background: 'var(--gradient-hero)' }}
             >
-              Save card
-            </Button>
+              <span className="material-symbols-outlined text-2xl">mic</span>
+            </button>
+            <button type="button" className="w-12 h-12 rounded-full flex items-center justify-center border bg-white" style={{ borderColor: 'var(--color-border)' }}>
+              <span className="material-symbols-outlined">pause</span>
+            </button>
           </div>
-        </Card>
-      </section>
+        </div>
 
-      <section className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_220px] gap-4 mb-6">
-        <Input
-          label="Search interview cards"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Question, answer, or notes"
-        />
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-semibold">Status filter</label>
+        <div className="space-y-4">
+          <div className="rounded-2xl p-5 border bg-white" style={{ borderColor: 'var(--color-border)' }}>
+            <p className="text-xs font-bold mb-3" style={{ color: 'var(--color-text-tertiary)' }}>
+              实时反馈（演示）
+            </p>
+            {[
+              { label: '表达清晰度', v: 88 },
+              { label: '自信度', v: 72 },
+              { label: '关键词命中', v: 95 },
+            ].map((m) => (
+              <div key={m.label} className="mb-3">
+                <div className="flex justify-between text-xs mb-1">
+                  <span>{m.label}</span>
+                  <span className="font-bold">{m.v}%</span>
+                </div>
+                <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--color-bg-subtle)' }}>
+                  <div className="h-full rounded-full" style={{ width: `${m.v}%`, background: 'var(--gradient-hero)' }} />
+                </div>
+              </div>
+            ))}
+            <div className="mt-4 p-3 rounded-xl text-xs leading-relaxed" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary-text)' }}>
+              提示：减少「嗯、那个」等填充词，结论先行会让回答更有权威感。
+            </div>
+          </div>
+          <div className="rounded-2xl p-4 border bg-white text-sm" style={{ borderColor: 'var(--color-border)' }}>
+            <p className="font-bold mb-2">推荐任务</p>
+            <ul className="space-y-2 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              <li>· STAR 实验室（约 15 分钟）</li>
+              <li>· 系统设计快问（约 10 分钟）</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border p-5 mb-8 bg-white" style={{ borderColor: 'var(--color-border)' }}>
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+          <h2 className="font-bold text-lg">关联分析会话</h2>
+          <Button icon="auto_awesome" size="sm" disabled={!sessionDetail} loading={generateMutation.isPending} onClick={() => generateMutation.mutate()}>
+            从分析生成题目
+          </Button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {sessions.length === 0 ? (
+            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+              暂无分析记录，请先在「岗位分析」中运行一次诊断。
+            </p>
+          ) : (
+            sessions.map((session) => (
+              <button
+                key={session.id}
+                type="button"
+                onClick={() => setSelectedId(session.id)}
+                className="px-4 py-2 rounded-xl text-sm font-semibold border transition-colors"
+                style={{
+                  borderColor: activeSessionId === session.id ? 'var(--color-primary)' : 'var(--color-border)',
+                  background: activeSessionId === session.id ? 'var(--color-primary-subtle)' : '#fff',
+                  color: activeSessionId === session.id ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                }}
+              >
+                {session.target_role} · {session.match_score}%
+              </button>
+            ))
+          )}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border p-5 mb-8 bg-white" style={{ borderColor: 'var(--color-border)' }}>
+        <h3 className="font-bold mb-4">手动添加面试卡</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Input label="问题" value={manualQuestion} onChange={(e) => setManualQuestion(e.target.value)} placeholder="例如：请描述一次你推动跨团队落地的经历。" />
+          <div className="lg:col-span-2 grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Textarea label="参考回答" value={manualAnswer} onChange={(e) => setManualAnswer(e.target.value)} className="min-h-[120px]" />
+            <Textarea label="备注" value={manualNotes} onChange={(e) => setManualNotes(e.target.value)} className="min-h-[120px]" />
+          </div>
+        </div>
+        <Button className="mt-4" loading={createMutation.isPending} disabled={!manualQuestion.trim()} onClick={() => createMutation.mutate({ question: manualQuestion, ideal_answer: manualAnswer, notes: manualNotes, session_id: activeSessionId })}>
+          保存面试卡
+        </Button>
+      </div>
+
+      <div id="interview-prep-list" className="flex flex-col sm:flex-row gap-4 mb-4">
+        <div className="flex-1">
+          <Input label="搜索" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="问题、答案或备注" />
+        </div>
+        <div className="w-full sm:w-48">
+          <label className="text-xs font-semibold mb-1 block">状态</label>
           <select
             value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value as 'all' | InterviewPrep['status'])}
-            className="h-11 px-3 rounded-[var(--radius-xl)] text-sm"
-            style={{ background: 'var(--color-surface-container-low)', border: '1px solid var(--color-border)' }}
+            onChange={(e) => setStatusFilter(e.target.value as 'all' | InterviewPrep['status'])}
+            className="w-full h-11 px-3 rounded-xl text-sm border"
+            style={{ borderColor: 'var(--color-border)', background: '#fff' }}
           >
-            <option value="all">All cards</option>
-            <option value="pending">Pending</option>
-            <option value="prepared">Prepared</option>
+            <option value="all">全部</option>
+            <option value="pending">待完善</option>
+            <option value="prepared">已准备</option>
           </select>
         </div>
-      </section>
+      </div>
 
       {isLoading ? (
-        <Card className="p-6 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-          Loading interview prep...
-        </Card>
+        <div className="text-sm py-8 text-center" style={{ color: 'var(--color-text-secondary)' }}>
+          加载中…
+        </div>
       ) : prepItems.length === 0 ? (
-        <EmptyState
-          icon="record_voice_over"
-          title="No interview cards yet"
-          description="Add one manually or generate a set from your latest analysis."
-        />
+        <EmptyState icon="record_voice_over" title="暂无面试卡" description="从分析生成题目，或手动添加一条面试问答。" />
       ) : filteredPrep.length === 0 ? (
-        <EmptyState
-          icon="search"
-          title="No interview cards match the current filter"
-          description="Try another search term or switch the status filter back to all."
-        />
+        <EmptyState icon="search" title="没有匹配的记录" description="试试调整筛选条件。" />
       ) : (
-        <section className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           {filteredPrep.map((item) => (
             <PrepCard
               key={item.id}
@@ -296,7 +351,7 @@ export default function InterviewPage() {
               onDelete={() => deleteMutation.mutate(item.id)}
             />
           ))}
-        </section>
+        </div>
       )}
     </PageContainer>
   );

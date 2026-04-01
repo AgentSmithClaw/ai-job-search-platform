@@ -1,6 +1,7 @@
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
+import { FAB } from '../ui/FAB';
 import { SIDEBAR_WIDTH, TOPBAR_HEIGHT, CONTENT_MAX } from './layoutConstants';
 
 interface AppShellProps {
@@ -57,6 +58,8 @@ export function AppShell({
           }
         }
       `}</style>
+
+      {showSidebar && showTopbar ? <FAB href="/analyze" icon="add" /> : null}
     </div>
   );
 }

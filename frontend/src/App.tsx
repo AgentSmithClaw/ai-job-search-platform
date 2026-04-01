@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store';
 
 import Dashboard from './pages/Dashboard';
+import ResumeCenterPage from './pages/ResumeCenterPage';
 import AnalyzePage from './pages/AnalyzePage';
 import AnalysisResultPage from './pages/AnalysisResultPage';
 import HistoryPage from './pages/HistoryPage';
@@ -42,6 +43,14 @@ function App() {
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/resume"
+        element={
+          <ProtectedRoute>
+            <ResumeCenterPage />
           </ProtectedRoute>
         }
       />

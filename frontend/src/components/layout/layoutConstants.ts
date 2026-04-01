@@ -1,5 +1,5 @@
 /** Layout constants — single source of truth for sidebar dimensions */
-export const SIDEBAR_WIDTH = 260;
+export const SIDEBAR_WIDTH = 280;
 export const TOPBAR_HEIGHT = 64;
 
 /** Spacing scale for page sections */
