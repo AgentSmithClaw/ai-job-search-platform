@@ -8,7 +8,8 @@
       "use": "@vercel/python",
       "config": {
         "installer": "pip",
-        "installCommand": "pip install -r requirements.txt"
+        "installCommand": "pip install -r requirements.txt",
+        "uv": false
       }
     },
     {
