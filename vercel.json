@@ -3,9 +3,21 @@
   "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": "public",
+  "framework": null,
+  "functions": {
+    "app/main.py": {
+      "runtime": "@vercel/python@4",
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/app/main.py" },
+    { "source": "/health", "destination": "/app/main.py" },
+    { "source": "/((?!.*\\.).*)", "destination": "/index.html" }
+  ],
   "headers": [
     {
-      "source": "/index-:hash.css",
+      "source": "/index-(.*).css",
       "headers": [
         {
           "key": "Cache-Control",
@@ -14,7 +26,7 @@
       ]
     },
     {
-      "source": "/index-:hash.js",
+      "source": "/index-(.*).js",
       "headers": [
         {
           "key": "Cache-Control",
@@ -40,20 +52,5 @@
         }
       ]
     }
-  ],
-  "builds": [
-    {
-      "src": "app/main.py",
-      "use": "@vercel/python"
-    },
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build"
-    }
-  ],
-  "routes": [
-    { "src": "/api/(.*)", "dest": "app/main.py" },
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/index.html", "status": 200 }
   ]
 }
