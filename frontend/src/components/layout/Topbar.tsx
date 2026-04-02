@@ -34,7 +34,7 @@ export function Topbar({ onOpenSidebar }: TopbarProps) {
       <div className="flex-1 min-w-0 max-w-xl mx-auto">
         <div
           className="relative flex items-center h-10 rounded-xl px-3 gap-2 border"
-          style={{ background: '#fff', borderColor: 'var(--color-border)' }}
+          style={{ background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)' }}
         >
           <span className="material-symbols-outlined text-[20px] flex-shrink-0" style={{ color: 'var(--color-text-tertiary)' }}>
             search
@@ -69,6 +69,8 @@ export function Topbar({ onOpenSidebar }: TopbarProps) {
           type="button"
           className="relative w-10 h-10 flex items-center justify-center rounded-xl text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-subtle)]"
           aria-label="通知"
+          disabled
+          title="功能开发中"
         >
           <span className="material-symbols-outlined text-[22px]">notifications</span>
           <span className="absolute top-2 right-2 w-2 h-2 rounded-full" style={{ background: '#ef4444' }} />

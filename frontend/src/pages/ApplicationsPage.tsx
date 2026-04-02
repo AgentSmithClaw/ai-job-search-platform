@@ -129,7 +129,7 @@ export default function ApplicationsPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" icon="filter_list">
+          <Button variant="secondary" icon="filter_list" disabled title="功能开发中">
             筛选
           </Button>
           <Button icon="add" onClick={() => setOpen(true)}>
@@ -141,7 +141,7 @@ export default function ApplicationsPage() {
       <div className="mb-6 max-w-md">
         <div
           className="flex items-center h-11 rounded-xl px-3 gap-2 border"
-          style={{ background: '#fff', borderColor: 'var(--color-border)' }}
+          style={{ background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)' }}
         >
           <span className="material-symbols-outlined text-[20px]" style={{ color: 'var(--color-text-tertiary)' }}>
             search
@@ -175,7 +175,7 @@ export default function ApplicationsPage() {
               <div key={col.title} className="rounded-2xl p-3 border min-h-[200px]" style={{ background: 'var(--color-bg-subtle)', borderColor: 'var(--color-border)' }}>
                 <div className="flex items-center justify-between px-2 py-2 mb-2">
                   <h2 className="text-sm font-bold">{col.title}</h2>
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-white border" style={{ borderColor: 'var(--color-border)' }}>
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full border" style={{ background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)' }}>
                     {items.length}
                   </span>
                 </div>
@@ -187,8 +187,9 @@ export default function ApplicationsPage() {
                     return (
                       <div
                         key={application.id}
-                        className="rounded-xl p-4 border bg-white"
+                        className="rounded-xl p-4 border"
                         style={{
+                          background: 'var(--color-bg-surface)',
                           borderColor: 'var(--color-border)',
                           opacity: isClosedCol ? 0.85 : 1,
                           boxShadow: 'var(--shadow-xs)',
@@ -227,7 +228,7 @@ export default function ApplicationsPage() {
                           disabled={isUpdating}
                           onChange={(e) => updateMutation.mutate({ id: application.id, status: e.target.value as Application['status'] })}
                           className="w-full h-9 px-2 rounded-lg text-xs font-medium border mb-2"
-                          style={{ borderColor: 'var(--color-border)', background: '#fff' }}
+                          style={{ borderColor: 'var(--color-border)', background: 'var(--color-bg-surface)' }}
                         >
                           {(Object.keys(STATUS_META) as Application['status'][]).map((s) => (
                             <option key={s} value={s}>
@@ -262,13 +263,13 @@ export default function ApplicationsPage() {
           <p className="text-3xl font-black">+12%</p>
           <p className="text-sm mt-2 opacity-90 leading-relaxed">本月「投递→面试」转化高于 84% 的同岗位参考样本。</p>
         </div>
-        <div className="rounded-2xl p-5 border bg-white" style={{ borderColor: 'var(--color-border)' }}>
+        <div className="rounded-2xl p-5 border" style={{ background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)' }}>
           <p className="text-sm font-bold mb-2">热门技能要求</p>
           <p className="text-xs leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
             Figma、设计系统、增长实验 等关键词在目标岗位中出现频率较高，可在简历中补充可量化证据。
           </p>
         </div>
-        <div className="rounded-2xl p-5 border bg-white" style={{ borderColor: 'var(--color-border)' }}>
+        <div className="rounded-2xl p-5 border" style={{ background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)' }}>
           <p className="text-sm font-bold mb-2">面试准备</p>
           <p className="text-xs mb-3" style={{ color: 'var(--color-text-secondary)' }}>
             针对目标岗位生成模拟问答，提前演练表达结构。

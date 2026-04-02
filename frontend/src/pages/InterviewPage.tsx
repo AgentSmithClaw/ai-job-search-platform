@@ -181,7 +181,7 @@ export default function InterviewPage() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-6 mb-8">
-        <div className="rounded-2xl border overflow-hidden bg-white" style={{ borderColor: 'var(--color-border)', boxShadow: 'var(--shadow-md)' }}>
+        <div className="rounded-2xl border overflow-hidden" style={{ borderColor: 'var(--color-border)', boxShadow: 'var(--shadow-md)', background: 'var(--color-bg-surface)' }}>
           <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b" style={{ borderColor: 'var(--color-border)' }}>
             <div>
               <p className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>
@@ -216,24 +216,38 @@ export default function InterviewPage() {
             </div>
           </div>
           <div className="flex items-center justify-center gap-4 py-4 border-t" style={{ borderColor: 'var(--color-border)' }}>
-            <button type="button" className="w-12 h-12 rounded-full flex items-center justify-center border bg-white" style={{ borderColor: 'var(--color-border)' }}>
+            <button
+              type="button"
+              className="w-12 h-12 rounded-full flex items-center justify-center border"
+              style={{ borderColor: 'var(--color-border)' }}
+              disabled
+              title="功能开发中"
+            >
               <span className="material-symbols-outlined">call_end</span>
             </button>
             <button
               type="button"
               className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg"
+              disabled
+              title="功能开发中"
               style={{ background: 'var(--gradient-hero)' }}
             >
               <span className="material-symbols-outlined text-2xl">mic</span>
             </button>
-            <button type="button" className="w-12 h-12 rounded-full flex items-center justify-center border bg-white" style={{ borderColor: 'var(--color-border)' }}>
+            <button
+              type="button"
+              className="w-12 h-12 rounded-full flex items-center justify-center border"
+              style={{ borderColor: 'var(--color-border)' }}
+              disabled
+              title="功能开发中"
+            >
               <span className="material-symbols-outlined">pause</span>
             </button>
           </div>
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-2xl p-5 border bg-white" style={{ borderColor: 'var(--color-border)' }}>
+          <div className="rounded-2xl p-5 border" style={{ borderColor: 'var(--color-border)', background: 'var(--color-bg-surface)' }}>
             <p className="text-xs font-bold mb-3" style={{ color: 'var(--color-text-tertiary)' }}>
               实时反馈（演示）
             </p>
@@ -256,7 +270,7 @@ export default function InterviewPage() {
               提示：减少「嗯、那个」等填充词，结论先行会让回答更有权威感。
             </div>
           </div>
-          <div className="rounded-2xl p-4 border bg-white text-sm" style={{ borderColor: 'var(--color-border)' }}>
+          <div className="rounded-2xl p-4 border text-sm" style={{ borderColor: 'var(--color-border)', background: 'var(--color-bg-surface)' }}>
             <p className="font-bold mb-2">推荐任务</p>
             <ul className="space-y-2 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
               <li>· STAR 实验室（约 15 分钟）</li>
@@ -266,7 +280,7 @@ export default function InterviewPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border p-5 mb-8 bg-white" style={{ borderColor: 'var(--color-border)' }}>
+      <div className="rounded-2xl border p-5 mb-8" style={{ background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)' }}>
         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
           <h2 className="font-bold text-lg">关联分析会话</h2>
           <Button icon="auto_awesome" size="sm" disabled={!sessionDetail} loading={generateMutation.isPending} onClick={() => generateMutation.mutate()}>
@@ -287,7 +301,7 @@ export default function InterviewPage() {
                 className="px-4 py-2 rounded-xl text-sm font-semibold border transition-colors"
                 style={{
                   borderColor: activeSessionId === session.id ? 'var(--color-primary)' : 'var(--color-border)',
-                  background: activeSessionId === session.id ? 'var(--color-primary-subtle)' : '#fff',
+                  background: activeSessionId === session.id ? 'var(--color-primary-subtle)' : 'var(--color-bg-surface)',
                   color: activeSessionId === session.id ? 'var(--color-primary)' : 'var(--color-text-secondary)',
                 }}
               >
@@ -298,7 +312,7 @@ export default function InterviewPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border p-5 mb-8 bg-white" style={{ borderColor: 'var(--color-border)' }}>
+      <div className="rounded-2xl border p-5 mb-8" style={{ background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)' }}>
         <h3 className="font-bold mb-4">手动添加面试卡</h3>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Input label="问题" value={manualQuestion} onChange={(e) => setManualQuestion(e.target.value)} placeholder="例如：请描述一次你推动跨团队落地的经历。" />
@@ -322,7 +336,7 @@ export default function InterviewPage() {
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as 'all' | InterviewPrep['status'])}
             className="w-full h-11 px-3 rounded-xl text-sm border"
-            style={{ borderColor: 'var(--color-border)', background: '#fff' }}
+            style={{ borderColor: 'var(--color-border)', background: 'var(--color-bg-surface)' }}
           >
             <option value="all">全部</option>
             <option value="pending">待完善</option>

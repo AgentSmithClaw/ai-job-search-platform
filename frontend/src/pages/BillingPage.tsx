@@ -87,7 +87,7 @@ export default function BillingPage() {
       </div>
 
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
-        <div className="rounded-2xl p-6 border bg-white" style={{ borderColor: 'var(--color-border)', boxShadow: 'var(--shadow-sm)' }}>
+        <div className="rounded-2xl p-6 border" style={{ borderColor: 'var(--color-border)', boxShadow: 'var(--shadow-sm)', background: 'var(--color-bg-surface)' }}>
           <p className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text-secondary)' }}>
             可用额度（积分）
           </p>
@@ -108,7 +108,7 @@ export default function BillingPage() {
           </p>
         </div>
 
-        <div className="rounded-2xl p-6 border bg-white" style={{ borderColor: 'var(--color-border)', boxShadow: 'var(--shadow-sm)' }}>
+        <div className="rounded-2xl p-6 border" style={{ borderColor: 'var(--color-border)', boxShadow: 'var(--shadow-sm)', background: 'var(--color-bg-surface)' }}>
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-sm font-semibold mb-1" style={{ color: 'var(--color-text-secondary)' }}>
@@ -150,7 +150,7 @@ export default function BillingPage() {
                   className="rounded-2xl p-6 border relative flex flex-col"
                   style={{
                     borderColor: recommended ? 'var(--color-primary)' : 'var(--color-border)',
-                    background: '#fff',
+                    background: 'var(--color-bg-surface)',
                     boxShadow: recommended ? '0 0 0 1px var(--color-primary)' : 'var(--shadow-sm)',
                   }}
                 >
@@ -212,7 +212,7 @@ export default function BillingPage() {
         ) : orders.length === 0 ? (
           <EmptyState icon="receipt_long" title="暂无支付记录" description="购买套餐后，订单会出现在这里。" />
         ) : (
-          <div className="rounded-2xl border overflow-hidden bg-white" style={{ borderColor: 'var(--color-border)' }}>
+          <div className="rounded-2xl border overflow-hidden" style={{ background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)' }}>
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ background: 'var(--color-bg-subtle)' }}>
@@ -254,5 +254,8 @@ export default function BillingPage() {
         )}
       </section>
     </PageContainer>
+  );
+}
+   </PageContainer>
   );
 }

@@ -34,7 +34,7 @@ export function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarProps) {
       <aside
         className={`fixed left-0 top-0 bottom-0 w-[280px] flex flex-col z-50 transition-transform duration-200 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
         style={{
-          background: '#ffffff',
+          background: 'var(--color-bg-surface)',
           borderRight: '1px solid var(--color-border)',
           boxShadow: '4px 0 24px rgba(15, 23, 42, 0.04)',
         }}

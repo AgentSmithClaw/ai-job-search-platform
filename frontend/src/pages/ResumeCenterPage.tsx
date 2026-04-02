@@ -39,7 +39,7 @@ export default function ResumeCenterPage() {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-10">
         <div
           className="rounded-2xl p-6 border"
-          style={{ background: '#fff', borderColor: 'var(--color-border)', boxShadow: 'var(--shadow-sm)' }}
+          style={{ background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)', boxShadow: 'var(--shadow-sm)' }}
         >
           <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: 'var(--color-text-tertiary)' }}>
             当前分析快照
@@ -135,7 +135,7 @@ export default function ResumeCenterPage() {
             查看全部
           </button>
         </div>
-        <div className="rounded-2xl border overflow-hidden" style={{ background: '#fff', borderColor: 'var(--color-border)' }}>
+        <div className="rounded-2xl border overflow-hidden" style={{ background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)' }}>
           {sessions.length === 0 ? (
             <p className="p-8 text-center text-sm" style={{ color: 'var(--color-text-secondary)' }}>
               暂无历史版本

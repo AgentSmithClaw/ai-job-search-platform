@@ -53,7 +53,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-6 mb-8">
         <div
           className="rounded-2xl p-6 md:p-8 border"
-          style={{ background: '#fff', borderColor: 'var(--color-border)', boxShadow: 'var(--shadow-md)' }}
+          style={{ background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)', boxShadow: 'var(--shadow-md)' }}
         >
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
@@ -82,7 +82,7 @@ export default function Dashboard() {
         <div className="space-y-4">
           <div
             className="rounded-2xl p-5 border"
-            style={{ background: '#fff', borderColor: 'var(--color-border)', boxShadow: 'var(--shadow-sm)' }}
+            style={{ background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)', boxShadow: 'var(--shadow-sm)' }}
           >
             <p className="text-xs font-semibold" style={{ color: 'var(--color-text-tertiary)' }}>
               活跃申请
@@ -94,7 +94,7 @@ export default function Dashboard() {
           </div>
           <div
             className="rounded-2xl p-5 border"
-            style={{ background: '#fff', borderColor: 'var(--color-border)', boxShadow: 'var(--shadow-sm)' }}
+            style={{ background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)', boxShadow: 'var(--shadow-sm)' }}
           >
             <p className="text-xs font-semibold" style={{ color: 'var(--color-text-tertiary)' }}>
               平均匹配度
@@ -110,11 +110,11 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="rounded-2xl p-6 border" style={{ background: '#fff', borderColor: 'var(--color-border)' }}>
+        <div className="rounded-2xl p-6 border" style={{ background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)' }}>
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-bold text-lg">申请频率</h3>
             <div className="flex rounded-lg p-0.5 text-xs font-semibold" style={{ background: 'var(--color-bg-subtle)' }}>
-              <span className="px-2 py-1 rounded-md bg-white shadow-sm">周</span>
+              <span className="px-2 py-1 rounded-md shadow-sm" style={{ background: 'var(--color-bg-surface)' }}>周</span>
               <span className="px-2 py-1" style={{ color: 'var(--color-text-tertiary)' }}>
                 月
               </span>
@@ -138,10 +138,16 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="rounded-2xl p-6 border" style={{ background: '#fff', borderColor: 'var(--color-border)' }}>
+        <div className="rounded-2xl p-6 border" style={{ background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)' }}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-lg">即将进行的面试</h3>
-            <button type="button" className="text-xs font-semibold" style={{ color: 'var(--color-primary)' }}>
+            <button
+              type="button"
+              className="text-xs font-semibold"
+              style={{ color: 'var(--color-primary)', opacity: 0.5, cursor: 'not-allowed' }}
+              disabled
+              title="功能开发中"
+            >
               同步日历
             </button>
           </div>
@@ -189,7 +195,7 @@ export default function Dashboard() {
             type="button"
             onClick={() => navigate(`/analyze/${s.id}`)}
             className="text-left rounded-2xl p-5 border transition-transform hover:-translate-y-0.5"
-            style={{ background: '#fff', borderColor: 'var(--color-border)', boxShadow: 'var(--shadow-sm)' }}
+            style={{ background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)', boxShadow: 'var(--shadow-sm)' }}
           >
             <div className="flex items-start justify-between gap-2 mb-3">
               <div>
