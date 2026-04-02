@@ -49,4 +49,4 @@ jobs:
         run: pip install ruff
 
       - name: Lint with Ruff
-        run: ruff check app/ tests/ --ignore E501 || true
+        run: ruff check app/ tests/ --ignore E501

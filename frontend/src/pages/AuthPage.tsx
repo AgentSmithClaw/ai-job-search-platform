@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, FileSearch, GraduationCap, MessagesSquare, Target } from 'lucide-react';
 import { Badge } from '../components/ui/Badge';
@@ -27,6 +27,7 @@ const FEATURE_BLOCKS = [
 export default function AuthPage() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
+  const [showLogin, setShowLogin] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -42,8 +43,8 @@ export default function AuthPage() {
             <div
               className="w-11 h-11 rounded-[16px] flex items-center justify-center"
               style={{
-                background: 'linear-gradient(135deg, #5b4eff 0%, #3525cd 100%)',
-                boxShadow: '0 14px 30px rgba(53,37,205,0.24)',
+                background: 'var(--gradient-hero)',
+                boxShadow: 'var(--shadow-lg)',
               }}
             >
               <Target size={20} style={{ color: 'white' }} />
@@ -66,14 +67,14 @@ export default function AuthPage() {
             className="relative overflow-hidden rounded-[36px] md:rounded-[44px] px-6 py-7 md:px-10 md:py-10 xl:px-12 xl:py-12"
             style={{
               background:
-                'radial-gradient(circle at 14% 18%, rgba(255,255,255,0.95), transparent 24%), radial-gradient(circle at 86% 12%, rgba(195,192,255,0.62), transparent 20%), linear-gradient(135deg, #f5f2ff 0%, #f8f6ff 48%, #eeebff 100%)',
+                'radial-gradient(circle at 14% 18%, color-mix(in srgb, white 95%, transparent), transparent 24%), radial-gradient(circle at 86% 12%, color-mix(in srgb, var(--color-primary) 62%, transparent), transparent 20%), linear-gradient(135deg, var(--color-surface-container) 0%, var(--color-surface-container-low) 48%, var(--color-surface-container-high) 100%)',
               border: '1px solid color-mix(in srgb, var(--color-outline-variant) 38%, transparent)',
-              boxShadow: '0 30px 80px rgba(53, 37, 205, 0.1)',
+              boxShadow: '0 30px 80px color-mix(in srgb, var(--color-primary) 10%, transparent)',
             }}
           >
             <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute right-[-70px] top-[-40px] w-[240px] h-[240px] rounded-full bg-[rgba(91,78,255,0.10)] blur-3xl" />
-              <div className="absolute left-[12%] bottom-[-80px] w-[280px] h-[180px] rounded-full bg-[rgba(255,182,149,0.18)] blur-3xl" />
+              <div className="absolute right-[-70px] top-[-40px] w-[240px] h-[240px] rounded-full bg-[color-mix(in_srgb,var(--color-primary)_10%,transparent)] blur-3xl" />
+              <div className="absolute left-[12%] bottom-[-80px] w-[280px] h-[180px] rounded-full bg-[color-mix(in_srgb,var(--color-tertiary)_18%,transparent)] blur-3xl" />
             </div>
 
             <div className="relative">
@@ -101,9 +102,9 @@ export default function AuthPage() {
                       key={feature.title}
                       className="rounded-[24px] p-5"
                       style={{
-                        background: 'rgba(255,255,255,0.76)',
-                        border: '1px solid rgba(255,255,255,0.7)',
-                        boxShadow: '0 10px 30px rgba(53,37,205,0.06)',
+                        background: 'color-mix(in srgb, var(--color-bg-surface) 76%, transparent)',
+                        border: '1px solid color-mix(in srgb, var(--color-outline-variant) 40%, transparent)',
+                        boxShadow: '0 10px 30px color-mix(in srgb, var(--color-primary) 6%, transparent)',
                       }}
                     >
                       <div
@@ -124,8 +125,8 @@ export default function AuthPage() {
               <div
                 className="mt-6 rounded-[28px] p-5 md:p-6"
                 style={{
-                  background: 'rgba(18,18,31,0.92)',
-                  boxShadow: '0 24px 60px rgba(17, 24, 39, 0.22)',
+                  background: 'color-mix(in srgb, var(--color-surface-container-highest) 92%, transparent)',
+                  boxShadow: 'var(--shadow-lg)',
                 }}
               >
                 <div className="flex items-center justify-between gap-4">
@@ -141,13 +142,40 @@ export default function AuthPage() {
             </div>
           </section>
 
-          <WorkspaceSignupCard
-            eyebrow="注册"
-            title="立即创建账号"
-            description="填写邮箱和姓名即可开始。注册后会获得体验点数，可以直接运行首份岗位分析。"
-            submitLabel="注册并进入工作台"
-            compact
-          />
+          <div className="space-y-6">
+            <div className="flex gap-2">
+              <Button
+                variant={!showLogin ? 'primary' : 'ghost'}
+                onClick={() => setShowLogin(false)}
+              >
+                注册
+              </Button>
+              <Button
+                variant={showLogin ? 'primary' : 'ghost'}
+                onClick={() => setShowLogin(true)}
+              >
+                登录
+              </Button>
+            </div>
+            {showLogin ? (
+              <WorkspaceSignupCard
+                eyebrow="登录"
+                title="欢迎回来"
+                description="输入邮箱和密码登录你的工作台。"
+                submitLabel="登录"
+                mode="login"
+                compact
+              />
+            ) : (
+              <WorkspaceSignupCard
+                eyebrow="注册"
+                title="立即创建账号"
+                description="填写邮箱和姓名即可开始。注册后会获得体验点数，可以直接运行首份岗位分析。"
+                submitLabel="注册并进入工作台"
+                compact
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>

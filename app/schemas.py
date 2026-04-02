@@ -114,6 +114,12 @@ class PricingCatalogResponse(BaseModel):
 class RegisterRequest(BaseModel):
     email: EmailStr
     name: str = Field(min_length=2, max_length=80)
+    password: str = Field(default="123456", min_length=6)
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=6)
 
 
 class UpdateUserRequest(BaseModel):

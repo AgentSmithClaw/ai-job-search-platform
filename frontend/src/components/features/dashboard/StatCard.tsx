@@ -27,7 +27,7 @@ export function StatCard({
   return (
     <div
       className="rounded-xl p-5 flex flex-col"
-      style={{ background: 'var(--color-surface-container-low)', minHeight: 256 }}
+      style={{ background: 'var(--color-surface-container-low)', minHeight: 180 }}
     >
       {/* Icon row */}
       <div className="flex items-start justify-between mb-4">

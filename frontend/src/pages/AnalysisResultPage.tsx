@@ -45,8 +45,8 @@ function Gauge({ score }: { score: number }) {
   const offset = circumference - (score / 100) * circumference;
 
   return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
+    <div className="relative mx-auto" style={{ width: size, height: size, maxWidth: '100%' }}>
+      <svg viewBox={`0 0 ${size} ${size}`} className="-rotate-90 w-full h-full">
         <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--color-surface-container-highest)" strokeWidth={stroke} />
         <circle
           cx={size / 2}
@@ -217,7 +217,7 @@ export default function AnalysisResultPage() {
 
             <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
               <div>
-                <h1 className="text-3xl md:text-4xl font-black tracking-tight mb-3">{session.target_role}</h1>
+                <h1 className="text-3xl md:text-4xl font-black tracking-tight line-clamp-2 mb-3">{session.target_role}</h1>
                 <p className="text-base max-w-3xl" style={{ color: 'var(--color-text-secondary)' }}>
                   {session.report.summary}
                 </p>

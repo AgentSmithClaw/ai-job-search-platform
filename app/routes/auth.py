@@ -5,6 +5,7 @@ from app.schemas import (
     RegisterRequest,
     UpdateUserRequest,
     UserProfile,
+    LoginRequest,
 )
 
 router = APIRouter(prefix="/api/auth", tags=["认证"])
@@ -14,6 +15,12 @@ router = APIRouter(prefix="/api/auth", tags=["认证"])
 def auth_register(request: RegisterRequest) -> UserProfile:
     from app.services.auth import register_user
     return register_user(request)
+
+
+@router.post("/login", response_model=UserProfile)
+def auth_login(request: LoginRequest) -> UserProfile:
+    from app.services.auth import login_user
+    return login_user(request)
 
 
 @router.get("/me", response_model=UserProfile)

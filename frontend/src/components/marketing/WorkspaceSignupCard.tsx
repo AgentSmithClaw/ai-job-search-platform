@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { CheckCircle2, Rocket } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { register, saveToken } from '../../services/auth';
+import { register, login, saveToken } from '../../services/auth';
 import { useAuthStore, useToastStore } from '../../store';
 import type { User } from '../../types';
 
@@ -15,6 +15,7 @@ interface WorkspaceSignupCardProps {
   submitLabel?: string;
   highlights?: string[];
   compact?: boolean;
+  mode?: 'signup' | 'login';
 }
 
 const DEFAULT_HIGHLIGHTS = [
@@ -30,17 +31,29 @@ export function WorkspaceSignupCard({
   submitLabel = '创建并进入工作台',
   highlights = DEFAULT_HIGHLIGHTS,
   compact = false,
+  mode = 'signup',
 }: WorkspaceSignupCardProps) {
   const navigate = useNavigate();
   const { setUser, setToken } = useAuthStore();
   const { addToast } = useToastStore();
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
 
-  const isValid = useMemo(() => email.includes('@') && name.trim().length >= 2, [email, name]);
+  const isValid = useMemo(() => {
+    if (mode === 'login') {
+      return email.includes('@') && password.length >= 6;
+    }
+    return email.includes('@') && name.trim().length >= 2 && password.length >= 6;
+  }, [email, name, password, mode]);
 
   const mutation = useMutation({
-    mutationFn: () => register(email, name),
+    mutationFn: () => {
+      if (mode === 'login') {
+        return login(email, password);
+      }
+      return register(email, name, password);
+    },
     onSuccess: (data) => {
       const user: User = {
         id: data.id,
@@ -99,11 +112,20 @@ export function WorkspaceSignupCard({
           onChange={(event) => setEmail(event.target.value)}
           placeholder="you@company.com"
         />
+        {mode === 'signup' && (
+          <Input
+            label="你的姓名"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="我们应该怎么称呼你？"
+          />
+        )}
         <Input
-          label="你的姓名"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          placeholder="我们应该怎么称呼你？"
+          label="设置密码"
+          type="password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          placeholder="至少6位字符"
         />
         <Button type="submit" className="w-full" size="lg" loading={mutation.isPending} disabled={!isValid}>
           {submitLabel}

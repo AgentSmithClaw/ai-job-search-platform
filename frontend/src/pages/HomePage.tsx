@@ -104,9 +104,9 @@ function MarketingPreviewCard({
     <div
       className="rounded-[28px] p-5 md:p-6"
       style={{
-        background: 'linear-gradient(180deg, rgba(255,255,255,0.92), rgba(245,242,255,0.9))',
+        background: 'linear-gradient(180deg, color-mix(in srgb, var(--color-bg-surface) 92%, transparent), color-mix(in srgb, var(--color-primary-subtle) 90%, transparent))',
         border: '1px solid color-mix(in srgb, var(--color-outline-variant) 42%, transparent)',
-        boxShadow: '0 24px 48px rgba(53, 37, 205, 0.08)',
+        boxShadow: '0 24px 48px color-mix(in srgb, var(--color-primary) 8%, transparent)',
       }}
     >
       <p className="editorial-kicker mb-3">{title}</p>
@@ -133,7 +133,7 @@ export default function HomePage() {
               className="w-11 h-11 rounded-[16px] flex items-center justify-center"
               style={{
                 background: 'var(--gradient-hero)',
-                boxShadow: '0 14px 30px rgba(53,37,205,0.24)',
+                boxShadow: 'var(--shadow-lg)',
               }}
             >
               <Target size={20} style={{ color: 'white' }} />
@@ -161,14 +161,14 @@ export default function HomePage() {
             className="relative overflow-hidden rounded-[36px] md:rounded-[44px] px-6 py-7 md:px-10 md:py-10 xl:px-12 xl:py-12"
             style={{
               background:
-                'radial-gradient(circle at 14% 18%, rgba(255,255,255,0.95), transparent 24%), radial-gradient(circle at 86% 12%, rgba(195,192,255,0.62), transparent 20%), linear-gradient(135deg, #f5f2ff 0%, #f8f6ff 48%, #eeebff 100%)',
+                'radial-gradient(circle at 14% 18%, color-mix(in srgb, white 95%, transparent), transparent 24%), radial-gradient(circle at 86% 12%, color-mix(in srgb, var(--color-primary) 62%, transparent), transparent 20%), linear-gradient(135deg, var(--color-surface-container) 0%, var(--color-surface-container-low) 48%, var(--color-surface-container-high) 100%)',
               border: '1px solid color-mix(in srgb, var(--color-outline-variant) 38%, transparent)',
-              boxShadow: '0 30px 80px rgba(53, 37, 205, 0.1)',
+              boxShadow: '0 30px 80px color-mix(in srgb, var(--color-primary) 10%, transparent)',
             }}
           >
             <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute right-[-70px] top-[-40px] w-[240px] h-[240px] rounded-full bg-[rgba(91,78,255,0.10)] blur-3xl" />
-              <div className="absolute left-[12%] bottom-[-80px] w-[280px] h-[180px] rounded-full bg-[rgba(255,182,149,0.18)] blur-3xl" />
+              <div className="absolute right-[-70px] top-[-40px] w-[240px] h-[240px] rounded-full bg-[color-mix(in_srgb,var(--color-primary)_10%,transparent)] blur-3xl" />
+              <div className="absolute left-[12%] bottom-[-80px] w-[280px] h-[180px] rounded-full bg-[color-mix(in_srgb,var(--color-tertiary)_18%,transparent)] blur-3xl" />
             </div>
 
             <div className="relative">
@@ -211,9 +211,9 @@ export default function HomePage() {
                     key={item.label}
                     className="rounded-[24px] p-4 md:p-5"
                     style={{
-                      background: 'rgba(255,255,255,0.72)',
-                      border: '1px solid rgba(255,255,255,0.7)',
-                      boxShadow: '0 10px 30px rgba(53,37,205,0.06)',
+                      background: 'color-mix(in srgb, var(--color-bg-surface) 72%, transparent)',
+                      border: '1px solid color-mix(in srgb, var(--color-outline-variant) 40%, transparent)',
+                      boxShadow: '0 10px 30px color-mix(in srgb, var(--color-primary) 6%, transparent)',
                     }}
                   >
                     <p className="text-[28px] md:text-[34px] leading-none font-black tracking-tight">{item.value}</p>
@@ -241,8 +241,8 @@ export default function HomePage() {
           <div
             className="rounded-[32px] p-6 md:p-7"
             style={{
-              background: 'linear-gradient(180deg, rgba(18,18,31,0.96), rgba(35,37,57,0.96))',
-              boxShadow: '0 24px 60px rgba(17, 24, 39, 0.26)',
+              background: 'linear-gradient(180deg, color-mix(in srgb, var(--color-surface-container-highest) 96%, transparent), color-mix(in srgb, var(--color-surface-container-highest) 96%, transparent))',
+              boxShadow: '0 24px 60px color-mix(in srgb, var(--color-surface-container-highest) 26%, transparent)',
             }}
           >
             <div className="flex items-center justify-between gap-4 mb-6">
@@ -292,9 +292,9 @@ export default function HomePage() {
                   key={feature.title}
                   className="rounded-[30px] p-6 md:p-7"
                   style={{
-                    background: 'linear-gradient(180deg, rgba(255,255,255,0.92), rgba(245,242,255,0.88))',
+                    background: 'linear-gradient(180deg, color-mix(in srgb, var(--color-bg-surface) 92%, transparent), color-mix(in srgb, var(--color-primary-subtle) 88%, transparent))',
                     border: '1px solid color-mix(in srgb, var(--color-outline-variant) 35%, transparent)',
-                    boxShadow: '0 18px 44px rgba(27,27,36,0.06)',
+                    boxShadow: '0 18px 44px color-mix(in srgb, var(--color-surface-container-highest) 6%, transparent)',
                   }}
                 >
                   <div
@@ -339,9 +339,9 @@ export default function HomePage() {
                 key={step.id}
                 className="rounded-[28px] p-5 md:p-6 flex gap-4 md:gap-5"
                 style={{
-                  background: 'rgba(255,255,255,0.78)',
+                  background: 'color-mix(in srgb, var(--color-bg-surface) 78%, transparent)',
                   border: '1px solid color-mix(in srgb, var(--color-outline-variant) 32%, transparent)',
-                  boxShadow: '0 16px 40px rgba(27,27,36,0.05)',
+                  boxShadow: '0 16px 40px color-mix(in srgb, var(--color-surface-container-highest) 5%, transparent)',
                 }}
               >
                 <div
@@ -385,9 +385,9 @@ export default function HomePage() {
                 key={item.title}
                 className="rounded-[28px] p-6"
                 style={{
-                  background: 'rgba(255,255,255,0.82)',
+                  background: 'color-mix(in srgb, var(--color-bg-surface) 82%, transparent)',
                   border: '1px solid color-mix(in srgb, var(--color-outline-variant) 30%, transparent)',
-                  boxShadow: '0 16px 34px rgba(27,27,36,0.05)',
+                  boxShadow: '0 16px 34px color-mix(in srgb, var(--color-surface-container-highest) 5%, transparent)',
                 }}
               >
                 <div className="mb-4 flex items-center gap-3">

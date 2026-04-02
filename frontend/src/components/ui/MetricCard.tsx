@@ -17,7 +17,7 @@ export function MetricCard({ value, unit = '', label, trend, description, classN
   return (
     <div
       className={`rounded-xl p-6 flex flex-col justify-between relative overflow-hidden ${className}`}
-      style={{ background: 'var(--color-surface-container)', minHeight: 256 }}
+      style={{ background: 'var(--color-surface-container)', minHeight: 180 }}
     >
       {/* Decorative circle top-right */}
       <div
@@ -25,7 +25,7 @@ export function MetricCard({ value, unit = '', label, trend, description, classN
         style={{
           top: 0, right: 0,
           width: 128, height: 128,
-          background: 'rgba(53,37,205,0.05)',
+          background: 'color-mix(in srgb, var(--color-primary) 5%, transparent)',
           marginRight: -64, marginTop: -64,
         }}
       />
@@ -47,7 +47,7 @@ export function MetricCard({ value, unit = '', label, trend, description, classN
           {trend !== undefined && trend !== 0 && (
             <span
               className="text-xs font-bold flex items-center gap-0.5 rounded px-2 py-0.5"
-              style={{ background: 'rgba(53,37,205,0.1)', color: 'var(--color-primary)' }}
+              style={{ background: 'color-mix(in srgb, var(--color-primary) 10%, transparent)', color: 'var(--color-primary)' }}
             >
               <span className="material-symbols-outlined text-xs">trending_up</span>
               {trend > 0 ? '+' : ''}{trend}%

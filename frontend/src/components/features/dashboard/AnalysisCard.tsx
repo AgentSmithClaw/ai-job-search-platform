@@ -15,7 +15,10 @@ export function AnalysisCard({ session, isNewAnalysis, onNewAnalysis }: Analysis
       <div
         className="rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer h-64 border-2 border-dashed transition-all duration-300"
         style={{ background: 'var(--color-surface-container)', borderColor: 'var(--color-outline-variant)' }}
+        role="button"
+        tabIndex={0}
         onClick={onNewAnalysis}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNewAnalysis?.(); } }}
       >
         <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4" style={{ background: 'var(--color-surface-container-low)' }}>
           <span className="material-symbols-outlined text-3xl" style={{ color: 'var(--color-primary)' }}>upload_file</span>
@@ -39,14 +42,17 @@ export function AnalysisCard({ session, isNewAnalysis, onNewAnalysis }: Analysis
     <div
       className="rounded-xl p-6 flex flex-col justify-between h-64 cursor-pointer transition-all duration-300 hover:bg-[var(--color-surface-container-lowest)]"
       style={{ background: 'var(--color-surface-container-low)' }}
+      role="button"
+      tabIndex={0}
       onClick={() => navigate(`/analyze/${session.id}`)}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/analyze/${session.id}`); } }}
     >
       <div>
         <div className="flex justify-between items-start mb-4">
           <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'var(--color-surface-container-lowest)' }}>
             <span className="material-symbols-outlined text-xl" style={{ color: 'var(--color-on-surface-variant)' }}>work</span>
           </div>
-          <span className="text-[10px] font-bold px-3 py-1 rounded-full" style={{ background: 'rgba(53,37,205,0.1)', color: 'var(--color-primary)' }}>
+          <span className="text-[10px] font-bold px-3 py-1 rounded-full" style={{ background: 'color-mix(in srgb, var(--color-primary) 10%, transparent)', color: 'var(--color-primary)' }}>
             {session.match_score}% MATCH
           </span>
         </div>

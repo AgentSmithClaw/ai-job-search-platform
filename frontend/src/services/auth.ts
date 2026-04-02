@@ -1,8 +1,13 @@
 import api from './api';
 import type { AuthResponse, User } from '../types';
 
-export async function register(email: string, name: string): Promise<AuthResponse> {
-  const { data } = await api.post<AuthResponse>('/auth/register', { email, name });
+export async function register(email: string, name: string, password: string): Promise<AuthResponse> {
+  const { data } = await api.post<AuthResponse>('/auth/register', { email, name, password });
+  return data;
+}
+
+export async function login(email: string, password: string): Promise<AuthResponse> {
+  const { data } = await api.post<AuthResponse>('/auth/login', { email, password });
   return data;
 }
 

@@ -29,7 +29,8 @@ CREATE TABLE IF NOT EXISTS users (
     name TEXT NOT NULL,
     token TEXT NOT NULL UNIQUE,
     credits INTEGER NOT NULL DEFAULT 0,
-    last_used_at TEXT
+    last_used_at TEXT,
+    password_hash TEXT
 );
 
 CREATE TABLE IF NOT EXISTS purchases (
@@ -134,7 +135,8 @@ CREATE TABLE IF NOT EXISTS users (
     name TEXT NOT NULL,
     token TEXT NOT NULL UNIQUE,
     credits INTEGER NOT NULL DEFAULT 0,
-    last_used_at TEXT
+    last_used_at TEXT,
+    password_hash TEXT
 );
 
 CREATE TABLE IF NOT EXISTS purchases (
@@ -326,6 +328,7 @@ def _get_postgres_connection() -> PostgresConnectionProxy:
     _ensure_column_postgres(conn, "payment_orders", "checkout_url", "checkout_url TEXT")
     _ensure_column_postgres(conn, "payment_orders", "session_id", "session_id TEXT")
     _ensure_column_postgres(conn, "users", "last_used_at", "last_used_at TEXT")
+    _ensure_column_postgres(conn, "users", "password_hash", "password_hash TEXT")
     conn.commit()
     return conn
 

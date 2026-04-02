@@ -204,9 +204,11 @@ export default function AnalyzePage() {
               <Button variant="secondary" onClick={clearDraft}>
                 Clear Draft
               </Button>
-              <Button loading={analyzeMutation.isPending} disabled={!canAnalyze || credits < 1} icon="auto_awesome" onClick={() => analyzeMutation.mutate()}>
-                Generate Report
-              </Button>
+              <div title={credits < 1 ? 'No credits remaining — purchase a package first' : !canAnalyze ? 'Fill in all fields (role ≥ 2 chars, resume ≥ 20 chars, JD ≥ 20 chars)' : ''}>
+                <Button loading={analyzeMutation.isPending} disabled={!canAnalyze || credits < 1} icon="auto_awesome" onClick={() => analyzeMutation.mutate()}>
+                  Generate Report
+                </Button>
+              </div>
             </div>
           </div>
         </Card>

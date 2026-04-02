@@ -256,6 +256,3 @@ export default function BillingPage() {
     </PageContainer>
   );
 }
-   </PageContainer>
-  );
-}

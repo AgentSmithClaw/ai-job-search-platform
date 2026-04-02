@@ -30,7 +30,7 @@ export function FAB({ icon = 'add', onClick, href, className = '' }: FABProps) {
         right: 40,
         background: 'var(--gradient-hero)',
         color: 'var(--color-on-primary)',
-        boxShadow: '0 8px 28px rgba(0, 102, 255, 0.35)',
+        boxShadow: '0 8px 28px color-mix(in srgb, var(--color-primary) 35%, transparent)',
       }}
       onClick={handleClick}
       aria-label="Create new"

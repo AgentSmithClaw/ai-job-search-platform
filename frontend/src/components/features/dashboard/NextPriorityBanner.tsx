@@ -24,7 +24,7 @@ export function NextPriorityBanner({ title, description, actionLabel = 'Take Act
           style={{
             background: 'var(--color-primary)',
             color: 'var(--color-on-primary)',
-            boxShadow: '0 4px 16px rgba(53,37,205,0.2)',
+            boxShadow: '0 4px 16px color-mix(in srgb, var(--color-primary) 20%, transparent)',
           }}
         >
           <span className="material-symbols-outlined" style={{ fontSize: 20 }}>auto_awesome</span>

@@ -4,25 +4,56 @@ from app.services.auth import (
     get_user_by_token,
     consume_credit,
     add_credits,
+    login_user,
 )
-from app.schemas import RegisterRequest
+from app.schemas import RegisterRequest, LoginRequest
 from fastapi import HTTPException
 
 
 class TestRegister:
     def test_register_creates_user(self):
-        user = register_user(RegisterRequest(email="new@test.com", name="New User"))
+        user = register_user(RegisterRequest(email="new@test.com", name="New User", password="mypassword"))
         assert user.email == "new@test.com"
         assert user.name == "New User"
         assert user.credits == 1
         assert user.access_token is not None
 
-    def test_register_duplicate_returns_existing(self):
-        req = RegisterRequest(email="dup@test.com", name="Dup User")
-        u1 = register_user(req)
-        u2 = register_user(req)
-        assert u1.id == u2.id
-        assert u1.access_token == u2.access_token
+    def test_register_duplicate_raises_error(self):
+        req = RegisterRequest(email="dup@test.com", name="Dup User", password="mypassword")
+        register_user(req)
+        with pytest.raises(HTTPException) as exc:
+            register_user(req)
+        assert exc.value.status_code == 409
+        assert "已被注册" in exc.value.detail
+
+
+class TestLogin:
+    def test_login_success(self):
+        email = "login_success@test.com"
+        password = "secretpassword"
+        register_user(RegisterRequest(email=email, name="Login User", password=password))
+        
+        login_req = LoginRequest(email=email, password=password)
+        user = login_user(login_req)
+        assert user.email == email
+        assert user.name == "Login User"
+        assert user.access_token is not None
+
+    def test_login_wrong_password(self):
+        email = "login_wrong@test.com"
+        register_user(RegisterRequest(email=email, name="Wrong User", password="correct_password"))
+        
+        login_req = LoginRequest(email=email, password="wrong_password")
+        with pytest.raises(HTTPException) as exc:
+            login_user(login_req)
+        assert exc.value.status_code == 401
+        assert "错误" in exc.value.detail
+
+    def test_login_nonexistent_user(self):
+        login_req = LoginRequest(email="nonexistent@test.com", password="anypassword")
+        with pytest.raises(HTTPException) as exc:
+            login_user(login_req)
+        assert exc.value.status_code == 401
 
 
 class TestGetUser:

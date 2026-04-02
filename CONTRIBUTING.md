@@ -56,8 +56,8 @@ npm run build
 
 If you change the deployment flow, API behavior, or onboarding steps, update the related docs:
 
-- [README.md](/E:/codex/ai-job-search-platform/README.md)
-- [README.zh-CN.md](/E:/codex/ai-job-search-platform/README.zh-CN.md)
-- [docs/api.md](/E:/codex/ai-job-search-platform/docs/api.md)
-- [docs/DEPLOYMENT.md](/E:/codex/ai-job-search-platform/docs/DEPLOYMENT.md)
-- [docs/PRODUCTION-CHECKLIST.md](/E:/codex/ai-job-search-platform/docs/PRODUCTION-CHECKLIST.md)
+- [README.md](./README.md)
+- [README.zh-CN.md](./README.zh-CN.md)
+- [docs/api.md](./docs/api.md)
+- [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)
+- [docs/PRODUCTION-CHECKLIST.md](./docs/PRODUCTION-CHECKLIST.md)

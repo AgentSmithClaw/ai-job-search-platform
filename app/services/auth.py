@@ -2,39 +2,71 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, UTC
 import secrets
+import hashlib
 
 from fastapi import HTTPException
 
 from app.db import get_connection
-from app.schemas import PurchaseResponse, RegisterRequest, UserProfile
+from app.schemas import PurchaseResponse, RegisterRequest, UserProfile, LoginRequest
 from app.services.pricing import get_package_by_code
 
 TOKEN_EXPIRY_DAYS = 90
 
 
+def _hash_password(password: str) -> str:
+    salt = secrets.token_hex(16)
+    hashed = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
+    return f"{salt}:{hashed.hex()}"
+
+
+def _verify_password(password: str, stored: str) -> bool:
+    if not stored or ':' not in stored:
+        return False
+    salt, hashed = stored.split(':')
+    check = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
+    return check.hex() == hashed
+
+
 def register_user(payload: RegisterRequest) -> UserProfile:
     conn = get_connection()
-    existing = conn.execute('SELECT id, email, name, token, credits FROM users WHERE email = ?', (payload.email,)).fetchone()
+    existing = conn.execute('SELECT id FROM users WHERE email = ?', (payload.email,)).fetchone()
     if existing:
         conn.close()
-        return UserProfile(
-            id=existing['id'],
-            email=existing['email'],
-            name=existing['name'],
-            access_token=existing['token'],
-            credits=existing['credits'],
-        )
+        raise HTTPException(status_code=409, detail='该邮箱已被注册。')
 
     token = secrets.token_urlsafe(18)
+    password_hash = _hash_password(payload.password)
     created_at = datetime.now(UTC).strftime('%Y-%m-%dT%H:%M:%SZ')
     cursor = conn.execute(
-        'INSERT INTO users (created_at, email, name, token, credits, last_used_at) VALUES (?, ?, ?, ?, ?, ?)',
-        (created_at, payload.email, payload.name, token, 1, created_at),
+        'INSERT INTO users (created_at, email, name, token, credits, last_used_at, password_hash) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        (created_at, payload.email, payload.name, token, 1, created_at, password_hash),
     )
     conn.commit()
     user_id = cursor.lastrowid
     conn.close()
     return UserProfile(id=user_id or 0, email=payload.email, name=payload.name, access_token=token, credits=1)
+
+
+def login_user(payload: LoginRequest) -> UserProfile:
+    conn = get_connection()
+    user = conn.execute(
+        'SELECT id, email, name, token, credits, password_hash FROM users WHERE email = ?',
+        (payload.email,)
+    ).fetchone()
+    
+    if not user or not _verify_password(payload.password, user['password_hash']):
+        conn.close()
+        raise HTTPException(status_code=401, detail='邮箱或密码错误。')
+
+    access_token = user['token']
+    conn.close()
+    return UserProfile(
+        id=user['id'],
+        email=user['email'],
+        name=user['name'],
+        access_token=access_token,
+        credits=user['credits'],
+    )
 
 
 def get_user_by_token(access_token: str) -> UserProfile:
