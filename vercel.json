@@ -7,7 +7,8 @@
       "src": "app/main.py",
       "use": "@vercel/python",
       "config": {
-        "installer": "pip"
+        "installer": "pip",
+        "installCommand": "pip install -r requirements.txt"
       }
     },
     {
