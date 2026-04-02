@@ -17,6 +17,7 @@ data/
 *.db
 
 # Workspace-only or unrelated artifacts
+preview.html
 .openclaw/
 memory/
 screenshots/
