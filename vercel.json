@@ -5,7 +5,10 @@
   "builds": [
     {
       "src": "app/main.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python",
+      "config": {
+        "installer": "pip"
+      }
     },
     {
       "src": "package.json",
